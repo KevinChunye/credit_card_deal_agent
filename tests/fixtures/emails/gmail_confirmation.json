@@ -1,0 +1,17 @@
+{
+ "message_id": "<gmail-006@google.com>",
+ "inbox_id": "kev_work@agentmail.to",
+ "thread_id": "t6",
+ "labels": [
+  "received"
+ ],
+ "timestamp": "2026-09-19T10:00:00Z",
+ "from_": "Gmail Team <forwarding-noreply@google.com>",
+ "to": [
+  "kev_work@agentmail.to"
+ ],
+ "subject": "(#123456789) Gmail Forwarding Confirmation - Receive Mail from owner@example.com",
+ "text": "owner@example.com has requested to automatically forward mail to your email address kev_work@agentmail.to.\nConfirmation code: 123456789\nTo allow owner@example.com to automatically forward mail to your address, please click the link below to confirm the request:\nhttps://mail-settings.google.com/mail/vf-example-confirm-link",
+ "html": null,
+ "headers": {}
+}

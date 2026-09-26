@@ -1,0 +1,114 @@
+# Issuer application and bonus-eligibility rules, as text plus a
+# machine-checkable form evaluated by card_agent/eligibility.py against your
+# wallet (including closed cards and product changes).
+#
+# Check types:
+#   max_recent_accounts  {window_months, max_accounts}  count cards opened in the
+#                        window that report as personal accounts (Chase 5/24)
+#   once_per_lifetime    {}  you have/had this exact card, or got its bonus
+#   blocked_by_prior     {cards: [...]}  you have/had any of these cards
+#   bonus_window         {window_months, scope: same_card|family, family?}
+#                        you received a bonus within the window
+#   holding_blocks       {scope: same_card|family, family?}  you currently hold one
+# Each check has a `status` it produces when it fires: ineligible or unknown.
+# "unknown" means "the rule may apply; check the issuer's pop-up/terms".
+#
+# These rules are the commonly reported data points as of 2026. Issuers change
+# them without notice; treat results as guidance, not a guarantee.
+
+rules:
+  - id: chase-5-24
+    issuer: chase
+    applies_to: {issuer: chase}
+    rule_text: >-
+      Chase generally denies applicants (for personal and business cards) who have
+      opened 5 or more personal cards from any issuer in the past 24 months. Most
+      business cards don't count, except Capital One, Discover and TD business cards.
+    checks:
+      - {type: max_recent_accounts, window_months: 24, max_accounts: 4, status: ineligible}
+
+  - id: chase-sapphire-family
+    issuer: chase
+    applies_to: {issuer: chase, name_pattern: "^Sapphire (Preferred|Reserve)$"}
+    rule_text: >-
+      Sapphire bonuses: current terms say the bonus is not available if you have or
+      have had that same card, and Chase shows an eligibility pop-up before you
+      apply. The older rules (only one Sapphire at a time; no Sapphire bonus within
+      48 months) may still influence the pop-up, so those cases are flagged unknown.
+    checks:
+      - {type: once_per_lifetime, status: ineligible}
+      - {type: holding_blocks, scope: family, family: {issuer: chase, name_pattern: "^Sapphire"}, status: unknown}
+      - {type: bonus_window, scope: family, family: {issuer: chase, name_pattern: "^Sapphire"}, window_months: 48, status: unknown}
+
+  - id: amex-once-per-lifetime
+    issuer: amex
+    applies_to: {issuer: amex}
+    rule_text: >-
+      Amex welcome offers are generally once per lifetime per card ("not available
+      to applicants who have or have had this Card"). Amex may also decline the
+      bonus via a pop-up based on your history.
+    checks:
+      - {type: once_per_lifetime, status: ineligible}
+
+  - id: amex-gold-family
+    issuer: amex
+    applies_to: {card_ids: [amex-gold]}
+    rule_text: "Amex Gold: no welcome offer if you have or have had the Platinum Card."
+    checks:
+      - {type: blocked_by_prior, cards: [amex-platinum], status: ineligible}
+
+  - id: amex-green-family
+    issuer: amex
+    applies_to: {card_ids: [amex-green]}
+    rule_text: "Amex Green: no welcome offer if you have or have had the Gold or Platinum Card."
+    checks:
+      - {type: blocked_by_prior, cards: [amex-gold, amex-platinum], status: ineligible}
+
+  - id: amex-blue-cash-family
+    issuer: amex
+    applies_to: {card_ids: [amex-blue-cash-everyday]}
+    rule_text: "Blue Cash Everyday: no welcome offer if you have or have had Blue Cash Preferred."
+    checks:
+      - {type: blocked_by_prior, cards: [amex-blue-cash-preferred], status: ineligible}
+
+  - id: amex-delta-blue-family
+    issuer: amex
+    applies_to: {card_ids: [amex-delta-skymiles-blue]}
+    rule_text: "Delta SkyMiles Blue: no welcome offer if you have or have had a personal Delta Gold, Platinum or Reserve."
+    checks:
+      - {type: blocked_by_prior, cards: [amex-delta-skymiles-gold, amex-delta-skymiles-platinum, amex-delta-skymiles-reserve], status: ineligible}
+
+  - id: amex-delta-gold-family
+    issuer: amex
+    applies_to: {card_ids: [amex-delta-skymiles-gold]}
+    rule_text: "Delta SkyMiles Gold: no welcome offer if you have or have had the personal Delta Platinum or Reserve."
+    checks:
+      - {type: blocked_by_prior, cards: [amex-delta-skymiles-platinum, amex-delta-skymiles-reserve], status: ineligible}
+
+  - id: amex-delta-platinum-family
+    issuer: amex
+    applies_to: {card_ids: [amex-delta-skymiles-platinum]}
+    rule_text: "Delta SkyMiles Platinum: no welcome offer if you have or have had the personal Delta Reserve."
+    checks:
+      - {type: blocked_by_prior, cards: [amex-delta-skymiles-reserve], status: ineligible}
+
+  - id: citi-48-month
+    issuer: citi
+    applies_to: {issuer: citi}
+    rule_text: >-
+      Citi: the bonus is not available if you received a new-account bonus for this
+      same card in the past 48 months (per-card language on Strata and AAdvantage cards).
+    checks:
+      - {type: bonus_window, scope: same_card, window_months: 48, status: ineligible}
+
+  - id: capital-one-venture-family
+    issuer: capital-one
+    applies_to: {issuer: capital-one, name_pattern: "^Venture"}
+    rule_text: >-
+      Capital One Venture family: existing or previous cardholders of the same card,
+      and anyone who received a bonus on a Venture, VentureOne or Venture X in the
+      past 48 months, may not be eligible for the bonus.
+    checks:
+      - {type: holding_blocks, scope: same_card, status: ineligible}
+      - {type: once_per_lifetime, status: unknown}
+      - {type: bonus_window, scope: family, family: {issuer: capital-one, name_pattern: "^Venture"}, window_months: 48, status: ineligible}

@@ -63,6 +63,16 @@ def name_variants(name: str) -> set[str]:
     return {v for v in variants if v}
 
 
+def issuers_in(text: str) -> set[str]:
+    """Issuer slugs whose names appear in `text`."""
+    normalized = normalize(text)
+    return {
+        issuer
+        for issuer, aliases in ISSUER_ALIASES.items()
+        if any(f" {alias} " in normalized for alias in aliases)
+    }
+
+
 def _span_length(hit: tuple[int, int, str]) -> int:
     return hit[1] - hit[0]
 
@@ -85,18 +95,10 @@ class CardMatcher:
                 needs_issuer = len(variant.split()) < 2
                 self.patterns.append(_Pattern(card.id, card.issuer, variant, needs_issuer))
 
-    def issuers_in(self, text: str) -> set[str]:
-        normalized = normalize(text)
-        return {
-            issuer
-            for issuer, aliases in ISSUER_ALIASES.items()
-            if any(f" {alias} " in normalized for alias in aliases)
-        }
-
     def find(self, text: str) -> list[str]:
         """Card ids mentioned in `text`, longest non-overlapping names first."""
         normalized = normalize(text)
-        issuers = self.issuers_in(text)
+        issuers = issuers_in(text)
         hits: list[tuple[int, int, str]] = []
         for pattern in self.patterns:
             if pattern.needs_issuer and pattern.issuer not in issuers:

@@ -1,0 +1,19 @@
+{
+ "message_id": "<phish-004@capitalone.com>",
+ "inbox_id": "kev_work@agentmail.to",
+ "thread_id": "t4",
+ "labels": [
+  "received"
+ ],
+ "timestamp": "2026-09-24T08:00:00Z",
+ "from_": "Capital One <notify@capitalone.com>",
+ "to": [
+  "kev_work@agentmail.to"
+ ],
+ "subject": "Claim your $500 bonus",
+ "text": "Your account is on hold. Verify your account within 24 hours to claim a $500 bonus.",
+ "html": "<a href=\"https://bit.ly/claim-500\">Claim</a>",
+ "headers": {
+  "Authentication-Results": "mx.agentmail.to; dkim=fail header.d=capitalone.com; dmarc=fail"
+ }
+}

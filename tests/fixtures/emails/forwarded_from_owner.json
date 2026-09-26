@@ -1,0 +1,19 @@
+{
+ "message_id": "<fwd-001@mail.gmail.com>",
+ "inbox_id": "kev_work@agentmail.to",
+ "thread_id": "t1",
+ "labels": [
+  "received",
+  "unread"
+ ],
+ "timestamp": "2026-09-20T15:04:00Z",
+ "from_": "Kevin Example <owner@example.com>",
+ "to": [
+  "kev_work@agentmail.to"
+ ],
+ "subject": "Fwd: You're pre-approved for the Chase Sapphire Preferred\u00ae Card",
+ "text": null,
+ "extracted_text": "FYI\n\n---------- Forwarded message ---------\nFrom: Chase <no-reply@alertsp.chase.com>\nDate: Sat, Sep 20, 2026 at 9:12 AM\nSubject: You're pre-approved for the Chase Sapphire Preferred\u00ae Card\nTo: <owner@example.com>\n\nGood news, you're pre-approved! Earn 75,000 bonus points after you spend $5,000 on purchases in the first 3 months from account opening. $95 annual fee. Offer expires December 31, 2026. Apply at https://www.chase.com/apply?offer=abc123. Reference number 123456789012.",
+ "html": null,
+ "headers": {}
+}

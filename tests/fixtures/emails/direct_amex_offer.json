@@ -1,0 +1,19 @@
+{
+ "message_id": "<amex-002@aexp.com>",
+ "inbox_id": "kev_work@agentmail.to",
+ "thread_id": "t2",
+ "labels": [
+  "received"
+ ],
+ "timestamp": "2026-09-22T12:00:00Z",
+ "from_": "American Express <americanexpress@welcome.aexp.com>",
+ "to": [
+  "kev_work@agentmail.to"
+ ],
+ "subject": "Exclusive offer: Earn 100,000 Membership Rewards\u00ae points with the Platinum Card\u00ae",
+ "text": "An exclusive offer just for you. Earn 100,000 Membership Rewards points after you spend $8,000 on eligible purchases within your first 6 months of Card Membership. Respond by 11/15/2026.",
+ "html": "<p>An exclusive offer just for you.</p><a href=\"https://www.americanexpress.com/us/credit-cards/card/platinum/\">Learn more</a><a href=\"https://click.email.americanexpress.com/x\">Apply</a>",
+ "headers": {
+  "Authentication-Results": "mx.agentmail.to; dkim=pass header.d=aexp.com; spf=pass; dmarc=pass"
+ }
+}

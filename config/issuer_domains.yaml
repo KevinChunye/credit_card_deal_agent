@@ -1,0 +1,24 @@
+# Sender allowlist for `inbox poll`. A message is accepted only if it comes from
+# OWNER_EMAIL (a manual forward, whose original sender must also be listed here)
+# or from one of these domains or any subdomain of them (e.g. alerts.chase.com).
+#
+# The sender domain maps the email to an issuer. Add a domain here if a real
+# issuer email is being rejected; never add a lookalike (chase-alerts.com etc.).
+
+issuers:
+  chase: [chase.com, chasecards.com]
+  amex: [americanexpress.com, aexp.com, amex.com]
+  capital-one: [capitalone.com]
+  citi: [citi.com, citibank.com, citicards.com]
+  bofa: [bankofamerica.com, bofa.com]
+  wells-fargo: [wellsfargo.com]
+  us-bank: [usbank.com]
+  barclays: [barclaysus.com, barclaycardus.com, barclays.com]
+  discover: [discover.com, discovercard.com]
+  bilt: [bilt.com, biltrewards.com]
+  robinhood: [robinhood.com]
+  apple: [apple.com, applecard.apple]
+
+# Gmail sends this when you add a forwarding address. It is surfaced to you,
+# never acted on.
+gmail_forwarding_confirmation_sender: forwarding-noreply@google.com
