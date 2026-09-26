@@ -373,10 +373,15 @@ def cmd_inbox(args, settings: Settings, store: Store, now: datetime) -> dict[str
 # ---------------------------------------------------------------------------
 
 
+class JsonErrorParser(argparse.ArgumentParser):
+    """Usage errors become {"ok": false, ...} JSON instead of stderr text."""
+
+    def error(self, message: str):
+        raise CommandError(f"{message}\n{self.format_usage().strip()}")
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="python -m card_agent", description=__doc__.splitlines()[0]
-    )
+    parser = JsonErrorParser(prog="python -m card_agent", description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("sync", help="pull the latest snapshot from the data branch")
@@ -446,8 +451,12 @@ def emit(payload: dict[str, Any], settings: Settings) -> None:
 
 
 def main(argv: list[str] | None = None, now: datetime | None = None) -> int:
-    args = build_parser().parse_args(argv)
     settings = Settings.from_env()
+    try:
+        args = build_parser().parse_args(argv)
+    except CommandError as exc:
+        emit({"ok": False, "command": None, "error": str(exc)}, settings)
+        return 2
     now = now or datetime.now(UTC)
     try:
         store = Store(settings.db_path)

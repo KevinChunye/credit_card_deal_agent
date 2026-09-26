@@ -1,0 +1,23 @@
+#!/bin/sh
+# Stable entrypoint for the card agent CLI, safe to call from any cwd.
+# Resolves the repo root (CARD_AGENT_HOME wins, else this script's parent),
+# runs the command, and falls back to the persisted last_response.json for
+# exec environments that swallow a child's stdout.
+ROOT="${CARD_AGENT_HOME:-$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)}"
+cd "$ROOT" || { echo "{\"ok\": false, \"error\": \"repo not found at $ROOT\"}"; exit 1; }
+
+# A human at a terminal (e.g. interactive `onboard`): run directly.
+if [ -t 0 ] && [ -t 1 ]; then
+    exec python3 -m card_agent "$@"
+fi
+
+STATE_DIR=$(dirname "${CARD_AGENT_DB:-$HOME/.credit_card_deal_agent/state.db}")
+rm -f "$STATE_DIR/last_response.json"  # never replay a previous command's output
+out=$(PYTHONUNBUFFERED=1 python3 -m card_agent "$@")
+rc=$?
+if [ -n "$out" ]; then
+    printf '%s\n' "$out"
+elif [ -f "$STATE_DIR/last_response.json" ]; then
+    cat "$STATE_DIR/last_response.json"
+fi
+exit $rc

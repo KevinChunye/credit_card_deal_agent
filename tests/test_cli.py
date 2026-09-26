@@ -203,3 +203,8 @@ def test_digest_email_goes_only_to_owner(capsys, env, monkeypatch):
 def test_missing_snapshot_is_a_clear_error(capsys, env):
     code, out = run(capsys, "rank")
     assert code == 1 and "sync" in out["error"]
+
+
+def test_usage_errors_are_json(capsys, env):
+    code, out = run(capsys, "rank", "--mode", "bogus")
+    assert code == 2 and out["ok"] is False and "invalid choice" in out["error"]
