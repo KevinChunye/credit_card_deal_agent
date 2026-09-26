@@ -1,0 +1,64 @@
+# Example profile for `python -m card_agent onboard --from-yaml <file>`.
+# Copy it OUTSIDE the repo (e.g. ~/.credit_card_deal_agent/profile.yaml) before
+# filling it in: your real profile is private and must never be committed.
+# Every section is optional; anything you omit keeps its current value.
+# Never put card numbers, account numbers or passwords in this file.
+
+profile:
+  # Relative weights; they're normalized. bonus_churning tilts the score toward
+  # first-year value (sign-up bonuses); the rest describe which cards fit you.
+  goal_weights: {travel: 0.4, cash_back: 0.1, business: 0.0, credit_building: 0.0, bonus_churning: 0.5}
+  max_annual_fee: 700          # rank hides cards above this fee
+  max_new_cards_per_year: 4    # the digest warns when you're at this pace
+  home_airport: ORD
+  preferred_airlines: [united]
+  preferred_hotels: [hyatt]
+  elite_statuses: []           # e.g. ["Hilton Gold"]; matching status benefits count as $0
+  trips_per_year: 4            # 0 zeroes lounge, bag, companion and airline-fee benefits
+  has_business: false          # true includes business cards in rankings
+  notify_channels: [email, whatsapp]
+  notify_day: 1                # day of month for the digest
+  min_marginal_ev_alert: 150   # only show picks worth at least this much in year 1
+
+# Typical monthly spend in USD. Categories: dining, groceries, online_groceries,
+# gas, ev_charging, travel_portal, travel_general, flights, hotels,
+# transit_rideshare, streaming, drugstores, rent, mobile_wallet, rotating, other.
+# "rotating" = spend you would steer into 5% quarterly categories.
+monthly_spend:
+  dining: 600
+  groceries: 500
+  gas: 120
+  flights: 150
+  hotels: 150
+  transit_rideshare: 80
+  streaming: 40
+  drugstores: 30
+  other: 1200
+
+# Cents per point. Omit a currency to keep the default (see card_agent/models.py).
+valuations:
+  chase_ur: 1.5
+  amex_mr: 1.5
+  hyatt: 1.7
+
+# Share of each benefit's face value you actually use, 0.0 to 1.0.
+haircuts:
+  dining_credit: 0.5
+  rideshare_credit: 0.6
+  hotel_credit: 0.7
+  lounge: 0.3
+
+# Cards you hold or held (closed cards still matter for 5/24 and lifetime rules).
+# Card ids come from `python -m card_agent rank --json` or the snapshot; names
+# like "sapphire preferred" also work.
+wallet:
+  - card_id: chase-sapphire-preferred
+    opened_on: 2024-03-15
+    annual_fee_date: 2026-03-01
+    bonus_received_on: 2024-06-01
+  - card_id: amex-gold
+    opened_on: 2025-01-10
+    annual_fee_date: 2026-01-01
+    bonus_received_on: 2025-04-02
+  - card_id: citi-double-cash
+    opened_on: 2019-07-01

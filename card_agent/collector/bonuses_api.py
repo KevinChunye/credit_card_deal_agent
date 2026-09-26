@@ -100,7 +100,10 @@ AIRLINE_CURRENCIES = {
 # Credit description -> benefit kind. First match wins, so order matters
 # (e.g. "Uber One Membership" is a dining membership, not a rideshare credit).
 KIND_RULES: list[tuple[str, BenefitKind]] = [
-    (r"perks", BenefitKind.other),
+    (
+        r"perks|award (?:flight )?discount|anniversary (?:bonus )?(?:points|miles)",
+        BenefitKind.other,
+    ),
     (r"precheck|global entry|nexus|trusted traveler", BenefitKind.global_entry),
     (r"lounge|priority pass|centurion", BenefitKind.lounge),
     (r"companion", BenefitKind.companion_cert),
@@ -191,10 +194,29 @@ def assign_ids(raw_cards: list[dict[str, Any]]) -> dict[str, str]:
     return ids
 
 
-def _offer_amounts(offer: dict[str, Any], card_currency: str) -> tuple[float, float]:
-    """(primary amount in the card's currency, extra USD) for one offer."""
-    primary = 0.0
-    extra_usd = 0.0
+AUTOMATIC = re.compile(
+    r"anniversary (?:bonus )?(?:points|miles)|anniversary credit|yearly anniversary", re.I
+)
+
+
+def credit_currency(credit: dict[str, Any]) -> str:
+    """The unit a credit's `value` is in. The API's optional `currency` is
+    sometimes the merchant ("$60 Hilton credit" tagged HILTON), so a "$" in the
+    description wins."""
+    raw = credit.get("currency")
+    if not raw or raw == "USD" or "$" in credit.get("description", ""):
+        return "usd"
+    return currency_key(raw)
+
+
+def _offer_amounts(offer: dict[str, Any], card_currency: str) -> tuple[float, float, float]:
+    """(headline amount in the card's currency, extra USD, extra points) for one offer.
+
+    Offer credits are extras: USD ones (statement credits, companion vouchers)
+    go to extra USD; ones in the card's own currency (a 50k free-night
+    certificate) go to extra points; anything else is ignored.
+    """
+    primary = extra_usd = extra_points = 0.0
     for part in offer.get("amount") or []:
         amount = float(part.get("amount") or 0)
         part_currency = currency_key(part["currency"]) if part.get("currency") else card_currency
@@ -202,8 +224,14 @@ def _offer_amounts(offer: dict[str, Any], card_currency: str) -> tuple[float, fl
             primary += amount
         elif part_currency == "usd":
             extra_usd += amount
-    extra_usd += sum(float(c.get("value") or 0) for c in offer.get("credits") or [])
-    return primary, extra_usd
+    for credit in offer.get("credits") or []:
+        value = float(credit.get("value") or 0)
+        unit = credit_currency(credit)
+        if unit == "usd":
+            extra_usd += value
+        elif unit == card_currency:
+            extra_points += value
+    return primary, extra_usd, extra_points
 
 
 def normalize(
@@ -271,6 +299,8 @@ def normalize(
                     kind=kind,
                     name=description,
                     face_value_annual=round(value, 2),
+                    value_currency=credit_currency(credit),
+                    automatic=bool(AUTOMATIC.search(description)),
                     cadence=cadence_for(description),
                     restrictions=restrictions,
                     source="bonuses_api",
@@ -281,8 +311,8 @@ def normalize(
         historical = [_offer_amounts(o, currency)[0] for o in raw.get("historicalOffers") or []]
         historical = [amount for amount in historical if amount > 0]
         for offer in raw.get("offers") or []:
-            primary, extra_usd = _offer_amounts(offer, currency)
-            if primary <= 0 and extra_usd <= 0:
+            primary, extra_usd, extra_points = _offer_amounts(offer, currency)
+            if primary <= 0 and extra_usd <= 0 and extra_points <= 0:
                 continue
             spend = offer.get("spend")
             expiration = offer.get("expiration")
@@ -302,6 +332,7 @@ def normalize(
                     expires_at=date.fromisoformat(expiration) if expiration else None,
                     is_public=offer.get("isPublic", True) is not False,
                     extra_usd=extra_usd,
+                    extra_points=extra_points,
                     details=offer.get("details"),
                 )
             )

@@ -88,3 +88,70 @@ def test_classify_credit_order():
     assert bonuses_api.classify_credit("Misc. Hotel Perks") == BenefitKind.other
     assert bonuses_api.classify_credit("Travel Credit") == BenefitKind.travel_credit
     assert bonuses_api.classify_credit("Equinox Credit") == BenefitKind.other
+
+
+def test_points_denominated_credits_and_offer_extras():
+    """Real API quirks: credit values can be in points, and offers can carry a
+    free-night certificate in the card's own currency."""
+    raw = [
+        {
+            "cardId": "abc123",
+            "name": "Marriott Bonvoy Bold",
+            "issuer": "CHASE",
+            "network": "VISA",
+            "currency": "MARRIOTT",
+            "isBusiness": False,
+            "annualFee": 0,
+            "isAnnualFeeWaived": False,
+            "universalCashbackPercent": 1,
+            "url": "https://example.com",
+            "imageUrl": "/x.png",
+            "credits": [
+                {
+                    "description": "Anniversary Points",
+                    "value": 7500,
+                    "weight": 1,
+                    "currency": "MARRIOTT",
+                },
+                {
+                    "description": "$60 Hilton credit per quarter.",
+                    "value": 240,
+                    "weight": 0.5,
+                    "currency": "HILTON",
+                },
+                {
+                    "description": "10k award flight discount",
+                    "value": 10000,
+                    "weight": 0.75,
+                    "currency": "UNITED",
+                },
+            ],
+            "offers": [
+                {
+                    "spend": 1000,
+                    "amount": [{"amount": 60000}],
+                    "days": 90,
+                    "credits": [
+                        {
+                            "description": "1x FNC, <= 50k",
+                            "value": 50000,
+                            "weight": 0.7,
+                            "currency": "MARRIOTT",
+                        },
+                        {"description": "Statement Credit", "value": 100, "weight": 1},
+                    ],
+                }
+            ],
+            "historicalOffers": [],
+            "discontinued": False,
+        }
+    ]
+    _, offers, benefits, _ = bonuses_api.normalize(raw, NOW)
+    offer = offers[0]
+    assert (offer.bonus_amount, offer.extra_points, offer.extra_usd) == (60000, 50000, 100)
+    by_name = {b.name: b for b in benefits}
+    anniversary = by_name["Anniversary Points"]
+    assert (anniversary.value_currency, anniversary.automatic) == ("marriott", True)
+    assert by_name["$60 Hilton credit per quarter."].value_currency == "usd"  # "$" wins
+    assert by_name["10k award flight discount"].value_currency == "united"
+    assert by_name["10k award flight discount"].kind == BenefitKind.other

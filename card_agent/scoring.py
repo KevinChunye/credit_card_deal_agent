@@ -251,8 +251,17 @@ def category_values(
     return values, lines, notes
 
 
+def benefit_face_usd(benefit: Benefit, ctx: ScoringContext) -> tuple[float, str]:
+    """Face value per year in USD, converting points-denominated benefits."""
+    if benefit.value_currency == "usd":
+        return benefit.face_value_annual, f"${benefit.face_value_annual:,.0f}"
+    cpp = float(ctx.valuations.get(benefit.value_currency, FALLBACK_CPP))
+    usd = benefit.face_value_annual * cpp / 100
+    return usd, f"{benefit.face_value_annual:,.0f} {benefit.value_currency} pts × {cpp:g}¢"
+
+
 def benefit_value(benefit: Benefit, ctx: ScoringContext) -> tuple[float, str]:
-    haircut = ctx.haircuts.get(benefit.kind, 0.0)
+    face, face_text = benefit_face_usd(benefit, ctx)
     if benefit.kind in TRAVEL_DEPENDENT and ctx.profile.trips_per_year == 0:
         return 0.0, "you told us you don't travel"
     if benefit.kind == BenefitKind.elite_status:
@@ -261,10 +270,10 @@ def benefit_value(benefit: Benefit, ctx: ScoringContext) -> tuple[float, str]:
         }
         if any(program in benefit.name.lower() for program in programs):
             return 0.0, "you already hold this status"
-    return (
-        benefit.face_value_annual * haircut,
-        f"${benefit.face_value_annual:,.0f} × {haircut:g} usage",
-    )
+    if benefit.automatic:
+        return face, f"{face_text}, automatic"
+    haircut = ctx.haircuts.get(benefit.kind, 0.0)
+    return face * haircut, f"{face_text} × {haircut:g} usage"
 
 
 def wallet_benefit_kinds(
@@ -337,25 +346,25 @@ def evaluate(card_id: str, ctx: ScoringContext) -> CardEvaluation:
     bonus_value = 0.0
     offer_summary = None
     if offer:
-        points_value = (
-            offer.bonus_amount
-            if offer.bonus_unit == BonusUnit.usd
-            else offer.bonus_amount * cpp / 100
-        )
-        bonus_value = points_value + offer.extra_usd
-        unit = "$" if offer.bonus_unit == BonusUnit.usd else f" {offer.bonus_unit.value}"
-        amount = (
-            f"${offer.bonus_amount:,.0f}" if unit == "$" else f"{offer.bonus_amount:,.0f}{unit}"
-        )
+        is_cash = offer.bonus_unit == BonusUnit.usd
+        points = offer.bonus_amount + offer.extra_points
+        bonus_value = (offer.bonus_amount if is_cash else points * cpp / 100) + offer.extra_usd
+        unit = offer.bonus_unit.value
+        amount = f"${offer.bonus_amount:,.0f}" if is_cash else f"{offer.bonus_amount:,.0f} {unit}"
+        extras = []
+        if offer.extra_points:
+            extras.append(f"{offer.extra_points:,.0f} {unit} extra")
+        if offer.extra_usd:
+            extras.append(f"${offer.extra_usd:,.0f} credit")
         spend = (
             f" after ${offer.min_spend:,.0f} in {offer.spend_window_days} days"
             if offer.min_spend
             else ""
         )
-        offer_summary = f"{amount}{spend}"
-        detail = amount if offer.bonus_unit == BonusUnit.usd else f"{amount} × {cpp:g}¢"
+        offer_summary = " + ".join([amount, *extras]) + spend
+        detail = amount if is_cash else f"{points:,.0f} {unit} × {cpp:g}¢"
         if offer.extra_usd:
-            detail += f" + ${offer.extra_usd:,.0f} cash"
+            detail += f" + ${offer.extra_usd:,.0f} credit"
         breakdown.append(Line("Sign-up bonus", bonus_value, detail))
         marginal.append(Line("Sign-up bonus", bonus_value, detail))
 

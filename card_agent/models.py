@@ -142,6 +142,7 @@ class SignupOffer(BaseModel):
     expires_at: date | None = None
     is_public: bool = True
     extra_usd: float = 0.0  # cash/statement-credit component on a points offer
+    extra_points: float = 0.0  # e.g. a free-night certificate, in the card's currency
     details: str | None = None
 
 
@@ -150,6 +151,8 @@ class Benefit(BaseModel):
     kind: BenefitKind
     name: str
     face_value_annual: float = 0.0
+    value_currency: str = "usd"  # face value unit; points are converted with your cpp
+    automatic: bool = False  # e.g. anniversary points: no effort to use, so no haircut
     cadence: Cadence = Cadence.annual
     restrictions: str | None = None
     source: str = "bonuses_api"

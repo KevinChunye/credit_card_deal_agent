@@ -147,3 +147,4 @@ class DataView:
         self.protections = group_by_card(snapshot.protections)
         self.offers = best_offers(snapshot.offers)
         self.matcher = CardMatcher(snapshot.cards)
+        self.downgrade_paths = snapshot.downgrade_paths
