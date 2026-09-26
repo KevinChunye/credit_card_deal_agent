@@ -1,0 +1,36 @@
+# Public product pages for the issuer probe (scripts/probe_issuers.py) and the
+# collector's cross-check. One plain GET per page, robots.txt respected.
+#
+# `collect: true` means the probe found the page readable with a plain GET, so
+# the weekly collector fetches it to cross-check the bonuses API. Pages that are
+# blocked or JavaScript-only stay `collect: false`; see docs/FINDINGS.md.
+
+pages:
+  - {issuer: chase, card_id: chase-sapphire-preferred, url: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred", collect: false}
+  - {issuer: chase, card_id: chase-freedom-unlimited, url: "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited", collect: false}
+  - {issuer: chase, card_id: chase-ink-business-preferred, url: "https://creditcards.chase.com/business-credit-cards/ink/business-preferred", collect: false}
+  - {issuer: amex, card_id: amex-gold, url: "https://www.americanexpress.com/us/credit-cards/card/gold-card/", collect: false}
+  - {issuer: amex, card_id: amex-platinum, url: "https://www.americanexpress.com/us/credit-cards/card/platinum/", collect: false}
+  - {issuer: amex, card_id: amex-blue-cash-preferred, url: "https://www.americanexpress.com/us/credit-cards/card/blue-cash-preferred/", collect: false}
+  - {issuer: capital-one, card_id: capital-one-venture-x, url: "https://www.capitalone.com/credit-cards/venture-x/", collect: false}
+  - {issuer: capital-one, card_id: capital-one-savor, url: "https://www.capitalone.com/credit-cards/savor/", collect: false}
+  - {issuer: capital-one, card_id: capital-one-quicksilver, url: "https://www.capitalone.com/credit-cards/quicksilver/", collect: false}
+  - {issuer: citi, card_id: citi-strata-premier, url: "https://www.citi.com/credit-cards/citi-strata-premier-credit-card", collect: false}
+  - {issuer: citi, card_id: citi-double-cash, url: "https://www.citi.com/credit-cards/citi-double-cash-credit-card", collect: false}
+  - {issuer: bofa, card_id: bofa-customized-cash-rewards, url: "https://www.bankofamerica.com/credit-cards/products/cash-back-credit-card/", collect: false}
+  - {issuer: bofa, card_id: bofa-premium-rewards, url: "https://www.bankofamerica.com/credit-cards/products/premium-rewards-credit-card/", collect: false}
+  - {issuer: wells-fargo, card_id: wells-fargo-active-cash, url: "https://creditcards.wellsfargo.com/active-cash-credit-card/", collect: false}
+  - {issuer: wells-fargo, card_id: wells-fargo-autograph, url: "https://creditcards.wellsfargo.com/autograph-visa-credit-card", collect: false}
+  - {issuer: us-bank, card_id: us-bank-altitude-go, url: "https://www.usbank.com/credit-cards/altitude-go-visa-signature-credit-card.html", collect: false}
+  - {issuer: us-bank, card_id: us-bank-cash, url: "https://www.usbank.com/credit-cards/cash-plus-visa-signature-credit-card.html", collect: false}
+  - {issuer: barclays, card_id: barclays-aadvantage-aviator-red-world-elite, url: "https://cards.barclaycardus.com/banking/cards/aadvantage-aviator-red-world-elite-mastercard/", collect: false}
+  - {issuer: barclays, card_id: barclays-jetblue-plus, url: "https://cards.barclaycardus.com/banking/cards/jetblue-plus-card/", collect: false}
+  - {issuer: discover, card_id: discover-discover-it, url: "https://www.discover.com/credit-cards/cash-back/it-card.html", collect: false}
+  - {issuer: bilt, card_id: wells-fargo-bilt, url: "https://www.biltrewards.com/card", collect: false}
+  - {issuer: robinhood, card_id: robinhood-gold-card, url: "https://robinhood.com/creditcard/", collect: false}
+  - {issuer: apple, card_id: apple-card, url: "https://www.apple.com/apple-card/", collect: false}
+
+# Aggregator feeds the probe also checks (plain GET + feedparser).
+feeds:
+  - "https://www.doctorofcredit.com/category/credit-cards/feed/"
+  - "https://www.doctorofcredit.com/feed/"

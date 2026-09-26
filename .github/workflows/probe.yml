@@ -1,0 +1,32 @@
+name: Issuer probe
+
+# One-off check of which issuer pages are readable with a single plain GET.
+# Runs when the probe itself changes, or on demand. Never commits anything:
+# results go to the job summary and an artifact, and a human copies them into
+# docs/FINDINGS.md and config/issuer_pages.yaml.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/probe_issuers.py"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Probe issuer pages and feeds
+        run: python scripts/probe_issuers.py --json probe-results.json --summary "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: probe-results
+          path: probe-results.json
