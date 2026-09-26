@@ -1,0 +1,32 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Secrets and local environment: never commit.
+.env
+.env.*
+!.env.example
+
+# Private state: the SQLite DB and any local snapshot cache.
+*.sqlite3
+*.sqlite
+*.db
+state.db
+.credit_card_deal_agent/
+
+# Collector output when run locally (the real snapshots live on the `data` branch).
+/data/
+/data-branch/
+/out/
+
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.DS_Store
