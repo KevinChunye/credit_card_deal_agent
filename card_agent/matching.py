@@ -1,0 +1,151 @@
+"""Find card mentions in free text (RSS titles, email subjects, CLI queries).
+
+Deterministic and conservative: a one-word card name ("Gold", "Platinum",
+"Cash") only counts when its issuer is also mentioned, and when two names
+overlap ("Platinum" inside "Business Platinum") the longer one wins.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+
+from card_agent.models import Card
+
+ISSUER_ALIASES: dict[str, list[str]] = {
+    "amex": ["amex", "american express"],
+    "bofa": ["bank of america", "bofa", "boa"],
+    "barclays": ["barclays", "barclaycard"],
+    "brex": ["brex"],
+    "chase": ["chase"],
+    "capital-one": ["capital one", "capitalone", "cap one"],
+    "citi": ["citi", "citibank"],
+    "comenity": ["comenity"],
+    "discover": ["discover"],
+    "fnbo": ["fnbo", "first national bank of omaha"],
+    "penfed": ["penfed"],
+    "pnc": ["pnc"],
+    "synchrony": ["synchrony"],
+    "us-bank": ["us bank", "u s bank", "usbank"],
+    "wells-fargo": ["wells fargo", "wf"],
+    "apple": ["apple"],
+    "robinhood": ["robinhood"],
+    "bilt": ["bilt"],
+}
+# Trailing words that issuers and blogs drop when naming a card.
+SUFFIXES = (
+    "world elite mastercard",
+    "world elite",
+    "world mastercard",
+    "world",
+    "signature",
+    "visa signature",
+    "visa",
+    "mastercard",
+    "credit card",
+    "card",
+)
+
+
+def normalize(text: str) -> str:
+    text = text.lower().replace("&", " and ").replace("+", " plus ")
+    text = re.sub(r"[®™*]", "", text)
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    return f" {text.strip()} "
+
+
+def name_variants(name: str) -> set[str]:
+    base = normalize(name).strip()
+    variants = {base}
+    for suffix in SUFFIXES:
+        if base.endswith(" " + suffix):
+            variants.add(base[: -len(suffix)].strip())
+    return {v for v in variants if v}
+
+
+def _span_length(hit: tuple[int, int, str]) -> int:
+    return hit[1] - hit[0]
+
+
+@dataclass(frozen=True)
+class _Pattern:
+    card_id: str
+    issuer: str
+    variant: str
+    needs_issuer: bool
+
+
+class CardMatcher:
+    def __init__(self, cards: list[Card]):
+        self.cards = {card.id: card for card in cards}
+        self.patterns: list[_Pattern] = []
+        for card in cards:
+            for variant in name_variants(card.name):
+                # One-word names ("gold", "cash") are too generic on their own.
+                needs_issuer = len(variant.split()) < 2
+                self.patterns.append(_Pattern(card.id, card.issuer, variant, needs_issuer))
+
+    def issuers_in(self, text: str) -> set[str]:
+        normalized = normalize(text)
+        return {
+            issuer
+            for issuer, aliases in ISSUER_ALIASES.items()
+            if any(f" {alias} " in normalized for alias in aliases)
+        }
+
+    def find(self, text: str) -> list[str]:
+        """Card ids mentioned in `text`, longest non-overlapping names first."""
+        normalized = normalize(text)
+        issuers = self.issuers_in(text)
+        hits: list[tuple[int, int, str]] = []
+        for pattern in self.patterns:
+            if pattern.needs_issuer and pattern.issuer not in issuers:
+                continue
+            for match in re.finditer(re.escape(f" {pattern.variant} "), normalized):
+                hits.append((match.start(), match.end(), pattern.card_id))
+        # Longest match first; skip any hit overlapping an accepted one.
+        hits.sort(key=_span_length, reverse=True)
+        accepted: list[tuple[int, int, str]] = []
+        for start, end, card_id in hits:
+            overlaps = any(
+                start < a_end - 1 and a_start < end - 1 for a_start, a_end, _ in accepted
+            )
+            if not overlaps:
+                accepted.append((start, end, card_id))
+        # Several issuers can share a name ("Premier"); keep only issuer-consistent
+        # hits when the text names an issuer.
+        found = []
+        for _start, _end, card_id in accepted:
+            issuer = self.cards[card_id].issuer
+            if issuers and issuer not in issuers:
+                continue
+            if card_id not in found:
+                found.append(card_id)
+        return found
+
+    def resolve(self, query: str) -> tuple[str | None, list[str]]:
+        """Resolve a user-typed card reference to one id.
+
+        Returns (card_id, candidates). card_id is None when nothing or more
+        than one card matches; candidates then lists the options.
+        """
+        query = query.strip()
+        if query in self.cards:
+            return query, [query]
+        slug = re.sub(r"[^a-z0-9]+", "-", query.lower()).strip("-")
+        if slug in self.cards:
+            return slug, [slug]
+        found = self.find(query)
+        if len(found) == 1:
+            return found[0], found
+        if found:
+            return None, found
+        tokens = normalize(query).split()
+        candidates = [
+            card.id
+            for card in self.cards.values()
+            if all(token in normalize(f"{card.issuer} {card.name} {card.id}") for token in tokens)
+        ]
+        if len(candidates) == 1:
+            return candidates[0], candidates
+        return None, candidates

@@ -1,0 +1,77 @@
+name: Collector
+
+# Weekly: pull the public sources, normalize, diff, and commit the snapshot to
+# the `data` branch (never main):
+#   data/latest.json, data/snapshots/YYYY-MM-DD.json, data/changes/YYYY-MM-DD.json
+# On pull requests that touch the collector it runs the same code live but
+# does not commit, so parser changes are verified against real sources first.
+on:
+  schedule:
+    - cron: "17 13 * * 1" # Mondays 13:17 UTC
+  workflow_dispatch:
+    inputs:
+      with_rewards_db:
+        description: "Merge fuermosi777/rewards (no license; see docs/FINDINGS.md)"
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - "card_agent/collector/**"
+      - "config/card_details.yaml"
+      - "config/issuer_pages.yaml"
+      - ".github/workflows/collector.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collector-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Check out the data branch (or start it)
+        run: |
+          if git fetch --depth=1 origin +refs/heads/data:refs/remotes/origin/data; then
+            git worktree add -B data data-branch origin/data
+          else
+            echo "No data branch yet; this run creates it."
+            git worktree add --detach data-branch
+            git -C data-branch checkout --orphan data
+            git -C data-branch rm -rfq . || true
+          fi
+
+      - name: Clone the rewards DB (opt-in only)
+        if: vars.ENABLE_REWARDS_DB == 'true' || inputs.with_rewards_db == true
+        run: |
+          git clone --depth 1 https://github.com/fuermosi777/rewards /tmp/rewards
+          echo "REWARDS_ARGS=--rewards-dir /tmp/rewards" >> "$GITHUB_ENV"
+
+      - name: Collect
+        run: |
+          python -m card_agent.collector run --out data-branch $REWARDS_ARGS \
+            --summary-md "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit snapshot to the data branch
+        if: github.event_name != 'pull_request'
+        working-directory: data-branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -q -m "data: snapshot $(date -u +%F)"
+          git push origin HEAD:data

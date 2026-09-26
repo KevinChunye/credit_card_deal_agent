@@ -1,0 +1,1504 @@
+[
+ {
+  "cardId": "6980c320c341292b63273e4362601aa8",
+  "name": "Blue Cash Everyday",
+  "issuer": "AMERICAN_EXPRESS",
+  "network": "AMERICAN_EXPRESS",
+  "currency": "USD",
+  "isBusiness": false,
+  "annualFee": 0,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 2,
+  "url": "https://www.americanexpress.com/us/credit-cards/card/blue-cash-everyday/",
+  "imageUrl": "/images/amex/blue-cash-everyday.webp",
+  "credits": [],
+  "offers": [
+   {
+    "spend": 2000,
+    "amount": [
+     {
+      "amount": 200
+     }
+    ],
+    "days": 180,
+    "credits": [],
+    "details": "$250 possible via incognito."
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 2000,
+    "amount": [
+     {
+      "amount": 200
+     }
+    ],
+    "days": 180,
+    "credits": [
+     {
+      "description": "Dining Credit",
+      "value": 150,
+      "weight": 0.8
+     }
+    ],
+    "url": "https://resy.com/amex-offers"
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "04abf9273e03fbe626fe80a9ffd53523",
+  "name": "Blue Cash Preferred",
+  "issuer": "AMERICAN_EXPRESS",
+  "network": "AMERICAN_EXPRESS",
+  "currency": "USD",
+  "isBusiness": false,
+  "annualFee": 95,
+  "isAnnualFeeWaived": true,
+  "universalCashbackPercent": 2,
+  "url": "https://www.americanexpress.com/us/credit-cards/card/blue-cash-preferred/",
+  "imageUrl": "/images/amex/blue-cash-preferred.webp",
+  "credits": [
+   {
+    "description": "$7/mo Disney Bundle Credit",
+    "value": 84,
+    "weight": 0.25
+   }
+  ],
+  "offers": [
+   {
+    "spend": 3000,
+    "amount": [
+     {
+      "amount": 250
+     }
+    ],
+    "days": 180,
+    "credits": [],
+    "details": "$300 possible via incognito."
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 3000,
+    "amount": [
+     {
+      "amount": 300
+     }
+    ],
+    "days": 180,
+    "expiration": "2024-06-01",
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "656a6a4296d40de4c62cc3ec888e5018",
+  "name": "Business Platinum",
+  "issuer": "AMERICAN_EXPRESS",
+  "network": "AMERICAN_EXPRESS",
+  "currency": "AMERICAN_EXPRESS",
+  "isBusiness": true,
+  "annualFee": 695,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+  "imageUrl": "/images/amex/business-platinum.webp",
+  "credits": [
+   {
+    "description": "PreCheck Credit",
+    "value": 100,
+    "weight": 0.4
+   },
+   {
+    "description": "Lounge Access",
+    "value": 850,
+    "weight": 0.25
+   },
+   {
+    "description": "Hotel Credit (2x/yr $300)",
+    "value": 600,
+    "weight": 0.9
+   },
+   {
+    "description": "Misc. Hotel Perks",
+    "value": 550,
+    "weight": 0.4
+   },
+   {
+    "description": "Hilton Credit",
+    "value": 200,
+    "weight": 0.75
+   },
+   {
+    "description": "Airline Fee Credit",
+    "value": 200,
+    "weight": 0.25
+   },
+   {
+    "description": "Hotel Collection Credit",
+    "value": 100,
+    "weight": 0.9
+   },
+   {
+    "description": "Marriott/Hilton Gold Status",
+    "value": 200,
+    "weight": 0.5
+   },
+   {
+    "description": "Dell Credit ($150/yr). Also comes w/ $1k bonus on $5k in spend.",
+    "value": 150,
+    "weight": 0.25
+   },
+   {
+    "description": "Adobe Credit ($250 w/ $600 purchase).",
+    "value": 250,
+    "weight": 0.25
+   },
+   {
+    "description": "Indeed Credit ($90/qtr).",
+    "value": 90,
+    "weight": 0.25
+   },
+   {
+    "description": "Wireless Credit ($10/mo).",
+    "value": 120,
+    "weight": 0.25
+   }
+  ],
+  "offers": [
+   {
+    "spend": 20000,
+    "amount": [
+     {
+      "amount": 200000
+     }
+    ],
+    "days": 90,
+    "credits": [],
+    "details": "300k possible via incognito."
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 30000,
+    "amount": [
+     {
+      "amount": 250000
+     }
+    ],
+    "days": 90,
+    "expiration": "2024-03-01",
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "54fddf9e59dfad730320eb65a04b7ea5",
+  "name": "Everyday",
+  "issuer": "AMERICAN_EXPRESS",
+  "network": "AMERICAN_EXPRESS",
+  "currency": "AMERICAN_EXPRESS",
+  "isBusiness": false,
+  "annualFee": 0,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://global.americanexpress.com/card-benefits/view-all/amex-everyday",
+  "imageUrl": "/images/amex/everyday.png",
+  "credits": [],
+  "offers": [
+   {
+    "spend": 3000,
+    "amount": [
+     {
+      "amount": 0
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 3000,
+    "amount": [
+     {
+      "amount": 0
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "discontinued": true
+ },
+ {
+  "cardId": "cafe43d37256bec116dff4be6cced2cf",
+  "name": "Gold",
+  "issuer": "AMERICAN_EXPRESS",
+  "network": "AMERICAN_EXPRESS",
+  "currency": "AMERICAN_EXPRESS",
+  "isBusiness": false,
+  "annualFee": 350,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://www.americanexpress.com/us/credit-cards/card/gold-card/",
+  "imageUrl": "/images/amex/gold.webp",
+  "credits": [
+   {
+    "description": "$10/mo credit for Uber",
+    "value": 120,
+    "weight": 0.5
+   },
+   {
+    "description": "$10/mo credit for Grubhub, Cheesecake Factory, Gold Belly, Wine.com, Milk, Shake Shack",
+    "value": 120,
+    "weight": 0.5
+   },
+   {
+    "description": "$7/mo credit for Dunkin",
+    "value": 84,
+    "weight": 0.4
+   },
+   {
+    "description": "Semi-annual $50 Resy credit",
+    "value": 100,
+    "weight": 0.8
+   }
+  ],
+  "offers": [
+   {
+    "spend": 6000,
+    "amount": [
+     {
+      "amount": 60000
+     }
+    ],
+    "days": 180,
+    "credits": [],
+    "details": "Fuzzy language, may be more.",
+    "url": "https://resy.com/amex-offers"
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 4000,
+    "amount": [
+     {
+      "amount": 90000
+     }
+    ],
+    "days": 180,
+    "expiration": "2024-03-01",
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "ad9a96ed5f730a79d0171f1f8ca92d0c",
+  "name": "Green",
+  "issuer": "AMERICAN_EXPRESS",
+  "network": "AMERICAN_EXPRESS",
+  "currency": "AMERICAN_EXPRESS",
+  "isBusiness": false,
+  "annualFee": 150,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://www.americanexpress.com/us/credit-cards/card/green/",
+  "imageUrl": "/images/amex/green.webp",
+  "credits": [
+   {
+    "description": "PreCheck Credit",
+    "value": 100,
+    "weight": 0.4
+   },
+   {
+    "description": "Lounge Access Credit",
+    "value": 100,
+    "weight": 0.25
+   }
+  ],
+  "offers": [
+   {
+    "spend": 3000,
+    "amount": [
+     {
+      "amount": 40000
+     }
+    ],
+    "days": 180,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 3000,
+    "amount": [
+     {
+      "amount": 40000
+     }
+    ],
+    "days": 180,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "ec1872dfd8a65491a33bae2da4dd487f",
+  "name": "Platinum",
+  "issuer": "AMERICAN_EXPRESS",
+  "network": "AMERICAN_EXPRESS",
+  "currency": "AMERICAN_EXPRESS",
+  "isBusiness": false,
+  "annualFee": 895,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://www.americanexpress.com/us/credit-cards/card/platinum/",
+  "imageUrl": "/images/amex/platinum.webp",
+  "credits": [
+   {
+    "description": "PreCheck Credit",
+    "value": 100,
+    "weight": 0.4
+   },
+   {
+    "description": "Lounge Access",
+    "value": 850,
+    "weight": 0.25
+   },
+   {
+    "description": "Hotel Credit (2x/yr $300)",
+    "value": 600,
+    "weight": 0.9
+   },
+   {
+    "description": "Misc. Hotel Perks",
+    "value": 250,
+    "weight": 0.4
+   },
+   {
+    "description": "Marriott/Hilton Gold Status",
+    "value": 200,
+    "weight": 0.5
+   },
+   {
+    "description": "Avis/Hertz/National Gold Status",
+    "value": 100,
+    "weight": 0.5
+   },
+   {
+    "description": "$15/mo Uber Cash",
+    "value": 200,
+    "weight": 0.5
+   },
+   {
+    "description": "Uber One Membership",
+    "value": 120,
+    "weight": 0.5
+   },
+   {
+    "description": "Airline Fee Credit",
+    "value": 200,
+    "weight": 0.25
+   },
+   {
+    "description": "Resy Credit ($100/qtr)",
+    "value": 400,
+    "weight": 0.8
+   },
+   {
+    "description": "Digital Entertainment Credit ($25/mo)",
+    "value": 300,
+    "weight": 0.25
+   },
+   {
+    "description": "Lululemon Credit",
+    "value": 300,
+    "weight": 0.2
+   },
+   {
+    "description": "Walmart+ Credit",
+    "value": 155,
+    "weight": 0.3
+   },
+   {
+    "description": "Saks Credit",
+    "value": 100,
+    "weight": 0.2
+   },
+   {
+    "description": "Oura Ring Credit",
+    "value": 200,
+    "weight": 0.2
+   },
+   {
+    "description": "Equinox Credit",
+    "value": 300,
+    "weight": 0.2
+   }
+  ],
+  "offers": [
+   {
+    "spend": 8000,
+    "amount": [
+     {
+      "amount": 100000
+     }
+    ],
+    "days": 180,
+    "credits": [],
+    "details": "Fuzzy language, may be up to 175k.",
+    "url": "https://resy.com/amex-offers"
+   },
+   {
+    "spend": 8000,
+    "amount": [
+     {
+      "amount": 75000
+     }
+    ],
+    "days": 180,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 8000,
+    "amount": [
+     {
+      "amount": 175000
+     }
+    ],
+    "days": 180,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "eb8bc1a6f86dc471aa0deeca619fbf59",
+  "name": "Premium Rewards",
+  "issuer": "BANK_OF_AMERICA",
+  "network": "VISA",
+  "currency": "BANK_OF_AMERICA",
+  "isBusiness": false,
+  "annualFee": 95,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://www.bankofamerica.com/credit-cards/products/premium-rewards-credit-card/",
+  "imageUrl": "/images/bankofamerica/premium-rewards.png",
+  "credits": [],
+  "offers": [
+   {
+    "spend": 4000,
+    "amount": [
+     {
+      "amount": 60000
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 5000,
+    "amount": [
+     {
+      "amount": 60000
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "c80cdb77c3eda940e2a36abb4f943c69",
+  "name": "Ink Business Preferred",
+  "issuer": "CHASE",
+  "network": "VISA",
+  "currency": "CHASE",
+  "isBusiness": true,
+  "annualFee": 95,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://creditcards.chase.com/business-credit-cards/ink/business-preferred",
+  "imageUrl": "/images/chase/ink-business-preferred.png",
+  "credits": [],
+  "offers": [
+   {
+    "spend": 8000,
+    "amount": [
+     {
+      "amount": 100000
+     }
+    ],
+    "days": 90,
+    "credits": [],
+    "referralUrl": "https://www.referyourchasecard.com/21e/CJ3VTYDKCY"
+   },
+   {
+    "spend": 8000,
+    "amount": [
+     {
+      "amount": 90000
+     }
+    ],
+    "days": 90,
+    "credits": [],
+    "referralUrl": "https://www.referyourchasecard.com/21e/CJ3VTYDKCY"
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 8000,
+    "amount": [
+     {
+      "amount": 120000
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "57f8a819c3bb4c6aa494016703281f35",
+  "name": "Sapphire Preferred",
+  "issuer": "CHASE",
+  "network": "VISA",
+  "currency": "CHASE",
+  "isBusiness": false,
+  "annualFee": 95,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
+  "imageUrl": "/images/chase/sapphire-preferred.png",
+  "credits": [
+   {
+    "description": "Hotel Credit",
+    "value": 50,
+    "weight": 0.9
+   }
+  ],
+  "offers": [
+   {
+    "spend": 5000,
+    "amount": [
+     {
+      "amount": 75000
+     }
+    ],
+    "days": 90,
+    "credits": [],
+    "referralUrl": "https://www.referyourchasecard.com/19w/F0DZZK1XD0"
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 5000,
+    "amount": [
+     {
+      "amount": 100000
+     }
+    ],
+    "days": 90,
+    "expiration": "2025-05-15",
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "77e3ef2fc9c35498ba1a3f46a63235cb",
+  "name": "Sapphire Reserve",
+  "issuer": "CHASE",
+  "network": "VISA",
+  "currency": "CHASE",
+  "isBusiness": false,
+  "annualFee": 795,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve",
+  "imageUrl": "/images/chase/sapphire-reserve.png",
+  "credits": [
+   {
+    "description": "PreCheck Credit",
+    "value": 100,
+    "weight": 0.4
+   },
+   {
+    "description": "Travel Credit",
+    "value": 300,
+    "weight": 0.9
+   },
+   {
+    "description": "Travel Credit (The Edit)",
+    "value": 500,
+    "weight": 0.5
+   },
+   {
+    "description": "Lounge Access",
+    "value": 469,
+    "weight": 0.25
+   },
+   {
+    "description": "Dining Credit",
+    "value": 300,
+    "weight": 0.75
+   },
+   {
+    "description": "Apple TV / Apple Music",
+    "value": 250,
+    "weight": 0.4
+   },
+   {
+    "description": "Dashpass",
+    "value": 120,
+    "weight": 0.4
+   }
+  ],
+  "offers": [
+   {
+    "spend": 6000,
+    "amount": [
+     {
+      "amount": 150000
+     }
+    ],
+    "days": 90,
+    "credits": [],
+    "referralUrl": "https://www.referyourchasecard.com/19w/F0DZZK1XD0"
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 5000,
+    "amount": [
+     {
+      "amount": 125000
+     }
+    ],
+    "days": 90,
+    "expiration": "2026-05-03",
+    "credits": [],
+    "referralUrl": "https://www.referyourchasecard.com/19w/F0DZZK1XD0"
+   },
+   {
+    "spend": 5000,
+    "amount": [
+     {
+      "amount": 100000
+     }
+    ],
+    "days": 90,
+    "credits": [
+     {
+      "description": "Chase Travel Credit",
+      "value": 500,
+      "weight": 0.9
+     }
+    ],
+    "referralUrl": "https://www.referyourchasecard.com/19w/F0DZZK1XD0"
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "6ba7f561f6a4f7f2934bec25bd9a3130",
+  "name": "Freedom Flex",
+  "issuer": "CHASE",
+  "network": "MASTERCARD",
+  "currency": "CHASE",
+  "isBusiness": false,
+  "annualFee": 0,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/flex",
+  "imageUrl": "/images/chase/freedom-flex.png",
+  "credits": [],
+  "offers": [
+   {
+    "spend": 500,
+    "amount": [
+     {
+      "amount": 20000
+     }
+    ],
+    "days": 90,
+    "credits": [],
+    "url": "https://www.referyourchasecard.com/18a/A85BX0FG21"
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 500,
+    "amount": [
+     {
+      "amount": 20000
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "3a9ea798ce73485fc8456280fd4b1816",
+  "name": "Freedom Unlimited",
+  "issuer": "CHASE",
+  "network": "VISA",
+  "currency": "CHASE",
+  "isBusiness": false,
+  "annualFee": 0,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1.5,
+  "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited",
+  "imageUrl": "/images/chase/freedom-unlimited.png",
+  "credits": [],
+  "offers": [
+   {
+    "spend": 500,
+    "amount": [
+     {
+      "amount": 25000
+     }
+    ],
+    "days": 90,
+    "credits": [],
+    "referralUrl": "https://www.referyourchasecard.com/18a/A85BX0FG21"
+   },
+   {
+    "spend": 500,
+    "amount": [
+     {
+      "amount": 20000
+     }
+    ],
+    "days": 90,
+    "credits": [],
+    "referralUrl": "https://www.referyourchasecard.com/18a/A85BX0FG21"
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 500,
+    "amount": [
+     {
+      "amount": 30000
+     }
+    ],
+    "days": 90,
+    "expiration": "2026-03-21",
+    "credits": []
+   },
+   {
+    "spend": 500,
+    "amount": [
+     {
+      "amount": 25000
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "2d16431e0caee645b420cc3d3255b2ee",
+  "name": "Savor",
+  "issuer": "CAPITAL_ONE",
+  "network": "VISA",
+  "currency": "USD",
+  "details": "Previously SavorOne. Original Savor was discontinued.",
+  "isBusiness": false,
+  "annualFee": 0,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://www.capitalone.com/credit-cards/savor/",
+  "imageUrl": "/images/capitalone/savor.webp",
+  "credits": [],
+  "offers": [
+   {
+    "spend": 500,
+    "amount": [
+     {
+      "amount": 200
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 500,
+    "amount": [
+     {
+      "amount": 250
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "4a7a8036e514f187ca7c41b31925251e",
+  "name": "Venture Rewards",
+  "issuer": "CAPITAL_ONE",
+  "network": "VISA",
+  "currency": "CAPITAL_ONE",
+  "isBusiness": false,
+  "annualFee": 95,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://www.capitalone.com/credit-cards/venture/",
+  "imageUrl": "/images/capitalone/venture-rewards.webp",
+  "credits": [
+   {
+    "description": "PreCheck Credit",
+    "value": 100,
+    "weight": 0.4
+   },
+   {
+    "description": "2x Capital One Lounge Visits",
+    "value": 100,
+    "weight": 0.25
+   }
+  ],
+  "offers": [
+   {
+    "spend": 4000,
+    "amount": [
+     {
+      "amount": 75000
+     }
+    ],
+    "days": 90,
+    "credits": [
+     {
+      "description": "Travel Portal Credit",
+      "value": 250,
+      "weight": 0.9,
+      "currency": "USD"
+     }
+    ]
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 4000,
+    "amount": [
+     {
+      "amount": 75000
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "9aa036266b8cc7e7512a630efdecae0b",
+  "name": "Venture X",
+  "issuer": "CAPITAL_ONE",
+  "network": "VISA",
+  "currency": "CAPITAL_ONE",
+  "isBusiness": false,
+  "annualFee": 395,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 2,
+  "url": "https://www.capitalone.com/credit-cards/venture-x/",
+  "imageUrl": "/images/capitalone/venture-x.webp",
+  "credits": [
+   {
+    "description": "PreCheck Credit",
+    "value": 100,
+    "weight": 0.4
+   },
+   {
+    "description": "Travel Credit",
+    "value": 300,
+    "weight": 0.9
+   },
+   {
+    "description": "Capital One Lounge Access",
+    "value": 300,
+    "weight": 0.25
+   }
+  ],
+  "offers": [
+   {
+    "spend": 4000,
+    "amount": [
+     {
+      "amount": 75000
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 4000,
+    "amount": [
+     {
+      "amount": 90000
+     }
+    ],
+    "days": 90,
+    "expiration": "2023-12-01",
+    "credits": []
+   },
+   {
+    "spend": 4000,
+    "amount": [
+     {
+      "amount": 75000
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "d0298263cc453d34160558a93fd1bcb2",
+  "name": "VentureOne",
+  "issuer": "CAPITAL_ONE",
+  "network": "VISA",
+  "currency": "CAPITAL_ONE",
+  "isBusiness": false,
+  "annualFee": 0,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://www.capitalone.com/credit-cards/ventureone/",
+  "imageUrl": "/images/capitalone/venture-one.webp",
+  "credits": [],
+  "offers": [
+   {
+    "spend": 500,
+    "amount": [
+     {
+      "amount": 20000
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 1000,
+    "amount": [
+     {
+      "amount": 40000
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "06b9a384d710e73db7f0ded7613c9c4b",
+  "name": "Double Cash",
+  "issuer": "CITI",
+  "network": "MASTERCARD",
+  "currency": "USD",
+  "isBusiness": false,
+  "annualFee": 0,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 2,
+  "url": "https://www.citi.com/credit-cards/citi-double-cash-credit-card",
+  "imageUrl": "/images/citi/double-cash.png",
+  "credits": [],
+  "offers": [
+   {
+    "spend": 1500,
+    "amount": [
+     {
+      "amount": 200
+     }
+    ],
+    "days": 180,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 1500,
+    "amount": [
+     {
+      "amount": 200
+     }
+    ],
+    "days": 180,
+    "credits": []
+   },
+   {
+    "spend": 750,
+    "amount": [
+     {
+      "amount": 300
+     }
+    ],
+    "days": 180,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "49fe6c73c0e823a89346979f50d5b981",
+  "name": "Custom Cash",
+  "issuer": "CITI",
+  "network": "MASTERCARD",
+  "currency": "USD",
+  "isBusiness": false,
+  "annualFee": 0,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 2,
+  "url": "https://www.citi.com/credit-cards/citi-custom-cash-credit-card",
+  "imageUrl": "/images/citi/custom-cash.png",
+  "credits": [],
+  "offers": [
+   {
+    "spend": 1500,
+    "amount": [
+     {
+      "amount": 200
+     }
+    ],
+    "days": 180,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 1500,
+    "amount": [
+     {
+      "amount": 200
+     }
+    ],
+    "days": 180,
+    "credits": []
+   },
+   {
+    "spend": 750,
+    "amount": [
+     {
+      "amount": 300
+     }
+    ],
+    "days": 180,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "d7e2e5b5e595ca6510c101349c914513",
+  "name": "Strata Premier",
+  "issuer": "CITI",
+  "network": "MASTERCARD",
+  "currency": "CITI",
+  "details": "Cashback rate is 0.75cpp w/o Double Cash or Custom Cash.",
+  "isBusiness": false,
+  "annualFee": 95,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 2,
+  "url": "https://www.citi.com/credit-cards/citi-strata-premier-credit-card",
+  "imageUrl": "/images/citi/strata-premier.png",
+  "credits": [
+   {
+    "description": "Hotel Credit ($500 min purchase)",
+    "value": 100,
+    "weight": 0.9
+   }
+  ],
+  "offers": [
+   {
+    "spend": 4000,
+    "amount": [
+     {
+      "amount": 60000
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 4000,
+    "amount": [
+     {
+      "amount": 75000
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "df2960b75b50536daa6e05a33479b198",
+  "name": "Active Cash",
+  "issuer": "WELLS_FARGO",
+  "network": "VISA",
+  "currency": "USD",
+  "isBusiness": false,
+  "annualFee": 0,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 2,
+  "url": "https://creditcards.wellsfargo.com/active-cash-credit-card/",
+  "imageUrl": "/images/wellsfargo/active-cash.png",
+  "credits": [],
+  "offers": [
+   {
+    "spend": 500,
+    "amount": [
+     {
+      "amount": 200
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 2000,
+    "amount": [
+     {
+      "amount": 200
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "c077a47639c7b47d1895200c72588ee3",
+  "name": "Bilt",
+  "issuer": "WELLS_FARGO",
+  "network": "MASTERCARD",
+  "currency": "WELLS_FARGO",
+  "isBusiness": false,
+  "annualFee": 0,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://www.biltrewards.com/card",
+  "imageUrl": "/images/wellsfargo/bilt.png",
+  "credits": [],
+  "offers": [],
+  "historicalOffers": [],
+  "discontinued": false
+ },
+ {
+  "cardId": "546dccf995e97f42d656d069c95efacf",
+  "name": "Expedia One Key",
+  "issuer": "WELLS_FARGO",
+  "network": "MASTERCARD",
+  "currency": "EXPEDIA",
+  "isBusiness": false,
+  "annualFee": 0,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1.5,
+  "url": "https://www.expedia.com/one-key-cards",
+  "imageUrl": "/images/wellsfargo/one-key.png",
+  "credits": [],
+  "offers": [
+   {
+    "spend": 1000,
+    "amount": [
+     {
+      "amount": 250,
+      "currency": "USD"
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 1000,
+    "amount": [
+     {
+      "amount": 300,
+      "currency": "USD"
+     }
+    ],
+    "days": 90,
+    "expiration": "2026-04-28",
+    "credits": []
+   },
+   {
+    "spend": 1000,
+    "amount": [
+     {
+      "amount": 400,
+      "currency": "USD"
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "90436ebe63417596fbc6cb5b7e5a2e8c",
+  "name": "Delta SkyMiles Blue",
+  "issuer": "AMERICAN_EXPRESS",
+  "network": "AMERICAN_EXPRESS",
+  "currency": "DELTA",
+  "isBusiness": false,
+  "annualFee": 0,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-blue-american-express-card/",
+  "imageUrl": "/images/amex/delta-skymiles-blue.jpg",
+  "credits": [],
+  "offers": [
+   {
+    "spend": 1000,
+    "amount": [
+     {
+      "amount": 10000
+     }
+    ],
+    "days": 180,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 1000,
+    "amount": [
+     {
+      "amount": 10000
+     }
+    ],
+    "days": 180,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "99d4ec3c5bcd51b70b83b4b792af3ef6",
+  "name": "Delta SkyMiles Gold",
+  "issuer": "AMERICAN_EXPRESS",
+  "network": "AMERICAN_EXPRESS",
+  "currency": "DELTA",
+  "isBusiness": false,
+  "annualFee": 150,
+  "isAnnualFeeWaived": true,
+  "universalCashbackPercent": 1,
+  "url": "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-gold-american-express-card/",
+  "imageUrl": "/images/amex/delta-skymiles-gold.jpg",
+  "credits": [
+   {
+    "description": "First checked bag free",
+    "value": 50,
+    "weight": 0.5
+   }
+  ],
+  "offers": [
+   {
+    "spend": 2000,
+    "amount": [
+     {
+      "amount": 50000
+     }
+    ],
+    "days": 180,
+    "credits": [
+     {
+      "description": "Statement Credit",
+      "value": 400,
+      "weight": 1
+     }
+    ]
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 3000,
+    "amount": [
+     {
+      "amount": 90000
+     }
+    ],
+    "days": 180,
+    "expiration": "2026-04-01",
+    "credits": []
+   },
+   {
+    "spend": 2000,
+    "amount": [
+     {
+      "amount": 50000
+     }
+    ],
+    "days": 180,
+    "expiration": "2026-03-21",
+    "credits": []
+   },
+   {
+    "spend": 3000,
+    "amount": [
+     {
+      "amount": 80000
+     }
+    ],
+    "days": 180,
+    "expiration": "2025-10-29",
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "bdf4ae17ff6808592f785fff3ae81a2a",
+  "name": "Delta SkyMiles Platinum",
+  "issuer": "AMERICAN_EXPRESS",
+  "network": "AMERICAN_EXPRESS",
+  "currency": "DELTA",
+  "isBusiness": false,
+  "annualFee": 350,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 1,
+  "url": "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-platinum-american-express-card/",
+  "imageUrl": "/images/amex/delta-skymiles-platinum.webp",
+  "credits": [
+   {
+    "description": "Companion Pass",
+    "value": 500,
+    "weight": 0.7
+   }
+  ],
+  "offers": [
+   {
+    "spend": 3000,
+    "amount": [
+     {
+      "amount": 60000
+     }
+    ],
+    "days": 180,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 4000,
+    "amount": [
+     {
+      "amount": 100000
+     }
+    ],
+    "days": 180,
+    "expiration": "2026-04-01",
+    "credits": []
+   },
+   {
+    "spend": 3000,
+    "amount": [
+     {
+      "amount": 60000
+     }
+    ],
+    "days": 180,
+    "expiration": "2026-03-21",
+    "credits": []
+   },
+   {
+    "spend": 4000,
+    "amount": [
+     {
+      "amount": 90000
+     }
+    ],
+    "days": 180,
+    "expiration": "2025-10-29",
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ },
+ {
+  "cardId": "dfdf46ff6cbfcea7b738c7092e00af78",
+  "name": "Expedia One Key+",
+  "issuer": "WELLS_FARGO",
+  "network": "MASTERCARD",
+  "currency": "EXPEDIA",
+  "isBusiness": false,
+  "annualFee": 99,
+  "isAnnualFeeWaived": false,
+  "universalCashbackPercent": 2,
+  "url": "https://www.expedia.com/one-key-cards",
+  "imageUrl": "/images/wellsfargo/one-key.png",
+  "credits": [
+   {
+    "description": "PreCheck Credit",
+    "value": 100,
+    "weight": 0.4
+   },
+   {
+    "description": "$100 anniversary bonus",
+    "value": 100,
+    "weight": 0.9
+   }
+  ],
+  "offers": [
+   {
+    "spend": 3000,
+    "amount": [
+     {
+      "amount": 350,
+      "currency": "USD"
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "historicalOffers": [
+   {
+    "spend": 3000,
+    "amount": [
+     {
+      "amount": 600,
+      "currency": "USD"
+     }
+    ],
+    "days": 90,
+    "credits": []
+   }
+  ],
+  "discontinued": false
+ }
+]

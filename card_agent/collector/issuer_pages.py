@@ -54,7 +54,8 @@ _AMOUNT_UNIT = (
 STRONG_BONUS = re.compile(
     r"\b(?:earn|get|receive)\s+(?:an?\s+)?(?:additional\s+)?"
     + _AMOUNT_UNIT
-    + r"[^.]{0,120}?\b(?:after|when|once)\s+(?:you\s+)?(?:spend|make|use)",
+    + r"(?:[^.]{0,120}?\b(?:after|when|once)\s+(?:you\s+)?(?:spend|make|use)"
+    + r"|\.\s*\d?\s*just\s+spend)",
     re.I,
 )
 WEAK_BONUS = re.compile(_AMOUNT_UNIT, re.I)
@@ -70,7 +71,7 @@ STRONG_FEE = (
 )
 ZERO_FEE = re.compile(
     r"(?<!cards with )(?<!have a )(\bno|\$0)\s+(?:intro(?:ductory)?\s+)?annual\s+fee\b"
-    r"(?!\s+(?:credit\s+)?cards?\b)",
+    r"(?!\s+(?:credit\s+)?cards?\b|\s*\(|\s+page\b)",
     re.I,
 )
 EARN_PATTERNS = (
@@ -305,7 +306,11 @@ def fetch_and_analyze(
 
 
 def cross_check(
-    card_id: str, analysis: PageAnalysis, api_fee: float | None, api_bonus: float | None
+    card_id: str,
+    analysis: PageAnalysis,
+    api_fee: float | None,
+    api_bonus: float | None,
+    api_unit: str | None = None,
 ) -> list[dict]:
     """Compare what the issuer page says against the bonuses API."""
     checks = []
@@ -324,6 +329,8 @@ def cross_check(
     bonus = analysis.best("bonus")
     if bonus is not None and bonus["strength"] != "strong":
         bonus = None  # weak bonus hits are too noisy to compare
+    if bonus is not None and api_unit and (bonus["unit"] == "usd") != (api_unit == "usd"):
+        bonus = None  # "$200 bonus" vs 20,000 points: same offer, different units
     if bonus is not None and api_bonus is not None:
         checks.append(
             {

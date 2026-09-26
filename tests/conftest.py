@@ -1,0 +1,54 @@
+"""Shared test helpers. Everything is offline: HTTP goes through
+httpx.MockTransport and AgentMail through a fake client."""
+
+from __future__ import annotations
+
+import json
+from datetime import UTC, datetime
+from pathlib import Path
+
+import httpx
+import pytest
+
+FIXTURES = Path(__file__).parent / "fixtures"
+NOW = datetime(2026, 9, 26, 12, 0, tzinfo=UTC)
+
+
+def fixture_path(name: str) -> Path:
+    return FIXTURES / name
+
+
+def routed_client(
+    routes: dict[str, httpx.Response | bytes | str],
+) -> tuple[httpx.Client, list[str]]:
+    """An httpx client that serves `routes` (exact URL -> response) and logs requests.
+
+    Unknown URLs get a 404, so a test fails loudly if code fetches something
+    it shouldn't.
+    """
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        seen.append(url)
+        body = routes.get(url)
+        if body is None:
+            return httpx.Response(404, text="not found")
+        if isinstance(body, httpx.Response):
+            return body
+        return httpx.Response(200, content=body if isinstance(body, bytes) else body.encode())
+
+    return httpx.Client(transport=httpx.MockTransport(handler)), seen
+
+
+@pytest.fixture
+def api_raw() -> list[dict]:
+    return json.loads(fixture_path("bonuses_api_data.json").read_text())
+
+
+@pytest.fixture
+def feed_pages() -> tuple[bytes, bytes]:
+    return (
+        fixture_path("doc_feed_page1.xml").read_bytes(),
+        fixture_path("doc_feed_page2.xml").read_bytes(),
+    )
