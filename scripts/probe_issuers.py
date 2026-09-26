@@ -91,6 +91,8 @@ def probe_feeds(client: httpx.Client, feeds: list[str]) -> list[dict]:
 
 
 def verdict(row: dict) -> str:
+    if row["status_code"] and row["status_code"] >= 400 and not row["blocked"]:
+        return f"not found (HTTP {row['status_code']}; URL moved)"
     if row["blocked"]:
         return f"blocked ({row['note']})"
     if row["js_only"]:

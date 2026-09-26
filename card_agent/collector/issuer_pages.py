@@ -42,22 +42,36 @@ JS_MARKERS = (
     "you need to enable javascript",
 )
 
-_NUM = r"\d{1,3}(?:,\d{3})+|\d+"
-BONUS_PATTERNS = (
-    re.compile(r"(\d{1,3}(?:,\d{3})+)\s+(?:bonus\s+|welcome\s+|total\s+)?(points|miles)", re.I),
-    re.compile(r"(\d{2,3})k\s+(?:bonus\s+)?(points|miles)", re.I),
+# "Strong" matches read like an offer sentence ("Earn 75,000 bonus points after
+# you spend $5,000"). "Weak" matches are any amount + unit and pick up noise such
+# as cross-promos, referral blurbs, or "minimum transfer is 1,000 points", so
+# they are only used when no strong match exists.
+_AMOUNT_UNIT = (
+    r"(?:(?P<pts>\d{1,3}(?:,\d{3})+)\s+(?:bonus\s+|welcome\s+)?(?:[\w®]+\s+){0,3}?(?P<unit>points|miles)"
+    r"|\$(?P<usd>\d{1,3}(?:,\d{3})*)\s+(?:cash\s+|welcome\s+)?(?:rewards?\s+)?"
+    r"(?:bonus|cash back|statement credit))"
+)
+STRONG_BONUS = re.compile(
+    r"\b(?:earn|get|receive)\s+(?:an?\s+)?(?:additional\s+)?"
+    + _AMOUNT_UNIT
+    + r"[^.]{0,120}?\b(?:after|when|once)\s+(?:you\s+)?(?:spend|make|use)",
+    re.I,
+)
+WEAK_BONUS = re.compile(_AMOUNT_UNIT, re.I)
+
+# Nonzero fees are specific enough to trust. "$0"/"no annual fee" is also used
+# in nav menus ("No Annual Fee Cards", "Credit Cards with No Annual Fee") and
+# for authorized users ("Additional Cards ... have a $0 annual fee").
+STRONG_FEE = (
+    re.compile(r"\$([1-9]\d{0,2}(?:,\d{3})?)\s+annual\s+fee", re.I),
     re.compile(
-        r"\$(\d{1,3}(?:,\d{3})*)\s+(?:cash\s+|welcome\s+|bonus\s+)?"
-        r"(?:rewards?\s+)?(bonus|cash back|statement credit|cash)\b",
-        re.I,
+        r"annual\s+(?:membership\s+)?fee(?:\s+(?:is|of))?\s*:?\s*\$([1-9]\d{0,2}(?:,\d{3})?)", re.I
     ),
 )
-ANNUAL_FEE_PATTERNS = (
-    re.compile(r"\$(\d{1,3}(?:,\d{3})?)\s+annual\s+fee", re.I),
-    re.compile(
-        r"annual\s+(?:membership\s+)?fee(?:\s+(?:is|of))?\s*:?\s*\$(\d{1,3}(?:,\d{3})?)", re.I
-    ),
-    re.compile(r"\b(no|\$0)\s+annual\s+fee", re.I),
+ZERO_FEE = re.compile(
+    r"(?<!cards with )(?<!have a )(\bno|\$0)\s+(?:intro(?:ductory)?\s+)?annual\s+fee\b"
+    r"(?!\s+(?:credit\s+)?cards?\b)",
+    re.I,
 )
 EARN_PATTERNS = (
     re.compile(
@@ -117,7 +131,12 @@ def next_data(page: str) -> Any | None:
 def inline_state_chunks(page: str) -> list[str]:
     """Raw text of `window.__SOMETHING__ = {...}` style state blobs."""
     pattern = r"window\.(__[A-Z0-9_]+__)\s*=\s*(.{20,}?)</script>"
-    return [chunk for _name, chunk in re.findall(pattern, page, flags=re.S)]
+    chunks = [chunk for _name, chunk in re.findall(pattern, page, flags=re.S)]
+    # State blobs are JSON-in-JS; undo the common escapes so the text reads normally.
+    return [
+        chunk.encode("utf-8", "ignore").decode("unicode_escape", "ignore").replace('\\"', '"')
+        for chunk in chunks
+    ]
 
 
 def flatten_strings(obj: Any) -> list[str]:
@@ -130,39 +149,55 @@ def flatten_strings(obj: Any) -> list[str]:
     return []
 
 
+def _bonus_hit(match: re.Match, text: str, strength: str) -> dict | None:
+    if match.group("pts"):
+        amount, unit = _to_number(match.group("pts")), match.group("unit").lower()
+        if amount < 1000:
+            return None
+    else:
+        amount, unit = _to_number(match.group("usd")), "usd"
+        if amount < 50:
+            return None
+    return {
+        "amount": amount,
+        "unit": unit,
+        "strength": strength,
+        "evidence": _evidence(text, match),
+    }
+
+
 def extract_facts(text: str) -> dict[str, list]:
-    """Regex the bonus, annual fee and earn rates out of a block of text."""
+    """Regex the bonus, annual fee and earn rates out of a block of text.
+
+    Each hit carries `strength` ("strong" or "weak") and a short evidence snippet.
+    """
     text = html_lib.unescape(re.sub(r"<[^>]+>", " ", text))
     text = re.sub(r"\s+", " ", text)
-    bonuses = []
-    for pattern in BONUS_PATTERNS:
-        for match in pattern.finditer(text):
-            amount = _to_number(match.group(1))
-            unit = match.group(2).lower()
-            if unit in ("points", "miles") and pattern is BONUS_PATTERNS[1]:
-                amount *= 1000
-            if unit not in ("points", "miles"):
-                unit = "usd"
-            if (unit == "usd" and amount < 50) or (unit != "usd" and amount < 1000):
-                continue
-            bonuses.append({"amount": amount, "unit": unit, "evidence": _evidence(text, match)})
-    fees = []
-    for pattern in ANNUAL_FEE_PATTERNS:
-        for match in pattern.finditer(text):
-            raw = match.group(1)
-            amount = 0.0 if raw.lower() in ("no", "$0") else _to_number(raw)
-            fees.append({"amount": amount, "evidence": _evidence(text, match)})
-    earn = []
-    for pattern in EARN_PATTERNS:
-        for match in pattern.finditer(text):
-            earn.append(
-                {
-                    "rate": float(match.group(1)),
-                    "on": match.group(2).strip(" ,&-").lower(),
-                    "evidence": _evidence(text, match),
-                }
-            )
-    return {"bonus": bonuses[:5], "annual_fee": fees[:5], "earn_rates": earn[:10]}
+    bonuses = [_bonus_hit(m, text, "strong") for m in STRONG_BONUS.finditer(text)]
+    bonuses += [_bonus_hit(m, text, "weak") for m in WEAK_BONUS.finditer(text)]
+    fees = [
+        {"amount": _to_number(m.group(1)), "strength": "strong", "evidence": _evidence(text, m)}
+        for pattern in STRONG_FEE
+        for m in pattern.finditer(text)
+    ]
+    fees += [
+        {"amount": 0.0, "strength": "weak", "evidence": _evidence(text, m)}
+        for m in ZERO_FEE.finditer(text)
+    ]
+    earn = [
+        {
+            "rate": float(m.group(1)),
+            "on": m.group(2).strip(" ,&-").lower(),
+            "evidence": _evidence(text, m),
+        }
+        for pattern in EARN_PATTERNS
+        for m in pattern.finditer(text)
+    ]
+    return {
+        "bonus": [hit for hit in bonuses if hit][:6],
+        "annual_fee": fees[:6],
+        "earn_rates": earn[:10],
+    }
 
 
 def _evidence(text: str, match: re.Match, width: int = 60) -> str:
@@ -190,12 +225,14 @@ class PageAnalysis:
         return [name for name, facts in self.methods.items() if any(facts.values())]
 
     def best(self, field_name: str) -> dict | None:
-        """First hit for a field, preferring structured sources over page text."""
-        for method in ("json_ld", "next_data", "inline_state", "static_text"):
-            items = self.methods.get(method, {}).get(field_name) or []
-            if items:
-                return items[0]
-        return None
+        """The most trustworthy hit for a field: strong beats weak, then visible
+        page text beats structured blobs (which often hold other cards' promos)."""
+        order = ("static_text", "json_ld", "next_data", "inline_state")
+        hits = [
+            hit for method in order for hit in self.methods.get(method, {}).get(field_name) or []
+        ]
+        strong = [hit for hit in hits if hit.get("strength", "strong") == "strong"]
+        return (strong or hits or [None])[0]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -216,6 +253,9 @@ def analyze_page(status_code: int | None, page: str) -> PageAnalysis:
     if status_code in BLOCKED_STATUS:
         analysis.blocked = True
         analysis.note = f"HTTP {status_code}"
+        return analysis
+    if status_code is not None and status_code >= 400:
+        analysis.note = f"HTTP {status_code}: page not found; the URL may have moved"
         return analysis
 
     analysis.methods["json_ld"] = extract_facts(" ".join(flatten_strings(json_ld_blocks(page))))
@@ -282,6 +322,8 @@ def cross_check(
             }
         )
     bonus = analysis.best("bonus")
+    if bonus is not None and bonus["strength"] != "strong":
+        bonus = None  # weak bonus hits are too noisy to compare
     if bonus is not None and api_bonus is not None:
         checks.append(
             {
