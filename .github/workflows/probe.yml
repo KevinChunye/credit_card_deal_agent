@@ -3,7 +3,7 @@ name: Issuer probe
 # One-off check of which issuer pages are readable with a single plain GET.
 # Runs when the probe itself changes, or on demand. Never commits anything:
 # results go to the job summary and an artifact, and a human copies them into
-# docs/FINDINGS.md and config/issuer_pages.yaml.
+# docs/FINDINGS.md and config/card_sources.yaml.
 on:
   workflow_dispatch:
   push:

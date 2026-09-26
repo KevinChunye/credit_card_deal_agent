@@ -18,11 +18,12 @@ import httpx
 from card_agent.collector import bonuses_api, doc_rss, rewards_db
 from card_agent.collector.diff import diff_snapshots, primary_offers
 from card_agent.collector.http import HostThrottle, RobotsCache
-from card_agent.collector.issuer_pages import cross_check, fetch_and_analyze, load_page_config
+from card_agent.collector.issuer_pages import cross_check, fetch_and_analyze
 from card_agent.collector.seed import apply_seed, load_seed
 from card_agent.config import CONFIG_DIR
 from card_agent.matching import CardMatcher
 from card_agent.models import ChangeSet, Snapshot, SourceStatus
+from card_agent.terms.sources import load_sources
 
 
 def load_previous(out_dir: Path) -> Snapshot | None:
@@ -107,23 +108,23 @@ def run_collector(
     cross_checks: list[dict[str, Any]] = []
     if with_issuer_pages:
         pages = [
-            p
-            for p in load_page_config(config_dir / "issuer_pages.yaml").get("pages", [])
-            if p.get("collect")
+            source
+            for source in load_sources(config_dir / "card_sources.yaml").values()
+            if source.cross_check and source.url
         ]
         best = primary_offers(Snapshot(generated_at=now, offers=offers))
         fees = {card.id: card.annual_fee for card in cards}
         robots, throttle = RobotsCache(client), HostThrottle()
         for page in pages:
-            analysis = fetch_and_analyze(client, robots, throttle, page["url"])
-            card_id = page["card_id"]
+            analysis = fetch_and_analyze(client, robots, throttle, page.url)
+            card_id = page.card_id
             has_offer = card_id in best.index
             api_bonus = float(best.loc[card_id, "bonus_amount"]) if has_offer else None
             api_unit = best.loc[card_id, "bonus_unit"] if has_offer else None
             checks = cross_check(card_id, analysis, fees.get(card_id), api_bonus, api_unit)
             if not checks:
                 checks = [{"card_id": card_id, "field": None, "match": None, "note": analysis.note}]
-            cross_checks.extend({**check, "url": page["url"]} for check in checks)
+            cross_checks.extend({**check, "url": page.url} for check in checks)
         sources["issuer_pages"] = SourceStatus(
             status="ok", fetched_at=now, count=len(pages), detail="cross-check only"
         )

@@ -1,0 +1,160 @@
+# Where each tracked card's terms come from: the issuer's public product page.
+#
+# Used by:
+# - the card-terms pipeline (card_agent/terms): fetch, hash, LLM-extract, validate,
+#   and propose changes to config/card_details.yaml through a reviewed PR;
+# - the weekly collector: pages with `cross_check: true` are also used to
+#   cross-check the bonuses API's bonus and annual fee;
+# - scripts/probe_issuers.py, which reports which pages are readable with one GET.
+#
+# Fields
+#   issuer, name   the card as the prompt names it
+#   url            the product page; null means "no working page": the card keeps
+#                  its hand-maintained values and gets source_status "manual"
+#   page_names     names the page may use for this card. The extraction is rejected
+#                  unless the card name the model read off the page matches one of
+#                  these after normalization (issuer names and words like "card",
+#                  "credit", "rewards", "Visa Signature" are ignored). This is what
+#                  stops a Delta promo on an Amex Gold page from being read as Gold.
+#   cross_check    weekly bonus/fee cross-check in the collector (probe-verified)
+#   manual_reason  why a card has no url
+#
+# Most URLs come from the bonuses API export; the 23 probed on 2026-09-26 are in
+# docs/FINDINGS.md. To track another card, add it here and to card_details.yaml.
+
+cards:
+  # ----------------------------------------------------------------- Chase
+  chase-sapphire-preferred:
+    {issuer: chase, name: Chase Sapphire Preferred, url: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred", page_names: [Sapphire Preferred], cross_check: true}
+  chase-sapphire-reserve:
+    {issuer: chase, name: Chase Sapphire Reserve, url: "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve", page_names: [Sapphire Reserve]}
+  chase-freedom-unlimited:
+    {issuer: chase, name: Chase Freedom Unlimited, url: "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited", page_names: [Freedom Unlimited], cross_check: true}
+  chase-freedom-flex:
+    {issuer: chase, name: Chase Freedom Flex, url: "https://creditcards.chase.com/cash-back-credit-cards/freedom/flex", page_names: [Freedom Flex]}
+  chase-ink-business-preferred:
+    {issuer: chase, name: Chase Ink Business Preferred, url: "https://creditcards.chase.com/business-credit-cards/ink/business-preferred", page_names: [Ink Business Preferred], cross_check: true}
+  chase-ink-business-cash:
+    {issuer: chase, name: Chase Ink Business Cash, url: "https://creditcards.chase.com/business-credit-cards/ink/cash", page_names: [Ink Business Cash]}
+  chase-ink-business-unlimited:
+    {issuer: chase, name: Chase Ink Business Unlimited, url: "https://creditcards.chase.com/business-credit-cards/ink/unlimited", page_names: [Ink Business Unlimited]}
+  chase-ink-business-premier:
+    {issuer: chase, name: Chase Ink Business Premier, url: "https://creditcards.chase.com/business-credit-cards/ink/premier", page_names: [Ink Business Premier]}
+  chase-amazon-prime:
+    {issuer: chase, name: Prime Visa (Chase), url: "https://www.amazon.com/dp/BT00LN946S", page_names: [Prime Visa, Amazon Prime Visa, Amazon Prime Rewards Visa Signature]}
+  chase-united-explorer:
+    {issuer: chase, name: United Explorer Card (Chase), url: "https://www.theexplorercard.com/rewards-cards/explorer-card", page_names: [United Explorer]}
+  chase-world-of-hyatt:
+    {issuer: chase, name: World of Hyatt Credit Card (Chase), url: "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card", page_names: [World of Hyatt]}
+  chase-marriott-bonvoy-boundless:
+    {issuer: chase, name: Marriott Bonvoy Boundless (Chase), url: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/boundless", page_names: [Marriott Bonvoy Boundless]}
+  chase-ihg-premier:
+    {issuer: chase, name: IHG One Rewards Premier (Chase), url: "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier", page_names: [IHG One Rewards Premier, IHG Premier]}
+
+  # ------------------------------------------------------------------ Amex
+  amex-platinum:
+    {issuer: amex, name: The Platinum Card from American Express, url: "https://www.americanexpress.com/us/credit-cards/card/platinum/", page_names: [Platinum, The Platinum Card]}
+  amex-gold:
+    {issuer: amex, name: American Express Gold Card, url: "https://www.americanexpress.com/us/credit-cards/card/gold-card/", page_names: [Gold, American Express Gold Card]}
+  amex-green:
+    {issuer: amex, name: American Express Green Card, url: "https://www.americanexpress.com/us/credit-cards/card/green/", page_names: [Green, American Express Green Card]}
+  amex-blue-cash-preferred:
+    {issuer: amex, name: Blue Cash Preferred Card from American Express, url: "https://www.americanexpress.com/us/credit-cards/card/blue-cash-preferred/", page_names: [Blue Cash Preferred]}
+  amex-blue-cash-everyday:
+    {issuer: amex, name: Blue Cash Everyday Card from American Express, url: "https://www.americanexpress.com/us/credit-cards/card/blue-cash-everyday/", page_names: [Blue Cash Everyday]}
+  amex-blue-business-plus:
+    {issuer: amex, name: The Blue Business Plus Credit Card from American Express, url: "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-blue-business-plus-credit-card-amex/", page_names: [Blue Business Plus]}
+  amex-blue-business-cash:
+    {issuer: amex, name: The Blue Business Cash Card from American Express, url: "https://www.americanexpress.com/en-us/business/credit-cards/blue-business-cash/", page_names: [Blue Business Cash]}
+  amex-business-gold:
+    {issuer: amex, name: American Express Business Gold Card, url: "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/", page_names: [Business Gold]}
+  amex-business-platinum:
+    {issuer: amex, name: The Business Platinum Card from American Express, url: "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/", page_names: [Business Platinum]}
+  amex-hilton-honors:
+    {issuer: amex, name: Hilton Honors American Express Card, url: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors/", page_names: [Hilton Honors]}
+  amex-hilton-honors-surpass:
+    {issuer: amex, name: Hilton Honors American Express Surpass Card, url: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-surpass/", page_names: [Hilton Honors Surpass]}
+  amex-hilton-honors-aspire:
+    {issuer: amex, name: Hilton Honors American Express Aspire Card, url: "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/", page_names: [Hilton Honors Aspire]}
+  amex-marriott-bonvoy-bevy:
+    {issuer: amex, name: Marriott Bonvoy Bevy American Express Card, url: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-bevy/", page_names: [Marriott Bonvoy Bevy]}
+  amex-marriott-bonvoy-brilliant:
+    {issuer: amex, name: Marriott Bonvoy Brilliant American Express Card, url: "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-brilliant/", page_names: [Marriott Bonvoy Brilliant]}
+  amex-delta-skymiles-gold:
+    {issuer: amex, name: Delta SkyMiles Gold American Express Card, url: "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-gold-american-express-card/", page_names: [Delta SkyMiles Gold]}
+  amex-delta-skymiles-platinum:
+    {issuer: amex, name: Delta SkyMiles Platinum American Express Card, url: "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-platinum-american-express-card/", page_names: [Delta SkyMiles Platinum]}
+  amex-delta-skymiles-reserve:
+    {issuer: amex, name: Delta SkyMiles Reserve American Express Card, url: "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-reserve-american-express-card/", page_names: [Delta SkyMiles Reserve]}
+
+  # ----------------------------------------------------------- Capital One
+  capital-one-venture-x:
+    {issuer: capital-one, name: Capital One Venture X, url: "https://www.capitalone.com/credit-cards/venture-x/", page_names: [Venture X], cross_check: true}
+  capital-one-venture-rewards:
+    {issuer: capital-one, name: Capital One Venture Rewards, url: "https://www.capitalone.com/credit-cards/venture/", page_names: [Venture, Venture Rewards]}
+  capital-one-ventureone:
+    {issuer: capital-one, name: Capital One VentureOne Rewards, url: "https://www.capitalone.com/credit-cards/ventureone/", page_names: [VentureOne, Venture One]}
+  capital-one-venture-x-business:
+    {issuer: capital-one, name: Capital One Venture X Business, url: "https://www.capitalone.com/small-business/credit-cards/venture-x-business/", page_names: [Venture X Business]}
+  capital-one-savor:
+    {issuer: capital-one, name: Capital One Savor, url: "https://www.capitalone.com/credit-cards/savor/", page_names: [Savor, Savor Cash Rewards], cross_check: true}
+  capital-one-quicksilver:
+    {issuer: capital-one, name: Capital One Quicksilver, url: "https://www.capitalone.com/credit-cards/quicksilver/", page_names: [Quicksilver, Quicksilver Cash Rewards]}
+  capital-one-spark-2-cash-plus:
+    {issuer: capital-one, name: Capital One Spark Cash Plus, url: "https://www.capitalone.com/small-business/credit-cards/spark-cash-plus/", page_names: [Spark Cash Plus, Spark 2% Cash Plus]}
+
+  # ------------------------------------------------------------------ Citi
+  citi-strata-premier:
+    {issuer: citi, name: Citi Strata Premier Card, url: "https://www.citi.com/credit-cards/citi-strata-premier-credit-card", page_names: [Strata Premier]}
+  citi-strata-elite:
+    {issuer: citi, name: Citi Strata Elite Card, url: "https://www.citi.com/credit-cards/citi-strata-elite-credit-card", page_names: [Strata Elite]}
+  citi-double-cash:
+    {issuer: citi, name: Citi Double Cash Card, url: "https://www.citi.com/credit-cards/citi-double-cash-credit-card", page_names: [Double Cash]}
+  citi-custom-cash:
+    {issuer: citi, name: Citi Custom Cash Card, url: "https://www.citi.com/credit-cards/citi-custom-cash-credit-card", page_names: [Custom Cash]}
+  citi-aadvantage-platinum-select-world-elite:
+    {issuer: citi, name: Citi AAdvantage Platinum Select World Elite Mastercard, url: "https://creditcards.aa.com/credit-cards/citi-platinum-card-american-airlines-direct/", page_names: [AAdvantage Platinum Select]}
+
+  # --------------------------------------------------------- Bank of America
+  bofa-customized-cash-rewards:
+    {issuer: bofa, name: Bank of America Customized Cash Rewards, url: "https://www.bankofamerica.com/credit-cards/products/cash-back-credit-card/", page_names: [Customized Cash Rewards]}
+  bofa-premium-rewards:
+    {issuer: bofa, name: Bank of America Premium Rewards, url: "https://www.bankofamerica.com/credit-cards/products/premium-rewards-credit-card/", page_names: [Premium Rewards]}
+  bofa-premium-rewards-elite:
+    {issuer: bofa, name: Bank of America Premium Rewards Elite, url: "https://www.bankofamerica.com/credit-cards/products/premium-rewards-elite-credit-card/", page_names: [Premium Rewards Elite]}
+  bofa-travel-rewards:
+    {issuer: bofa, name: Bank of America Travel Rewards, url: "https://www.bankofamerica.com/credit-cards/products/travel-rewards-credit-card/", page_names: [Travel Rewards]}
+  bofa-unlimited-cash-rewards:
+    {issuer: bofa, name: Bank of America Unlimited Cash Rewards, url: "https://www.bankofamerica.com/credit-cards/products/unlimited-cash-back-credit-card/", page_names: [Unlimited Cash Rewards]}
+
+  # ----------------------------------------------------------- Wells Fargo
+  wells-fargo-active-cash:
+    {issuer: wells-fargo, name: Wells Fargo Active Cash Card, url: "https://creditcards.wellsfargo.com/active-cash-credit-card/", page_names: [Active Cash], cross_check: true}
+  wells-fargo-autograph:
+    {issuer: wells-fargo, name: Wells Fargo Autograph Card, url: "https://creditcards.wellsfargo.com/autograph-visa-credit-card", page_names: [Autograph], cross_check: true}
+  wells-fargo-autograph-journey:
+    {issuer: wells-fargo, name: Wells Fargo Autograph Journey Card, url: "https://creditcards.wellsfargo.com/autograph-journey-visa-credit-card", page_names: [Autograph Journey]}
+  wells-fargo-bilt:
+    issuer: wells-fargo
+    name: Bilt Mastercard (legacy, Wells Fargo)
+    url: null
+    page_names: [Bilt Mastercard]
+    manual_reason: >-
+      Legacy card. biltrewards.com/card now lists only the 2026 Cardless lineup
+      (Bilt Blue, Obsidian, Palladium), so there is no page for this card.
+
+  # ---------------------------------------------------------------- U.S. Bank
+  us-bank-altitude-go:
+    {issuer: us-bank, name: U.S. Bank Altitude Go Visa Signature Card, url: "https://www.usbank.com/credit-cards/altitude-go-visa-signature-credit-card.html", page_names: [Altitude Go], cross_check: true}
+  us-bank-cash:
+    {issuer: us-bank, name: U.S. Bank Cash+ Visa Signature Card, url: "https://www.usbank.com/credit-cards/cash-plus-visa-signature-credit-card.html", page_names: [Cash+, Cash Plus], cross_check: true}
+
+  # ----------------------------------------------- Barclays / Discover / other
+  barclays-jetblue-plus:
+    {issuer: barclays, name: JetBlue Plus Card (Barclays), url: "https://cards.barclaycardus.com/banking/cards/jetblue-plus-card/", page_names: [JetBlue Plus], cross_check: true}
+  discover-discover-it:
+    {issuer: discover, name: Discover it Cash Back, url: "https://www.discover.com/credit-cards/cash-back/it-card.html", page_names: [Discover it, Discover it Cash Back]}
+  apple-card:
+    {issuer: apple, name: Apple Card, url: "https://www.apple.com/apple-card/", page_names: [Apple Card]}
+  robinhood-gold-card:
+    {issuer: robinhood, name: Robinhood Gold Card, url: "https://robinhood.com/creditcard/", page_names: [Robinhood Gold Card, Gold Card]}

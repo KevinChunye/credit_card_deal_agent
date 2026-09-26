@@ -84,15 +84,15 @@ def test_rewards_db_is_opt_in_and_fills_gaps(tmp_path, api_raw, feed_pages):
     assert card.foreign_tx_fee is False
 
 
-def test_issuer_pages_only_collect_true(tmp_path, api_raw):
+def test_issuer_pages_only_cross_check_true(tmp_path, api_raw):
     page_html = fixture_path("issuer_pages/chase_sapphire_preferred.html").read_text()
     config = tmp_path / "config"
     config.mkdir()
     (config / "card_details.yaml").write_text((CONFIG_DIR / "card_details.yaml").read_text())
-    (config / "issuer_pages.yaml").write_text(
-        "pages:\n"
-        "  - {issuer: chase, card_id: chase-sapphire-preferred, url: 'https://bank.example/csp', collect: true}\n"
-        "  - {issuer: amex, card_id: amex-gold, url: 'https://bank.example/gold', collect: false}\n"
+    (config / "card_sources.yaml").write_text(
+        "cards:\n"
+        "  chase-sapphire-preferred: {issuer: chase, name: CSP, url: 'https://bank.example/csp', cross_check: true}\n"
+        "  amex-gold: {issuer: amex, name: Gold, url: 'https://bank.example/gold', cross_check: false}\n"
     )
     client, seen = routed_client(
         {bonuses_api.DATA_URL: json.dumps(api_raw), "https://bank.example/csp": page_html}

@@ -9,6 +9,10 @@ Usage:
     python scripts/probe_issuers.py                    # markdown table to stdout
     python scripts/probe_issuers.py --json out.json    # full results
     python scripts/probe_issuers.py --write-findings   # update docs/FINDINGS.md
+
+Pages come from config/card_sources.yaml. Besides the regex facts it reports
+what the card-terms pipeline will see: the extracted text length, its hash, and
+whether the card's name appears on the page at all.
 """
 
 from __future__ import annotations
@@ -26,31 +30,52 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
+from card_agent.collector.doc_rss import FEED_URL  # noqa: E402
 from card_agent.collector.http import HostThrottle, RobotsCache, make_client  # noqa: E402
-from card_agent.collector.issuer_pages import fetch_and_analyze, load_page_config  # noqa: E402
+from card_agent.collector.issuer_pages import analyze_page, fetch_html  # noqa: E402
+from card_agent.terms.page import MIN_TEXT_CHARS, content_hash, page_text  # noqa: E402
+from card_agent.terms.sources import load_sources, normalize_card_name  # noqa: E402
+
+FEEDS = [FEED_URL, "https://www.doctorofcredit.com/feed/"]
 
 START_MARKER = "<!-- probe:start -->"
 END_MARKER = "<!-- probe:end -->"
 
 
 def probe_pages(client: httpx.Client, pages: list[dict]) -> list[dict]:
+    """One GET per page; report both the regex facts and the extraction text."""
     robots = RobotsCache(client)
     throttle = HostThrottle(min_interval=2.0)
     results = []
     for page in pages:
-        analysis = fetch_and_analyze(client, robots, throttle, page["url"])
-        row = {**page, **analysis.to_dict()}
+        status, body, error = fetch_html(client, robots, throttle, page["url"])
+        if error:
+            analysis = analyze_page(None, "")
+            analysis.blocked, analysis.note = True, error
+            text = ""
+        else:
+            analysis = analyze_page(status, body)
+            text = page_text(body) if status and status < 400 else ""
+        normalized_text = f" {normalize_card_name(text)} "
+        name_found = any(
+            f" {normalize_card_name(name)} " in normalized_text for name in page["page_names"]
+        )
+        row = {
+            **page,
+            **analysis.to_dict(),
+            "text_chars": len(text),
+            "sha256": content_hash(text)[:12] if text else None,
+            "name_found": name_found,
+            "extraction_ready": bool(text) and len(text) >= MIN_TEXT_CHARS and not analysis.blocked,
+        }
         results.append(row)
         print(
             f"[{page['issuer']}] {page['card_id']}: status={analysis.status_code} "
-            f"blocked={analysis.blocked} js_only={analysis.js_only} "
-            f"methods={analysis.working_methods} fields={analysis.fields_available} "
-            f"note={analysis.note}",
+            f"text_chars={len(text)} name_found={name_found} blocked={analysis.blocked} "
+            f"js_only={analysis.js_only} fields={analysis.fields_available} note={analysis.note}",
             file=sys.stderr,
         )
-        for field_name in analysis.fields_available:
-            hit = analysis.best(field_name)
-            print(f"    {field_name}: {hit}", file=sys.stderr)
+        print(f"    text: {text[:240]!r}", file=sys.stderr)
     return results
 
 
@@ -95,26 +120,27 @@ def verdict(row: dict) -> str:
         return f"not found (HTTP {row['status_code']}; URL moved)"
     if row["blocked"]:
         return f"blocked ({row['note']})"
-    if row["js_only"]:
-        return "JS-only"
-    if not row["fields_available"]:
-        return f"readable, nothing matched ({row['note']})"
-    return "no"
+    if row["js_only"] or not row["extraction_ready"]:
+        return "JS-only / too little text"
+    if not row["name_found"]:
+        return "readable, but the card's name isn't on the page"
+    return "usable"
 
 
 def issuer_table(results: list[dict]) -> str:
     frame = pd.DataFrame(results)
-    frame["method"] = frame["working_methods"].map(lambda m: ", ".join(m) if m else "none")
     frame["fields"] = frame["fields_available"].map(lambda f: ", ".join(f) if f else "none")
     frame["verdict"] = frame.apply(verdict, axis=1)
     frame = frame.sort_values(["issuer", "card_id"])
     lines = [
-        "| issuer | card | method that works | fields available | blocked/JS-only? |",
-        "|---|---|---|---|---|",
+        "| issuer | card | HTTP | text chars | card name on page | regex fields | verdict |",
+        "|---|---|---|---|---|---|---|",
     ]
     for row in frame.itertuples():
+        found = "yes" if row.name_found else "no"
         lines.append(
-            f"| {row.issuer} | {row.card_id} | {row.method} | {row.fields} | {row.verdict} |"
+            f"| {row.issuer} | {row.card_id} | {row.status_code or '–'} | {row.text_chars:,} "
+            f"| {found} | {row.fields} | {row.verdict} |"
         )
     return "\n".join(lines)
 
@@ -147,7 +173,7 @@ def write_findings(markdown: str, path: Path) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--config", type=Path, default=REPO_ROOT / "config" / "issuer_pages.yaml")
+    parser.add_argument("--sources", type=Path, default=REPO_ROOT / "config" / "card_sources.yaml")
     parser.add_argument("--json", type=Path, help="write full results as JSON here")
     parser.add_argument("--write-findings", action="store_true", help="update docs/FINDINGS.md")
     parser.add_argument(
@@ -155,10 +181,19 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    config = load_page_config(args.config)
+    pages = [
+        {
+            "issuer": source.issuer,
+            "card_id": source.card_id,
+            "url": source.url,
+            "page_names": source.page_names or [source.name],
+        }
+        for source in load_sources(args.sources).values()
+        if source.url
+    ]
     with make_client() as client:
-        issuers = probe_pages(client, config.get("pages", []))
-        feeds = probe_feeds(client, config.get("feeds", []))
+        issuers = probe_pages(client, pages)
+        feeds = probe_feeds(client, FEEDS)
 
     markdown = render(issuers, feeds)
     print(markdown)
