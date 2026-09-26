@@ -33,7 +33,13 @@ sys.path.insert(0, str(REPO_ROOT))
 from card_agent.collector.doc_rss import FEED_URL  # noqa: E402
 from card_agent.collector.http import HostThrottle, RobotsCache, make_client  # noqa: E402
 from card_agent.collector.issuer_pages import analyze_page, fetch_html  # noqa: E402
-from card_agent.terms.page import MIN_TEXT_CHARS, content_hash, page_text  # noqa: E402
+from card_agent.terms.page import (  # noqa: E402
+    EMBEDDED_HEADER,
+    MIN_TEXT_CHARS,
+    STATE_HEADER,
+    content_hash,
+    page_text,
+)
 from card_agent.terms.sources import load_sources, normalize_card_name  # noqa: E402
 
 FEEDS = [FEED_URL, "https://www.doctorofcredit.com/feed/"]
@@ -64,6 +70,13 @@ def probe_pages(client: httpx.Client, pages: list[dict]) -> list[dict]:
             **page,
             **analysis.to_dict(),
             "text_chars": len(text),
+            "text_source": (
+                "page state (fallback)"
+                if STATE_HEADER in text
+                else "visible + embedded JSON"
+                if EMBEDDED_HEADER in text
+                else "visible"
+            ),
             "sha256": content_hash(text)[:12] if text else None,
             "name_found": name_found,
             "extraction_ready": bool(text) and len(text) >= MIN_TEXT_CHARS and not analysis.blocked,
@@ -133,13 +146,14 @@ def issuer_table(results: list[dict]) -> str:
     frame["verdict"] = frame.apply(verdict, axis=1)
     frame = frame.sort_values(["issuer", "card_id"])
     lines = [
-        "| issuer | card | HTTP | text chars | card name on page | regex fields | verdict |",
-        "|---|---|---|---|---|---|---|",
+        "| issuer | card | HTTP | text chars | text source | card name on page | regex fields | verdict |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for row in frame.itertuples():
         found = "yes" if row.name_found else "no"
+        status = int(row.status_code) if pd.notna(row.status_code) else "–"
         lines.append(
-            f"| {row.issuer} | {row.card_id} | {row.status_code or '–'} | {row.text_chars:,} "
+            f"| {row.issuer} | {row.card_id} | {status} | {row.text_chars:,} | {row.text_source} "
             f"| {found} | {row.fields} | {row.verdict} |"
         )
     return "\n".join(lines)
@@ -191,7 +205,7 @@ def main(argv: list[str] | None = None) -> int:
         for source in load_sources(args.sources).values()
         if source.url
     ]
-    with make_client() as client:
+    with make_client(timeout=45.0) as client:
         issuers = probe_pages(client, pages)
         feeds = probe_feeds(client, FEEDS)
 

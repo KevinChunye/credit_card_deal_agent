@@ -41,7 +41,13 @@ cards:
   chase-ink-business-premier:
     {issuer: chase, name: Chase Ink Business Premier, url: "https://creditcards.chase.com/business-credit-cards/ink/premier", page_names: [Ink Business Premier]}
   chase-amazon-prime:
-    {issuer: chase, name: Prime Visa (Chase), url: "https://www.amazon.com/dp/BT00LN946S", page_names: [Prime Visa, Amazon Prime Visa, Amazon Prime Rewards Visa Signature]}
+    issuer: chase
+    name: Prime Visa (Chase)
+    url: null
+    page_names: [Prime Visa, Amazon Prime Visa, Amazon Prime Rewards Visa Signature]
+    manual_reason: >-
+      The product page is on amazon.com, which answers a plain GET with HTTP 500
+      (probe 2026-09-26); no Chase-hosted product page is known.
   chase-united-explorer:
     {issuer: chase, name: United Explorer Card (Chase), url: "https://www.theexplorercard.com/rewards-cards/explorer-card", page_names: [United Explorer]}
   chase-world-of-hyatt:
@@ -111,9 +117,21 @@ cards:
   citi-double-cash:
     {issuer: citi, name: Citi Double Cash Card, url: "https://www.citi.com/credit-cards/citi-double-cash-credit-card", page_names: [Double Cash]}
   citi-custom-cash:
-    {issuer: citi, name: Citi Custom Cash Card, url: "https://www.citi.com/credit-cards/citi-custom-cash-credit-card", page_names: [Custom Cash]}
+    issuer: citi
+    name: Citi Custom Cash Card
+    url: null
+    page_names: [Custom Cash]
+    manual_reason: >-
+      citi.com renders this page with JavaScript: a plain GET returns ~700
+      characters of text and no embedded data (probe 2026-09-26).
   citi-aadvantage-platinum-select-world-elite:
-    {issuer: citi, name: Citi AAdvantage Platinum Select World Elite Mastercard, url: "https://creditcards.aa.com/credit-cards/citi-platinum-card-american-airlines-direct/", page_names: [AAdvantage Platinum Select]}
+    issuer: citi
+    name: Citi AAdvantage Platinum Select World Elite Mastercard
+    url: null
+    page_names: [AAdvantage Platinum Select]
+    manual_reason: >-
+      creditcards.aa.com answers plain GETs from GitHub Actions with HTTP 403
+      (probe 2026-09-26).
 
   # --------------------------------------------------------- Bank of America
   bofa-customized-cash-rewards:

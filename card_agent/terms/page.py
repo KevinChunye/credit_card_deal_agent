@@ -20,13 +20,15 @@ from card_agent.collector.issuer_pages import (
     BLOCK_MARKERS,
     fetch_html,
     flatten_strings,
+    inline_state_chunks,
     json_ld_blocks,
     next_data,
 )
 
 MAX_TEXT_CHARS = 80_000
-MIN_TEXT_CHARS = 400
+MIN_TEXT_CHARS = 1_500
 EMBEDDED_HEADER = "[Embedded page data]"
+STATE_HEADER = "[Embedded page state]"
 
 
 def visible_text(page: str) -> str:
@@ -65,6 +67,18 @@ def page_text(page: str) -> str:
     text = visible_text(page)
     if embedded:
         text = f"{text} {EMBEDDED_HEADER} {' | '.join(embedded)}"
+    if len(text) < MIN_TEXT_CHARS:
+        # Client-rendered pages (e.g. some Amex pages) ship their copy only in a
+        # `window.__STATE__ = ...` blob. Use its prose only when the page has
+        # almost no visible text, so normal pages stay lean and hash-stable.
+        quoted = [
+            match
+            for chunk in inline_state_chunks(page)
+            for match in re.findall(r'"((?:[^"\\]|\\.){15,2000})"', chunk)
+        ]
+        state = _human_strings(quoted)
+        if state:
+            text = f"{text} {STATE_HEADER} {' | '.join(state)}"
     return normalize_whitespace(text)[:MAX_TEXT_CHARS]
 
 

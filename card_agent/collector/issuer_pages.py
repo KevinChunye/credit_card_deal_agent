@@ -131,11 +131,18 @@ def inline_state_chunks(page: str) -> list[str]:
     """Raw text of `window.__SOMETHING__ = {...}` style state blobs."""
     pattern = r"window\.(__[A-Z0-9_]+__)\s*=\s*(.{20,}?)</script>"
     chunks = [chunk for _name, chunk in re.findall(pattern, page, flags=re.S)]
-    # State blobs are JSON-in-JS; undo the common escapes so the text reads normally.
-    return [
-        chunk.encode("utf-8", "ignore").decode("unicode_escape", "ignore").replace('\\"', '"')
-        for chunk in chunks
-    ]
+    return [_decode_state(chunk) for chunk in chunks]
+
+
+def _decode_state(chunk: str) -> str:
+    """State blobs are JSON-in-JS, often a JSON string holding escaped JSON."""
+    raw = chunk.strip().rstrip(";").strip()
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError:
+        # Not plain JSON (e.g. a JS object literal): undo the common escapes.
+        return raw.encode("utf-8", "ignore").decode("unicode_escape", "ignore").replace('\\"', '"')
+    return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
 
 
 def flatten_strings(obj: Any) -> list[str]:
