@@ -25,7 +25,7 @@ from card_agent.collector.issuer_pages import (
     next_data,
 )
 
-MAX_TEXT_CHARS = 80_000
+MAX_TEXT_CHARS = 150_000  # ~37k tokens; the longest probed page (Sapphire Reserve) exceeds 80k
 MIN_TEXT_CHARS = 1_500
 EMBEDDED_HEADER = "[Embedded page data]"
 STATE_HEADER = "[Embedded page state]"
