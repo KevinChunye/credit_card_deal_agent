@@ -42,7 +42,7 @@ cards:
       - {category: travel_general, multiplier: 2, notes: "travel purchases", evidence: "2 points (“2X points”) on travel purchases"}
       - {category: other, multiplier: 1, notes: "all other purchases", evidence: "You’ll earn 1 point for each $1 spent on all other purchases."}
     benefits:
-      - {kind: travel_credit, name: "Chase Travel Hotel Credit", amount: 100, cadence: annual, evidence: "Earn up to $100 in statement credits each account anniversary year for hotel stays purchased through Chase Travel"}
+      - {kind: hotel_credit, name: "Chase Travel Hotel Credit", amount: 100, cadence: annual, evidence: "Earn up to $100 in statement credits each account anniversary year for hotel stays purchased through Chase Travel"}
       - {kind: global_entry, name: "Global Entry, TSA PreCheck or NEXUS application fee credit", amount: 30, cadence: annual, evidence: "Receive one statement credit of up to $120 every four years as reimbursement for the application fee charged to your card."}
       - {kind: other, name: "Complimentary Apple TV", amount: null, cadence: one-time, evidence: "You, as the primary cardmember, will receive at least 12 months of complimentary Apple TV from the activation date."}
       - {kind: other, name: "Complimentary DashPass membership", amount: null, cadence: one-time, evidence: "You and your authorized user(s) will receive at least 12 months of complimentary DashPass for use on both the DoorDash and Caviar applications"}
@@ -211,7 +211,7 @@ cards:
     annual_fee: 0
     foreign_tx_fee: false
     earn:
-      - {category: travel_portal, multiplier: 3, notes: "Purchases made through Chase Travel without an eligible Prime membership", evidence: "You'll earn 5% back with an eligible Prime membership or 3% back without an eligible Prime membership for each $1 spent on purchases made using your card account through Chase Travel."}
+      - {category: travel_portal, multiplier: 5, notes: "Chase Travel, with an eligible Prime membership (3% without)", evidence: "You'll earn 5% back with an eligible Prime membership or 3% back without an eligible Prime membership for each $1 spent on purchases made using your card account through Chase Travel."}
       - {category: gas, multiplier: 2, notes: "Gas stations", evidence: "You'll earn 2% back for each $1 spent in the following rewards categories: gas stations; local transit and commuting; restaurants."}
       - {category: dining, multiplier: 2, notes: "Restaurants", evidence: "You'll earn 2% back for each $1 spent in the following rewards categories: gas stations; local transit and commuting; restaurants."}
       - {category: transit_rideshare, multiplier: 2, notes: "Local transit and commuting", evidence: "You'll earn 2% back for each $1 spent in the following rewards categories: gas stations; local transit and commuting; restaurants."}
@@ -346,10 +346,10 @@ cards:
       - {category: flights, multiplier: 5, cap: 500000, cap_period: year, notes: "Booked directly with airlines or via Amex Travel"}
     benefits:
       - {kind: lounge, name: "The Global Lounge Collection", amount: null, cadence: annual, evidence: "access to Centurion Lounges, 10 Delta Sky Club visits when flying on an eligible Delta flight, Priority Pass membership"}
-      - {kind: travel_credit, name: "Hotel Credit", amount: 600, cadence: semiannual, evidence: "Get up to $300 back in statement credits semi-annually"}
+      - {kind: hotel_credit, name: "Hotel Credit", amount: 600, cadence: semiannual, evidence: "Get up to $300 back in statement credits semi-annually"}
       - {kind: rideshare_credit, name: "Uber Cash monthly credit", amount: 180, cadence: monthly, evidence: "start receiving $15 in Uber Cash each month"}
       - {kind: rideshare_credit, name: "Uber Cash December bonus", amount: 20, cadence: annual, evidence: "plus a bonus $20 in December"}
-      - {kind: rideshare_credit, name: "Uber One Credit", amount: 120, cadence: annual, evidence: "you can get up to $120 in statement credits each calendar year"}
+      - {kind: dining_membership, name: "Uber One Credit", amount: 120, cadence: annual, evidence: "you can get up to $120 in statement credits each calendar year"}
       - {kind: airline_fee, name: "Airline Fee Credit", amount: 200, cadence: annual, evidence: "receive up to $200 in statement credits per calendar year"}
       - {kind: other, name: "CLEAR+ Credit", amount: 219, cadence: annual, evidence: "You can receive up to $219 in statement credits per calendar year"}
       - {kind: dining_credit, name: "Resy Credit", amount: 400, cadence: quarterly, evidence: "get up to $100 in statement credits each quarter"}
@@ -412,7 +412,6 @@ cards:
       - {category: transit_rideshare, multiplier: 3, notes: "transit including trains, taxicabs, rideshare services, ferries, tolls, parking, buses, and subways", evidence: "3X points on transit including trains, taxicabs, rideshare services, ferries, tolls, parking, buses, and subways."}
       - {category: dining, multiplier: 3, notes: "dining at restaurants worldwide, including takeout and delivery in the US", evidence: "3X points dining at restaurants worldwide, including takeout and delivery in the US."}
       - {category: other, multiplier: 1, notes: "other eligible purchases", evidence: "1X points on other eligible purchases."}
-      - {category: travel_general, multiplier: 3}
     protections: [trip_delay, secondary_rental, purchase, extended_warranty]
     terms_source:
       url: "https://www.americanexpress.com/us/credit-cards/card/green/"
@@ -528,7 +527,7 @@ cards:
       - {kind: other, name: "Adobe Credit", amount: 250, cadence: annual, evidence: "A $250 statement credit per calendar year after you spend $600 or more on U.S. purchases directly with Adobe in a calendar year."}
       - {kind: other, name: "Indeed Credit", amount: 360, cadence: quarterly, evidence: "Get up to $90 in statement credits quarterly for purchases with Indeed on the Card."}
       - {kind: other, name: "Wireless Credit", amount: 120, cadence: monthly, evidence: "Statement credits up to $10 per month for wireless phone service purchases made directly with a U.S. wireless telephone service provider."}
-      - {kind: travel_credit, name: "Amex Travel Online Flight Statement Credit", amount: 1200, cadence: annual, evidence: "Unlock up to $1,200 in statement credits on flights booked on AmexTravel.com with the Business Platinum Card"}
+      - {kind: travel_credit, name: "Amex Travel flight credit (after $250,000 of spend)", amount: null, cadence: annual, evidence: "Unlock up to $1,200 in statement credits on flights booked on AmexTravel.com with the Business Platinum Card"}
       - {kind: other, name: "35% Airline Bonus", amount: null, cadence: annual, evidence: "Get 35% points back after you use Pay with Points for flights booked through Amex Travel with your selected qualifying airline"}
       - {kind: elite_status, name: "Premium status for select car rental programs", amount: null, cadence: annual, evidence: "Business Platinum Card Members enjoy complimentary premium status for select car rental programs."}
       - {kind: dining_membership, name: "Global Dining Access by Resy", amount: null, cadence: annual, evidence: "Global Dining Access by Resy provides Business Platinum Card Members with access to exclusive reservations, Priority Notify"}
@@ -598,7 +597,6 @@ cards:
     earn:
       - {category: flights, multiplier: 7, notes: "Flights booked directly with airlines", evidence: "7X Points on Select Travel Including flights booked directly with airlines or AmexTravel.com and car rentals booked directly with select car rental companies."}
       - {category: travel_portal, multiplier: 7, notes: "Flights booked through AmexTravel.com", evidence: "7X Points on Select Travel Including flights booked directly with airlines or AmexTravel.com and car rentals booked directly with select car rental companies."}
-      - {category: travel_general, multiplier: 7, notes: "Car rentals booked directly with select car rental companies", evidence: "7X Points on Select Travel Including flights booked directly with airlines or AmexTravel.com and car rentals booked directly with select car rental companies."}
       - {category: dining, multiplier: 7, notes: "Dining at U.S. restaurants", evidence: "7X Points on Dining At U.S. restaurants, including takeout and delivery."}
       - {category: other, multiplier: 3, notes: "Other eligible purchases", evidence: "3X Points on Other Eligible Purchases Spent on other eligible purchases."}
     benefits:
@@ -902,7 +900,7 @@ cards:
       - {category: other, multiplier: 1.5, notes: "All Other Purchases", evidence: "1.5X points on All Other Purchases2"}
     benefits:
       - {kind: hotel_credit, name: "Annual Hotel Benefit", amount: 300, cadence: annual, evidence: "Once per calendar year, you can enjoy $300 off a single hotel stay of 2 nights or more (excluding taxes and fees) booked through cititravel.com."}
-      - {kind: other, name: "Splurge Credit", amount: 200, cadence: annual, evidence: "Every calendar year, earn up to $200 in statement credits on your choice of up to 2 of the following brands: 1stDibs, American Airlines (exclusions apply), Best Buy, Future Personal Training, and Live Nation (exclusions apply)."}
+      - {kind: airline_fee, name: "Splurge Credit", amount: 200, cadence: annual, evidence: "Every calendar year, earn up to $200 in statement credits on your choice of up to 2 of the following brands: 1stDibs, American Airlines (exclusions apply), Best Buy, Future Personal Training, and Live Nation (exclusions apply)."}
       - {kind: other, name: "Blacklane Credit", amount: 200, cadence: annual, evidence: "Every calendar year, earn up to $200 in statement credits when you book with Blacklane, a premium global chauffeur service."}
       - {kind: lounge, name: "Priority Pass Select membership", amount: null, cadence: annual, evidence: "Enjoy complimentary access to 1,500+ airport lounges worldwide."}
       - {kind: lounge, name: "Admirals Club Citi Strata Elite Passes", amount: null, cadence: annual, evidence: "Every calendar year, you will receive four Admirals Club® Citi Strata Elite® Passes for access to nearly 50 Admirals Club® lounges."}
@@ -922,7 +920,7 @@ cards:
     point_currency: citi_typ
     earn:
       - {category: other, multiplier: 2, notes: purchases, evidence: "Earn 2% cash back on purchases: 1% when you buy and 1% as you pay with no category enrollment, caps, or annual fee."}
-      - {category: travel_portal, multiplier: 3, notes: "hotels, car rentals, and attractions booked with Citi Travel", evidence: "In addition, earn 3% cash back on hotels, car rentals, and attractions booked with Citi Travel."}
+      - {category: travel_portal, multiplier: 5, notes: "5% total: the 2% on purchases plus 3% more on hotels, car rentals and attractions booked with Citi Travel", evidence: "In addition, earn 3% cash back on hotels, car rentals, and attractions booked with Citi Travel."}
     evidence:
       annual_fee: "The Citi Double Cash® Card does not charge an annual fee."
       foreign_tx_fee: "Fee for foreign purchases – % of the U.S. dollar amount of each purchase."
@@ -1191,14 +1189,12 @@ cards:
       point_currency: usd
       apply_url: "https://robinhood.com/creditcard/"
       notes: "No card fee, but requires Robinhood Gold ($50/yr), counted here as the annual fee. Issued by Coastal Community Bank."
-    annual_fee: 0
+    annual_fee: 50
     foreign_tx_fee: false
     point_currency: usd
     earn:
       - {category: other, multiplier: 3, notes: "all categories", evidence: "3% cash back on all categories."}
       - {category: travel_portal, multiplier: 5, notes: "Robinhood travel portal"}
-    evidence:
-      annual_fee: "No annual fee"
     terms_source:
       url: "https://robinhood.com/creditcard/"
       extracted: "2026-09-27"

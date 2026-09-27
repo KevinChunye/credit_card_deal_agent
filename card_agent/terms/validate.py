@@ -200,7 +200,9 @@ STATUS_DOLLARS = re.compile(r"\bqualification dollars?\b|\bMQDs?\b", re.I)
 # model. Small minimum purchases ("a stay of $500 or more") are not thresholds.
 SPEND_UNLOCK = re.compile(
     r"\bspend(?:s|ing)? (?:at least |over |more than )?\$\d{1,3}(?:,\d{3})+"
-    r"|\$\d{1,3}(?:,\d{3})+ (?:in )?(?:annual )?spend(?:ing)?\b|\bspending threshold\b",
+    r"|\$\d{1,3}(?:,\d{3})+ (?:in )?(?:annual )?spend(?:ing)?\b|\bspending threshold\b"
+    # Amex words spend-unlocked credits "Unlock up to $1,200 in statement credits ...".
+    r"|\bunlock(?:s|ed)? up to \$\d",
     re.I,
 )
 # "10% back ... up to $250": the amount caps a percentage rebate; it isn't a credit.
@@ -424,6 +426,9 @@ def _check_earn(row: EarnRateOut, page_key: str) -> tuple[EarnRow | None, str | 
         r"\btravel\b", PORTAL.sub(" ", applies), re.I
     ):
         return None, "evidence doesn't name travel in general"
+    # "7X Points on Select Travel Including flights ... and car rentals": a named subset.
+    if category == Category.travel_general and re.search(r"\bselect travel\b", applies, re.I):
+        return None, '"select travel" is a subset of travel (use its categories)'
     if category == Category.other and row.cap_usd is not None and not capped_base(wording):
         return None, "a capped base rate must cover all purchases (use a category or not_listed)"
     if row.cap_usd is None and CAP_HINT.search(wording):

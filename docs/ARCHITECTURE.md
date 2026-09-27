@@ -64,9 +64,10 @@ hash changed / queued by RSS / --force
           rate stated once over a list can use a heading + item quote pair (heading
           before the item, within 1,500 chars, no other rate in between)
         portal-only rates count as travel_portal; co-brand rates can't be hotels or
-          flights (what a rate excludes, or the card's own points, don't count); a
-          capped base rate (other) must cover all purchases; a cap the quote mentions
-          must be extracted; menu options outside the categories are left out
+          flights (what a rate excludes, or the card's own points, don't count);
+          "Select Travel" isn't travel in general; a capped base rate (other) must
+          cover all purchases; a cap the quote mentions must be extracted; menu options
+          outside the categories are left out
         benefit amounts are only lowered: coverage limits, per-use credits, rebate caps,
           credits unlocked by a spending threshold and airline status dollars get no $
           value, time-limited perks count once
