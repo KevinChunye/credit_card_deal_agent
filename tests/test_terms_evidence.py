@@ -479,6 +479,7 @@ def test_menu_options_outside_the_categories_are_left_out():
     "quote",
     [
         "You won't have to pay an annual fee for all the great features that come with your Freedom Unlimited card.",
+        "You won't have to pay an annual credit card fee for all the great features that come with your Prime Visa.",
         "No annual credit card fee",
         "The Citi Double Cash® Card does not charge an annual fee.",
         "No annual, over-the-limit, foreign-transaction, or late fees.",

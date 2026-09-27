@@ -76,7 +76,7 @@ NO_ANNUAL_FEE = re.compile(
     r"|\$0 annual fee\b"
     r"|\bannual fee(?: is|:| of)?\s*(?:none\b|\$0\b)"
     r"|\b(?:won't|will not|don't|do not|doesn't|does not|never)(?: have to)? (?:pay|charges?) "
-    r"(?:an|any) annual fees?\b"
+    r"(?:an|any) annual (?:credit card |card |membership )?fees?\b"
     r"|\bno annual,[^.]{0,60}\bfees\b",
     re.I,
 )
