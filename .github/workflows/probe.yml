@@ -6,6 +6,11 @@ name: Issuer probe
 # docs/FINDINGS.md and config/card_sources.yaml.
 on:
   workflow_dispatch:
+    inputs:
+      try:
+        description: "Only probe these candidates: space-separated CARD_ID=URL pairs"
+        type: string
+        default: ""
   push:
     paths:
       - "scripts/probe_issuers.py"
@@ -25,7 +30,12 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - name: Probe issuer pages and feeds
-        run: python scripts/probe_issuers.py --json probe-results.json --summary "$GITHUB_STEP_SUMMARY"
+        env:
+          TRY: ${{ inputs.try }}
+        run: |
+          args=()
+          for pair in $TRY; do args+=(--try "$pair"); done
+          python scripts/probe_issuers.py "${args[@]}" --json probe-results.json --summary "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
           name: probe-results
