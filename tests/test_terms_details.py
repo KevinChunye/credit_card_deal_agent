@@ -6,7 +6,7 @@ from __future__ import annotations
 from datetime import date
 
 from card_agent.collector.run import stamp_provenance
-from card_agent.collector.seed import merge_benefits
+from card_agent.collector.seed import apply_seed, merge_benefits
 from card_agent.models import Benefit, BenefitKind, Card
 from card_agent.terms.details import (
     DETAILS_PATH,
@@ -202,6 +202,9 @@ def test_live_config_is_structurally_valid():
         else:
             assert source.url.startswith("https://") and source.page_names, card_id
     for card_id, entry in details.items():
+        if (entry.get("override") or {}).get("discontinued"):
+            assert card_id not in tracked, f"{card_id}: discontinued cards aren't tracked"
+            assert entry.get("notes"), f"{card_id}: say why it's discontinued"
         terms = terms_from_entry(entry)  # raises on an unknown category, kind, or cadence
         if terms.annual_fee is not None:
             assert 0 <= terms.annual_fee <= 1000, card_id
@@ -209,3 +212,12 @@ def test_live_config_is_structurally_valid():
             assert 0.5 <= row.multiplier <= 15, (card_id, row)
         for row in terms.benefits or []:
             assert row.amount is None or 0 <= row.amount <= 2000, (card_id, row)
+
+
+def test_discontinued_override_reaches_the_card():
+    seeded = apply_seed(
+        {"cards": {"citi-custom-cash": {"override": {"discontinued": True}, "notes": "closed"}}},
+        [Card(id="citi-custom-cash", issuer="citi", name="Custom Cash")],
+        [],
+    )
+    assert seeded.cards[0].discontinued is True

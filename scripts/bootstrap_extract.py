@@ -4,7 +4,7 @@
 
 Writes a markdown report (card | field | hand value | extracted | evidence) for
 spot-checking the hand-compiled config/card_details.yaml. It applies nothing,
-commits nothing, and saves no pipeline state. Needs OPENAI_API_KEY; about 52
+commits nothing, and saves no pipeline state. Needs OPENAI_API_KEY; about 55
 LLM calls (roughly $0.20 at gpt-6-luna prices).
 
 In GitHub Actions: Actions tab -> Card terms -> Run workflow -> bootstrap: true.

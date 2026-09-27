@@ -157,7 +157,7 @@ def bonus_changes(ctx: ScoringContext, changes: ChangeSet | None, limit: int = 5
     ]
     for change in rows[: limit * 2]:
         card_id = change["card_id"]
-        if card_id in held or card_id not in ctx.data.cards:
+        if card_id in held or card_id not in ctx.data.cards or ctx.data.cards[card_id].discontinued:
             continue
         card = ctx.data.cards[card_id]
         status = ctx.checker.check(card).status

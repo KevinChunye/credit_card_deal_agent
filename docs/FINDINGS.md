@@ -14,7 +14,7 @@ network the weekly collector uses, so the results reflect production.
 | 2. Doctor of Credit RSS | **Wired** | The credit-card category feed works with a plain GET; ~15 posts/page, paginated. |
 | 3. fuermosi777/rewards | **Built, OFF by default** | Best data for earn rates/benefits/protections, but the repo has **no license**, so no reuse is granted. You decide; see below. |
 | 4. Issuer pages | **10 pages wired as a cross-check** | 21 of 23 pages are readable with one plain GET; 10 state the bonus/fee unambiguously enough to compare. Nothing needed a browser, a login, or anti-bot work. |
-| Category earn rates | `config/card_details.yaml` (generated from issuer pages, reviewed in PRs) | Source 1 has no per-category earn rates; source 3 can't be used by default. The card-terms pipeline re-reads 52 of the 57 cards' issuer pages (the other 5 stay hand-maintained); see "Card terms from issuer pages" below. |
+| Category earn rates | `config/card_details.yaml` (generated from issuer pages, reviewed in PRs) | Source 1 has no per-category earn rates; source 3 can't be used by default. The card-terms pipeline re-reads 55 of the 57 cards' issuer pages; the other 2 are discontinued (not ranked). See "Card terms from issuer pages" below. |
 
 ## Source 1: credit-card-bonuses-api (MIT)
 
@@ -196,17 +196,29 @@ probe → Run workflow) or locally with `python scripts/probe_issuers.py --write
 ## Card terms from issuer pages (LLM extraction, deterministic checks)
 
 `config/card_details.yaml` is regenerated from the same issuer pages by the card-terms
-pipeline (docs/ARCHITECTURE.md). Of the 57 cards in it, **52 are tracked** and **5 stay
-manual** (`url: null` in `config/card_sources.yaml`, hand values kept, flagged ⚠ in the
-agent):
+pipeline (docs/ARCHITECTURE.md). Of the 57 cards in it, **55 are tracked** and **2 are
+discontinued**; no card is left manual.
 
-| card | why it's manual |
-|---|---|
-| wells-fargo-bilt (legacy Bilt Mastercard) | biltrewards.com/card now lists only the 2026 lineup (Bilt Blue, Obsidian, Palladium); there's no page for the legacy card |
-| chase-amazon-prime (Prime Visa) | the product page is on amazon.com, which answers a plain GET with HTTP 500; no Chase-hosted page is known |
-| chase-united-explorer | theexplorercard.com never answered from GitHub Actions: ReadTimeout after 45 s in every probe. Getting through would take browser emulation |
-| citi-custom-cash | citi.com renders this page with JavaScript: a plain GET returns ~700 characters of text and no embedded data |
-| citi-aadvantage-platinum-select-world-elite | creditcards.aa.com answers plain GETs from GitHub Actions with HTTP 403 |
+The first probe left 5 cards without a readable page. Each got exactly one alternative,
+checked on GitHub Actions on 2026-09-27 with `scripts/probe_issuers.py --try`:
+
+| card | first probe | one alternative tried | result |
+|---|---|---|---|
+| chase-amazon-prime (Prime Visa) | amazon.com: HTTP 500 | creditcards.chase.com/cash-back-credit-cards/amazon-prime-rewards | 200, 22,820 chars, name on page: **tracked** |
+| chase-united-explorer | theexplorercard.com: ReadTimeout after 45 s, every probe | creditcards.chase.com/travel-credit-cards/united/united-explorer | 200, 66,024 chars: **tracked** |
+| citi-aadvantage-platinum-select-world-elite | creditcards.aa.com: HTTP 403 | citi.com/credit-cards/citi-aadvantage-platinum-select-world-elite-mastercard | 200, 20,875 chars (visible + embedded JSON): **tracked** |
+| citi-custom-cash | citi.com: ~700 chars | the same page's embedded data, and citi.com/credit-cards/view-all-credit-cards | the 719 characters are the whole page: "Citi is no longer accepting applications for the Citi Custom Cash Card product as of May 28, 2026 … Existing Citi Custom Cash cardmembers are not impacted." **Discontinued** |
+| wells-fargo-bilt (legacy Bilt Mastercard) | none tried | none: the card was replaced by the 2026 Cardless lineup | **Discontinued** |
+
+Discontinued cards have `override: {discontinued: true}` and a note in
+`card_details.yaml` and are not in `card_sources.yaml`. The ranking and the digest's
+bonus section skip them, and nobody re-extracts their terms; their hand values stay
+only so a card you already hold is still valued (Custom Cash can still be reached by a
+product change, per the notices linked below). Sources on the Custom Cash closure:
+[citi.com](https://www.citi.com/credit-cards/citi-custom-cash-credit-card),
+[NerdWallet](https://www.nerdwallet.com/credit-cards/news/citi-custom-cash-closed-to-new-applications),
+[U.S. News](https://money.usnews.com/credit-cards/articles/citi-shuts-down-applications-for-popular-custom-cash-card),
+[Frequent Miler](https://frequentmiler.com/citi-custom-cash-card-is-almost-certainly-being-discontinued/).
 
 Page text is the visible text plus prose from JSON-LD and `__NEXT_DATA__`. Amex Green
 shows almost no visible text (its copy lives in the page's inline state), so when visible
@@ -233,7 +245,7 @@ from OpenAI's model and changelog pages as indexed by search plus pricing write-
 confirms the model name: a wrong one fails fast with "OpenAI has no model … (HTTP 404)".
 
 Estimated usage: a page is 2k–37k input tokens (most 3k–10k) and one response of a few
-thousand output tokens including reasoning, so a full forced run of 52 pages costs
+thousand output tokens including reasoning, so a full forced run of 55 pages costs
 roughly $0.15–0.25. Monthly runs only call the LLM for pages whose text changed (plus
 RSS-queued cards), typically 5–20 calls, a few cents. Each run's job summary shows the
 actual tokens and estimated cost.

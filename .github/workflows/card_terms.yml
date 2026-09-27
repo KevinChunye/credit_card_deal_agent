@@ -29,7 +29,7 @@ on:
         options: [full, rss]
         default: full
       force:
-        description: "Re-extract pages even if unchanged (a full forced run is ~52 LLM calls, about $0.20)"
+        description: "Re-extract pages even if unchanged (a full forced run is ~55 LLM calls, about $0.10-0.20)"
         type: boolean
         default: false
       cards:

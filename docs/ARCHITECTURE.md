@@ -15,7 +15,7 @@ flowchart LR
         A4["rewards DB<br/>(opt-in, no license)"] -.-> C
         A5["10 issuer pages<br/>(cross-check only)"] --> C
         C --> D[("data branch<br/>latest.json<br/>snapshots/DATE.json<br/>changes/DATE.json<br/>page_hashes.json …")]
-        P["issuer product pages<br/>(52 cards, plain GET)"] --> T[card-terms pipeline]
+        P["issuer product pages<br/>(55 cards, plain GET)"] --> T[card-terms pipeline]
         R["Doctor of Credit<br/>change posts"] -.->|queue| T
         T <-->|"hashes, last_verified,<br/>validated extractions"| D
         T -->|"PR: card terms changed"| A3
@@ -84,7 +84,7 @@ hash changed / queued by RSS / --force
   `LLM_PROVIDER=anthropic` is reserved. No key: extraction is skipped with a notice and
   the run still succeeds. A 401/403/404 stops further calls for the run.
 - **Cost**: tokens and an estimated cost are in each run's job summary. A page is about
-  5–20k input tokens; a full forced run of 52 pages is roughly $0.20 at gpt-6-luna prices,
+  5–20k input tokens; a full forced run of 55 pages is roughly $0.10–0.20 at gpt-6-luna prices,
   a normal month (only changed pages) a few cents.
 
 ## Layout
