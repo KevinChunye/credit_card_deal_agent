@@ -4,7 +4,8 @@ name: Card terms
 # (card_agent/terms). Plain HTTP GETs only (no browser, no login); one LLM call
 # per page that changed.
 #
-#   monthly (3rd, 14:37 UTC)   full run over every tracked card
+#   monthly (28th, 14:37 UTC)  full run over every tracked card (before the digest
+#                              on the 1st, so its "data health" line is current)
 #   weekly (Thu, 15:23 UTC)    RSS trigger: queue cards named in Doctor of Credit
 #                              change posts, then re-extract just those
 #   workflow_dispatch          full or rss run; force; limit to cards; bootstrap
@@ -18,7 +19,7 @@ name: Card terms
 # notice); optional repo variables LLM_MODEL, LLM_REASONING_EFFORT, LLM_PROVIDER.
 on:
   schedule:
-    - cron: "37 14 3 * *"
+    - cron: "37 14 28 * *"
     - cron: "23 15 * * 4"
   workflow_dispatch:
     inputs:
@@ -97,7 +98,7 @@ jobs:
     permissions:
       contents: write # state to the data branch; card_details.yaml to card-terms/auto
       pull-requests: write # open or update the card-terms PR
-      actions: write # start CI on card-terms/auto (GITHUB_TOKEN pushes don't trigger workflows)
+      actions: write # dispatch CI on card-terms/auto and the collector (GITHUB_TOKEN pushes don't trigger workflows)
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       GH_TOKEN: ${{ github.token }}
@@ -167,6 +168,7 @@ jobs:
           path: card-terms-report.json
 
       - name: Commit state to the data branch
+        id: state
         working-directory: data-branch
         run: |
           git config user.name "github-actions[bot]"
@@ -176,15 +178,29 @@ jobs:
             echo "No state changes."
             exit 0
           fi
+          if ! git diff --cached --quiet -- data/page_hashes.json; then
+            echo "hashes_changed=true" >> "$GITHUB_OUTPUT"
+          fi
           git commit -q -m "data: card terms $(date -u +%F) (${{ steps.mode.outputs.mode }})"
           # The collector writes other files on this branch; rebase and retry if it
           # pushed first.
           for attempt in 1 2 3; do
-            if git push -q origin HEAD:data; then exit 0; fi
+            if git push -q origin HEAD:data; then
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
             echo "Push rejected (attempt $attempt); rebasing on origin/data."
             git pull -q --rebase origin data
           done
           exit 1
+
+      # The agent reads verification dates from the collector's snapshot
+      # (latest.json); refresh it now rather than at the next weekly run.
+      - name: Restamp the snapshot with the new verification dates
+        if: steps.state.outputs.pushed == 'true' && steps.state.outputs.hashes_changed == 'true'
+        run: |
+          gh workflow run collector.yml --ref "$GITHUB_REF_NAME" \
+            || echo "::warning::Could not start the collector; its next weekly run picks up the new dates."
 
       - name: Test the regenerated card_details.yaml
         if: hashFiles('pr/title.txt') != ''

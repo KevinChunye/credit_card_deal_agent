@@ -22,6 +22,7 @@ Modes:
 
 from __future__ import annotations
 
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import date
@@ -101,6 +102,7 @@ class RunReport:
     usage: Usage
     diffs: list[DiffRow] = field(default_factory=list)
     queued: dict[str, str] = field(default_factory=dict)  # card id -> post title, left queued
+    llm_problem: str | None = None  # a provider error that stopped extraction this run
 
     @property
     def cost(self) -> float | None:
@@ -139,6 +141,7 @@ class Pipeline:
         self.provider = provider
         self.provider_note = provider_note
         self.workers = workers
+        self.llm_problem: str | None = None
 
     # ----------------------------------------------------------------- run
 
@@ -178,6 +181,7 @@ class Pipeline:
             usage=usage,
             diffs=self.proposals(extracted, options.include_pending),
             queued={k: v.reason for k, v in self.state.queue.queued.items()},
+            llm_problem=self.llm_problem,
         )
 
     def select(self, options: RunOptions) -> list[tuple[CardSource, str | None]]:
@@ -248,11 +252,20 @@ class Pipeline:
     def extract_all(
         self, pending: list[tuple[CardOutcome, FetchedPage]]
     ) -> list[LLMResult | LLMError]:
+        """LLM calls, a few at a time. After a fatal error (bad key, unknown model)
+        the remaining cards aren't sent."""
+        stopped = threading.Event()
+
         def call(item: tuple[CardOutcome, FetchedPage]) -> LLMResult | LLMError:
             outcome, page = item
+            if stopped.is_set():
+                return LLMError(f"not sent: {self.llm_problem}")
             try:
                 return extract_terms(self.provider, outcome.source, page.text)
             except LLMError as exc:
+                if exc.fatal:
+                    self.llm_problem = str(exc)
+                    stopped.set()
                 return exc
 
         with ThreadPoolExecutor(max_workers=self.workers) as pool:

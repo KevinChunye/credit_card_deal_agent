@@ -16,7 +16,7 @@ from card_agent.terms import report as render
 from card_agent.terms import runner
 from card_agent.terms.__main__ import main
 from card_agent.terms.details import DiffRow, dump_details, load_details
-from card_agent.terms.llm import Usage
+from card_agent.terms.llm import LLMError, Usage
 from card_agent.terms.pipeline import RunReport
 from card_agent.terms.state import StateFiles
 from tests.conftest import routed_client
@@ -354,3 +354,18 @@ def test_pr_body_stays_under_githubs_size_limit():
     body = render.pr_body(report, {})
     assert len(body) <= render.MAX_PR_BODY
     assert "more rows" in body
+
+
+def test_smoke_fails_when_a_key_is_set_but_nothing_extracts(config, offline, monkeypatch, capsys):
+    rejected = LLMError(
+        "OpenAI rejected the API key (HTTP 401). Check the OPENAI_API_KEY secret.", fatal=True
+    )
+    use_provider(monkeypatch, FakeProvider({"amex-gold": rejected, "wells-fargo-bilt": rejected}))
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    summary = config["tmp"] / "summary.md"
+    code = cli(
+        config, "smoke", "--cards", "amex-gold,wells-fargo-bilt", "--summary-md", str(summary)
+    )
+    assert code == 1
+    assert "**LLM problem:** OpenAI rejected the API key (HTTP 401)." in summary.read_text()
+    assert "::error title=card terms::OpenAI rejected the API key" in capsys.readouterr().out

@@ -8,6 +8,7 @@ from datetime import timedelta
 import yaml
 
 from card_agent.terms.details import dump_details, terms_from_entry
+from card_agent.terms.llm import LLMError
 from card_agent.terms.page import content_hash, page_text
 from card_agent.terms.pipeline import PipelineState, RunOptions
 from card_agent.terms.state import QueueEntry
@@ -407,3 +408,25 @@ def test_hand_edits_to_unvalidated_fields_are_not_proposed_back():
         RunOptions(mode="full", cards=["chase-sapphire-preferred"], include_pending=True)
     )
     assert report.diffs == []
+
+
+def test_a_rejected_key_stops_further_calls():
+    rejected = LLMError("OpenAI rejected the API key (HTTP 401).", fatal=True)
+    provider = FakeProvider(
+        {
+            "chase-sapphire-preferred": rejected,
+            "amex-gold": gold_extraction(),
+            "wells-fargo-bilt": rejected,
+        }
+    )
+    pipeline, _ = make_pipeline(provider)
+    pipeline.workers = 1  # deterministic order for the test
+    report = pipeline.run(RunOptions(mode="full"))
+
+    assert provider.calls == ["chase-sapphire-preferred"]
+    assert report.llm_problem == "OpenAI rejected the API key (HTTP 401)."
+    notes = [o.note for o in report.outcomes if o.action == "llm_error"]
+    assert notes[1:] == ["not sent: OpenAI rejected the API key (HTTP 401)."] * 2
+    assert all(
+        pipeline.state.hashes.cards[c].sha256 is None for c in ("amex-gold", "wells-fargo-bilt")
+    )

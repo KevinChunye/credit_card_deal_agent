@@ -25,6 +25,7 @@ from card_agent.terms.rss_trigger import load_news, scan
 from card_agent.terms.runner import (
     card_list,
     log,
+    notice,
     provider_or_note,
     run_pipeline,
     run_url,
@@ -70,6 +71,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     write_summary(render.job_summary(report, names, pr_note), args.summary_md)
     if args.report_json:
         args.report_json.write_text(json.dumps(render.report_json(report), indent=1))
+    if report.llm_problem:
+        notice(report.llm_problem, "warning")  # the run still succeeds; state was saved
     return 0
 
 
@@ -131,6 +134,10 @@ def cmd_smoke(args: argparse.Namespace) -> int:
     write_summary(render.smoke_summary(report), args.summary_md)
     if args.report_json:
         args.report_json.write_text(json.dumps(render.report_json(report), indent=1))
+    # A key was set, so this is a real test: fail if nothing could be extracted.
+    if not any(o.action == "extracted" for o in report.outcomes):
+        notice(report.llm_problem or "smoke test: no card was extracted and validated", "error")
+        return 1
     return 0
 
 

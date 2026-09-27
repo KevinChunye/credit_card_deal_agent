@@ -23,11 +23,11 @@ def log(message: str) -> None:
     print(f"card-terms: {message}", file=sys.stderr)
 
 
-def notice(message: str) -> None:
+def notice(message: str, level: str = "notice") -> None:
     """A log line, and an annotation on the run page when inside GitHub Actions."""
     log(message)
     if os.environ.get("GITHUB_ACTIONS") == "true":
-        print(f"::notice title=card terms::{message}")
+        print(f"::{level} title=card terms::{message}")
 
 
 def provider_or_note() -> tuple[Provider | None, str | None]:

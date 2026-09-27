@@ -110,6 +110,37 @@ def test_refusal_and_api_errors_become_llm_errors():
         broken.extract("s", "u", TermsExtraction)
 
 
+class FakeAPIError(Exception):
+    def __init__(self, status_code: int, message: str):
+        super().__init__(message)
+        self.status_code = status_code
+
+
+def test_rejected_key_is_fatal_and_never_echoed():
+    masked = "Incorrect API key provided: sk-proj-****************x7v$. You can find your key..."
+    provider = OpenAIProvider(
+        "sk", "gpt-6-luna", client=fake_client(error=FakeAPIError(401, masked))
+    )
+    with pytest.raises(LLMError) as caught:
+        provider.extract("s", "u", TermsExtraction)
+    assert caught.value.fatal
+    assert (
+        str(caught.value)
+        == "OpenAI rejected the API key (HTTP 401). Check the OPENAI_API_KEY secret."
+    )
+
+    unknown = OpenAIProvider("sk", "gpt-9", client=fake_client(error=FakeAPIError(404, "no model")))
+    with pytest.raises(LLMError, match="no model 'gpt-9'") as caught:
+        unknown.extract("s", "u", TermsExtraction)
+    assert caught.value.fatal
+
+    flaky = OpenAIProvider("sk", "gpt-6-luna", client=fake_client(error=FakeAPIError(500, masked)))
+    with pytest.raises(LLMError) as caught:
+        flaky.extract("s", "u", TermsExtraction)
+    assert not caught.value.fatal
+    assert "x7v" not in str(caught.value) and "sk-[redacted]" in str(caught.value)
+
+
 def test_missing_key_is_a_clean_skip_not_an_error():
     with pytest.raises(ProviderUnavailable, match="OPENAI_API_KEY is not set"):
         get_provider({})

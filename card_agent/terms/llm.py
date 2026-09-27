@@ -14,6 +14,7 @@ The model gets no tools: one request, JSON out, parsed into the Pydantic schema.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
@@ -37,11 +38,27 @@ PRICES_PER_MTOK: dict[str, tuple[float, float]] = {
 class LLMError(RuntimeError):
     """The provider failed (network, API error, refusal, unparseable output).
 
-    `usage` holds whatever tokens the failed call still consumed."""
+    `usage` holds whatever tokens the failed call still consumed. `fatal` means
+    every further call in this run would fail the same way (bad key, no access,
+    unknown model), so the pipeline stops calling."""
 
-    def __init__(self, message: str, usage: Usage | None = None):
+    def __init__(self, message: str, usage: Usage | None = None, fatal: bool = False):
         super().__init__(message)
         self.usage = usage if usage is not None else Usage()
+        self.fatal = fatal
+
+
+# HTTP statuses after which no call in this run can succeed.
+FATAL_STATUS = {
+    401: "OpenAI rejected the API key (HTTP 401). Check the OPENAI_API_KEY secret.",
+    403: "OpenAI refused access for this key (HTTP 403). Check the key's project permissions.",
+    404: "OpenAI has no model {model!r} for this key (HTTP 404). Check the LLM_MODEL variable.",
+}
+
+
+def redact(text: str) -> str:
+    """Drop anything that looks like an API key (even a masked one) from a message."""
+    return re.sub(r"\bsk-[^\s'\",]+", "sk-[redacted]", text)
 
 
 class ProviderUnavailable(RuntimeError):
@@ -133,7 +150,11 @@ class OpenAIProvider:
                 **kwargs,
             )
         except Exception as exc:  # the SDK raises many types; report them uniformly
-            raise LLMError(f"{type(exc).__name__}: {exc}") from exc
+            status = getattr(exc, "status_code", None)
+            if status in FATAL_STATUS:
+                message = FATAL_STATUS[status].format(model=self.model)
+                raise LLMError(message, fatal=True) from exc
+            raise LLMError(f"{type(exc).__name__}: {redact(str(exc))}") from exc
 
         usage = Usage(calls=1)
         if response.usage is not None:

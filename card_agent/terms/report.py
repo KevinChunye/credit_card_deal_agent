@@ -46,6 +46,8 @@ def table(headers: list[str], rows: list[list[str]]) -> list[str]:
 def usage_line(report: RunReport) -> str:
     if report.model is None:
         return f"**LLM:** not used. {report.provider_note or ''}".strip()
+    if report.llm_problem:
+        return f"**LLM problem:** {report.llm_problem} Extraction stopped for this run."
     usage, cost = report.usage, report.cost
     cost_text = (
         f"${cost:.4f}"
