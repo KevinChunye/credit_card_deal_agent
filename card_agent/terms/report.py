@@ -11,7 +11,7 @@ import pandas as pd
 from card_agent.terms.details import compare_all_fields, terms_from_entry
 from card_agent.terms.pipeline import ACTIONS, CardOutcome, RunReport
 from card_agent.terms.schema import TermsExtraction
-from card_agent.terms.validate import ValidationResult, map_currency
+from card_agent.terms.validate import ValidationResult, earn_evidence, map_currency
 
 MAX_PR_BODY = 60_000  # GitHub rejects bodies over 65,536 characters
 EVIDENCE_CHARS = 220
@@ -332,8 +332,8 @@ def extraction_rows(
             [
                 name,
                 cell(_earn_value(row), 120),
-                quote(row.evidence),
-                verdict(name, row.evidence, skipped),
+                quote(earn_evidence(row)),
+                verdict(name, earn_evidence(row), skipped),
             ]
         )
     for row in extraction.benefits:

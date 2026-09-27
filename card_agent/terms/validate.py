@@ -3,7 +3,10 @@
 A value is kept only if:
 - its evidence quote appears in the page text (ignoring whitespace, case, and
   trademark symbols/typographic quotes), and is long enough to mean something;
-- the number it claims appears in that quote (3x needs a "3" in the evidence);
+- the number it claims appears in that quote (3x needs a "3" in the evidence),
+  or, for a rate stated once in a heading over a list ("3x points on:" then
+  "dining ..."), in a heading quote that precedes the item quote on the page,
+  within 1,500 characters, with no other rate stated in between;
 - it is within bounds (multiplier 0.5-15, annual fee 0-1000, credits 0-2000/yr);
 - its category is one of the existing spend categories.
 The whole extraction is rejected if the card named on the page isn't the target
@@ -38,6 +41,9 @@ MULTIPLIER_BOUNDS = (0.5, 15.0)
 ANNUAL_FEE_BOUNDS = (0.0, 1000.0)
 CREDIT_BOUNDS = (0.0, 2000.0)
 CAP_MAX = 1_000_000.0
+# Heading + list evidence: the heading must come before the item, at most this
+# many characters earlier (whitespace ignored), with no other rate in between.
+MAX_LIST_GAP = 1_500
 PERIODS_PER_YEAR = {
     Cadence.monthly: 12,
     Cadence.quarterly: 4,
@@ -80,6 +86,25 @@ CURRENCY_PATTERNS: list[tuple[str, str]] = [
 ]
 
 
+# Foreign transaction fee quotes must say where (abroad) and what (a fee/charge).
+ABROAD = re.compile(
+    r"\bforeign\b|\boutside (?:of )?the (?:united states|u\.? ?s\b\.?)|\binternational\b|\babroad\b",
+    re.I,
+)
+FEE_WORDS = re.compile(r"\bfees?\b|\bcharg(?:e|es|ed|ing)\b|\bpay(?:s|ing)?\b", re.I)
+NEGATION = re.compile(
+    r"\bno\b|\bnone\b|\bwithout\b|\bwon't\b|\bwill not\b|\bdon't\b|\bdo not\b|"
+    r"\bdoesn't\b|\bdoes not\b|\bnever\b|\bzero\b|\$0\b|\b0%|\bwaived\b",
+    re.I,
+)
+
+
+def plain(text: str) -> str:
+    """Text for wording rules: NFKC, straight quotes, single spaces."""
+    text = unicodedata.normalize("NFKC", text or "").replace("’", "'").replace("‘", "'")
+    return " ".join(text.split())
+
+
 def match_key(text: str) -> str:
     """Canonical form for quote matching: no whitespace, marks or case."""
     text = re.sub(r"[®™℠†‡*]", "", text or "")
@@ -116,6 +141,76 @@ def numbers_in(text: str) -> set[float]:
 
 def number_in(value: float, text: str) -> bool:
     return any(abs(value - found) < 1e-6 for found in numbers_in(text))
+
+
+def _starts(needle: str, haystack: str) -> list[int]:
+    return [match.start() for match in re.finditer(re.escape(needle), haystack)]
+
+
+def rates_in(key_text: str) -> list[tuple[float, str]]:
+    """Rates stated in match_key text: "3x" -> (3.0, "x"), "5%" -> (5.0, "%")."""
+    return [
+        (float(number), unit)
+        for number, unit in re.findall(r"(?<![\d.,$])(\d{1,2}(?:\.\d+)?)(x|%)", key_text)
+    ]
+
+
+def heading_item_problem(multiplier: float, heading: str, item: str, page_key: str) -> str | None:
+    """Why a heading + list-item pair doesn't back `multiplier`, or None if it does.
+
+    Both quotes must be on the page, the heading must state the multiplier, the
+    item must not state a different one, and some occurrence of the heading must
+    end before an occurrence of the item, within MAX_LIST_GAP characters, with no
+    different rate (same unit) stated in between (that would be another list)."""
+    heading_key, item_key = match_key(heading), match_key(item)
+    if not quote_on_page(heading, page_key):
+        return "heading not found on page"
+    if not quote_on_page(item, page_key):
+        return "list item not found on page"
+    if not number_in(multiplier, heading):
+        return f"heading doesn't state {multiplier:g}"
+    if any(abs(value - multiplier) > 1e-6 for value, _unit in rates_in(item_key)):
+        return "list item states a different rate"
+    units = {unit for value, unit in rates_in(heading_key) if abs(value - multiplier) < 1e-6}
+    nearest = None
+    for heading_start in _starts(heading_key, page_key):
+        heading_end = heading_start + len(heading_key)
+        for item_start in _starts(item_key, page_key):
+            gap = item_start - heading_end
+            if not 0 <= gap <= MAX_LIST_GAP:
+                continue
+            between = rates_in(page_key[heading_end:item_start])
+            if any(
+                abs(value - multiplier) > 1e-6 and (not units or unit in units)
+                for value, unit in between
+            ):
+                nearest = "another rate is stated between the heading and the item"
+                continue
+            return None
+    return nearest or f"heading isn't within {MAX_LIST_GAP:,} characters before the item"
+
+
+def earn_evidence(row: EarnRateOut) -> str:
+    """The quote(s) behind an earn row, as shown in reports."""
+    if row.evidence_heading and row.evidence_item:
+        return f"{row.evidence_heading} … {row.evidence_item}"
+    return row.evidence
+
+
+def _earn_quote(row: EarnRateOut, page_key: str) -> tuple[str | None, str | None]:
+    """(evidence to keep, None) when one quote, or a heading + item pair, backs the
+    multiplier; (None, reason) otherwise."""
+    single = quote_on_page(row.evidence, page_key)
+    if single and number_in(row.multiplier, row.evidence):
+        return row.evidence, None
+    if row.evidence_heading and row.evidence_item:
+        problem = heading_item_problem(
+            row.multiplier, row.evidence_heading, row.evidence_item, page_key
+        )
+        return (None, problem) if problem else (earn_evidence(row), None)
+    if not single:
+        return None, "evidence not found on page"
+    return None, f"evidence doesn't state {row.multiplier:g}"
 
 
 def map_currency(text: str) -> str | None:
@@ -162,12 +257,11 @@ def _in_bounds(value: float, bounds: tuple[float, float]) -> bool:
 
 def _check_earn(row: EarnRateOut, page_key: str) -> tuple[EarnRow | None, str | None]:
     """(row, None) if valid, (None, reason) if not."""
-    if not quote_on_page(row.evidence, page_key):
-        return None, "evidence not found on page"
+    evidence, problem = _earn_quote(row, page_key)
+    if problem:
+        return None, problem
     if not _in_bounds(row.multiplier, MULTIPLIER_BOUNDS):
         return None, f"multiplier {row.multiplier:g} outside {MULTIPLIER_BOUNDS}"
-    if not number_in(row.multiplier, row.evidence):
-        return None, f"evidence doesn't state {row.multiplier:g}"
     cap = cap_period = None
     if row.cap_usd is not None:
         if not (0 < row.cap_usd <= CAP_MAX) or row.cap_period is None:
@@ -187,7 +281,7 @@ def _check_earn(row: EarnRateOut, page_key: str) -> tuple[EarnRow | None, str | 
             choice_group=row.choice_group or None,
             choose=(row.choose or 1) if row.choice_group else None,
             notes=row.description or None,
-            evidence=row.evidence,
+            evidence=evidence,
         ),
         None,
     )
@@ -267,12 +361,14 @@ def validate_extraction(
 
     ftf = extraction.foreign_tx_fee
     if ftf is not None:
-        says_none = re.search(r"\bno\b|\bnone\b|\bwithout\b|\$0\b|\b0%|waived", ftf.evidence, re.I)
+        wording = plain(ftf.evidence)
         if not quote_on_page(ftf.evidence, page_key):
             reason = "evidence not found on page"
-        elif "foreign" not in ftf.evidence.lower():
+        elif not ABROAD.search(wording):
             reason = "evidence doesn't mention foreign transactions"
-        elif ftf.charged == bool(says_none):
+        elif not FEE_WORDS.search(wording):
+            reason = "evidence doesn't mention a fee or charge"
+        elif ftf.charged == bool(NEGATION.search(wording)):
             reason = "evidence contradicts the value"
         else:
             reason = None
@@ -320,7 +416,10 @@ def validate_extraction(
             failed_categories.add(Category(row.category.value))
             result.issues.append(
                 Issue(
-                    f"earn.{row.category.value}", reason or "", f"{row.multiplier:g}x", row.evidence
+                    f"earn.{row.category.value}",
+                    reason or "",
+                    f"{row.multiplier:g}x",
+                    earn_evidence(row),
                 )
             )
         else:

@@ -29,6 +29,11 @@ Pick one category per row; use not_listed for merchant-specific or co-brand cate
 else that doesn't fit. Include the base rate ("all other purchases") as category other. \
 cap_usd is the spend limit in USD for the rate, with cap_period and a cap_evidence quote \
 that contains the cap amount, or all three null.
+- Earn-rate evidence: quote a sentence that states both the multiplier and the category. \
+If the page states the multiplier once in a heading over a list of categories (e.g. "3x \
+points on:" followed by "dining at restaurants", "select streaming services"), set \
+evidence_heading to that heading and evidence_item to the list item, both verbatim, and \
+repeat the list item in evidence. Otherwise set evidence_heading and evidence_item to null.
 - "Choose your category" menus: one row per option, all with the same choice_group label, \
 and choose = how many options earn the rate at once.
 - benefits: recurring credits and perks. amount_stated = the dollar amount per period as \
