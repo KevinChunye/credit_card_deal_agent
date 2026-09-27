@@ -7,5 +7,24 @@
  "removed_offers": [],
  "elevated_bonuses": [],
  "reduced_bonuses": [],
- "fee_changes": []
+ "fee_changes": [
+  {
+   "card_id": "amex-business-platinum",
+   "name": "Business Platinum",
+   "old_annual_fee": 695.0,
+   "new_annual_fee": 895.0
+  },
+  {
+   "card_id": "amex-gold",
+   "name": "Gold",
+   "old_annual_fee": 350.0,
+   "new_annual_fee": 325.0
+  },
+  {
+   "card_id": "amex-hilton-honors-surpass",
+   "name": "Hilton Honors Surpass",
+   "old_annual_fee": 95.0,
+   "new_annual_fee": 150.0
+  }
+ ]
 }
