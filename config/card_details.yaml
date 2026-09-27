@@ -1,29 +1,34 @@
-# Hand-curated card details the public bonuses API does not carry:
-# per-category earn rates, foreign transaction fees, protections, and
+# Card terms the bonuses API doesn't carry: per-category earn rates, annual fees,
+# credits/benefits, foreign transaction fees, rewards currency, protections, and
 # product-change (downgrade) paths. Also defines a few cards the API lacks.
 #
-# Why a static file: the only open dataset with category earn rates
-# (fuermosi777/rewards) has no license, so it is opt-in (see docs/FINDINGS.md).
-# Earn rates change rarely; editing this file is the simplest thing that works.
-#
-# Compiled from public issuer terms as understood mid-2026. VERIFY before
-# relying on any single number; fix it here and the next collector run picks it up.
+# GENERATED + REVIEWED. For cards with an issuer page in config/card_sources.yaml,
+# the card-terms pipeline (card_agent/terms) re-reads the page when it changes,
+# extracts the terms with an LLM, checks every value deterministically against a
+# verbatim quote from the page, and proposes changes to this file in a PR titled
+# "card terms changed: ...". Merge the PR to accept them.
+# - Pipeline-owned keys: annual_fee, foreign_tx_fee, point_currency, earn,
+#   benefits, evidence, terms_source. Hand edits to these are overwritten by the
+#   next accepted extraction; to maintain a card by hand, set its url to null in
+#   card_sources.yaml.
+# - Hand-owned keys (kept as is): define, override, notes, transferable,
+#   protections, downgrade_to.
 #
 # Conventions
 # - Keys are our card ids (issuer slug + name slug, as the collector builds them).
 # - multiplier: points/miles per $ for points cards, percent for cash-back cards.
-# - Co-brand bonus categories (e.g. "6x at Marriott") are left out on purpose:
-#   they don't map to a general spend category, so the scorer undercounts rather
-#   than overcounts. travel_portal uses the rate that covers every portal
-#   booking (flights included); hotel-only portal rates are in `notes`.
+# - Co-brand bonus categories ("6x at Marriott") are left out: they don't map to
+#   a general spend category, so the scorer undercounts rather than overcounts.
+#   When a category has several rates (portal hotels 10x vs portal flights 5x),
+#   the lower one is kept.
 # - choice: a menu; the scorer applies the rate to the `choose` categories that
 #   are worth the most for your spending (Custom Cash, Customized Cash, Cash+).
 # - cap / cap_period: spend cap for that rate; spend above it earns the `other` rate.
+# - benefits: amount is USD per year (null when the page states no dollar value).
 
 as_of: "2026-06"
 
 cards:
-  # ----------------------------------------------------------------- Chase
   chase-sapphire-preferred:
     foreign_tx_fee: false
     earn:
@@ -50,8 +55,8 @@ cards:
     downgrade_to: [chase-sapphire-preferred, chase-freedom-unlimited, chase-freedom-flex]
 
   chase-freedom-unlimited:
-    foreign_tx_fee: true
     transferable: false
+    foreign_tx_fee: true
     earn:
       - {category: travel_portal, multiplier: 5, notes: "Chase Travel"}
       - {category: dining, multiplier: 3}
@@ -60,8 +65,8 @@ cards:
     protections: [secondary_rental, purchase, extended_warranty]
 
   chase-freedom-flex:
-    foreign_tx_fee: true
     transferable: false
+    foreign_tx_fee: true
     earn:
       - {category: rotating, multiplier: 5, cap: 1500, cap_period: quarter, notes: "Quarterly categories; activation required"}
       - {category: travel_portal, multiplier: 5, notes: "Chase Travel"}
@@ -79,8 +84,8 @@ cards:
     downgrade_to: [chase-ink-business-cash, chase-ink-business-unlimited]
 
   chase-ink-business-cash:
-    foreign_tx_fee: true
     transferable: false
+    foreign_tx_fee: true
     earn:
       - {category: gas, multiplier: 2, cap: 25000, cap_period: year, notes: "$25k combined with dining; 5x office supply & internet/cable/phone not modeled"}
       - {category: dining, multiplier: 2, cap: 25000, cap_period: year}
@@ -88,8 +93,8 @@ cards:
     protections: [primary_rental, purchase, extended_warranty]
 
   chase-ink-business-unlimited:
-    foreign_tx_fee: true
     transferable: false
+    foreign_tx_fee: true
     earn:
       - {category: other, multiplier: 1.5}
     protections: [primary_rental, purchase, extended_warranty]
@@ -142,7 +147,6 @@ cards:
       - {category: other, multiplier: 3}
     downgrade_to: [chase-ihg-traveler]
 
-  # ------------------------------------------------------------------ Amex
   amex-platinum:
     foreign_tx_fee: false
     earn:
@@ -267,7 +271,6 @@ cards:
   amex-delta-skymiles-reserve:
     downgrade_to: [amex-delta-skymiles-platinum, amex-delta-skymiles-gold, amex-delta-skymiles-blue]
 
-  # ----------------------------------------------------------- Capital One
   capital-one-venture-x:
     foreign_tx_fee: false
     earn:
@@ -313,7 +316,6 @@ cards:
     earn:
       - {category: other, multiplier: 2}
 
-  # ------------------------------------------------------------------ Citi
   citi-strata-premier:
     foreign_tx_fee: false
     earn:
@@ -353,7 +355,6 @@ cards:
       - {category: gas, multiplier: 2}
       - {category: other, multiplier: 1, notes: "2x American Airlines not modeled"}
 
-  # --------------------------------------------------------- Bank of America
   bofa-customized-cash-rewards:
     foreign_tx_fee: true
     earn:
@@ -388,7 +389,6 @@ cards:
     earn:
       - {category: other, multiplier: 1.5}
 
-  # ----------------------------------------------------------- Wells Fargo
   wells-fargo-active-cash:
     foreign_tx_fee: true
     earn:
@@ -419,16 +419,17 @@ cards:
     downgrade_to: [wells-fargo-autograph, wells-fargo-active-cash]
 
   wells-fargo-bilt:
-    override: {point_currency: bilt, transferable: true}
-    foreign_tx_fee: false
+    override:
+      point_currency: bilt
+      transferable: true
     notes: "Legacy Bilt Mastercard terms. biltrewards.com/card now shows the 2026 lineup (Bilt Blue $0, Palladium $495, up to 1.25x on rent/mortgage) issued by Cardless; update this entry for the card you hold."
+    foreign_tx_fee: false
     earn:
       - {category: rent, multiplier: 1, notes: "No fee on rent; up to 100k points/yr; 5 transactions per statement required"}
       - {category: dining, multiplier: 3}
       - {category: travel_general, multiplier: 2}
       - {category: other, multiplier: 1}
 
-  # ---------------------------------------------------------------- U.S. Bank
   us-bank-altitude-go:
     foreign_tx_fee: false
     earn:
@@ -440,15 +441,14 @@ cards:
       - {category: other, multiplier: 1}
 
   us-bank-cash:
-    foreign_tx_fee: true
     notes: "Cash+ Visa Signature"
+    foreign_tx_fee: true
     earn:
       - {choice: [streaming, transit_rideshare], choose: 2, multiplier: 5, cap: 2000, cap_period: quarter, notes: "5% on two chosen categories; utilities, cell phone, fast food etc. not modeled"}
       - {choice: [gas, groceries, dining], choose: 1, multiplier: 2, notes: "2% on one everyday category"}
       - {category: travel_portal, multiplier: 5, notes: "Prepaid travel via the Rewards Travel Center"}
       - {category: other, multiplier: 1}
 
-  # ------------------------------------------------------ Barclays / Discover
   barclays-jetblue-plus:
     foreign_tx_fee: false
     earn:
@@ -462,7 +462,6 @@ cards:
       - {category: rotating, multiplier: 5, cap: 1500, cap_period: quarter, notes: "Quarterly categories; activation required; first-year Cashback Match"}
       - {category: other, multiplier: 1}
 
-  # --------------------------------------- Cards the bonuses API doesn't have
   apple-card:
     define:
       issuer: apple

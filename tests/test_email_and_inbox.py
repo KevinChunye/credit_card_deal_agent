@@ -26,9 +26,8 @@ def email(name: str) -> dict:
 @pytest.fixture
 def data(api_raw) -> DataView:
     cards, offers, benefits, base = bonuses_api.normalize(api_raw, NOW)
-    cards, rates, protections, paths, _ = apply_seed(
-        load_seed(CONFIG_DIR / "card_details.yaml"), cards, base
-    )
+    seeded = apply_seed(load_seed(CONFIG_DIR / "card_details.yaml"), cards, base)
+    cards, rates = seeded.cards, seeded.earn_rates
     return DataView(Snapshot(generated_at=NOW, cards=cards, offers=offers, earn_rates=rates))
 
 
