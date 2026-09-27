@@ -667,3 +667,24 @@ def test_page_name_variants_still_have_to_be_this_card():
     assert name_matches(journey, "Wells Fargo Autograph Journey service mark ℠ Card")
     # ...but a different card is still a different card.
     assert not name_matches(journey, "Wells Fargo Autograph service mark ℠ Card")
+
+
+@pytest.mark.parametrize(
+    ("kind", "amount", "quote"),
+    [
+        ("travel_credit", 200, "After you spend $10,000 in purchases on your Card in a calendar year, you can receive a $200 Delta Flight Credit to use toward future travel."),
+        ("other", 100, "You'll receive a $100 statement credit and 10,000 bonus points each calendar year during which you spend at least $20,000 in purchases."),
+        ("travel_credit", 1200, "Unlock up to $1,200 in statement credits on flights booked on AmexTravel.com with the Business Platinum Card, for use in the next calendar year, after spending $250,000 in eligible purchases in this calendar year."),
+    ],
+)  # fmt: skip
+def test_credits_unlocked_by_a_spending_threshold_have_no_dollar_value(kind, amount, quote):
+    result = check_text(quote, benefits=(benefit(kind, amount, "annual", quote),))
+    assert result.issues == []
+    assert [row.amount for row in result.terms.benefits] == [None]
+    assert any("spending threshold" in note for note in result.skipped)
+
+
+def test_a_minimum_purchase_is_not_a_spending_threshold():
+    quote = "Get $100 off a single hotel stay of $500 or more when you spend $500 through cititravel.com"
+    result = check_text(quote, benefits=(benefit("hotel_credit", 100, "annual", quote),))
+    assert [row.amount for row in result.terms.benefits] == [100]

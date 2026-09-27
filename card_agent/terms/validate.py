@@ -19,8 +19,9 @@ A value is kept only if:
 Benefit amounts are only ever lowered: a coverage limit ("reimbursed up to $800"
 if a phone is stolen), a per-use credit ("every time you book") or the cap on a
 percentage rebate ("10% back ... up to $250") keeps no dollar value, nor does
-airline status currency ("$2,500 Medallion Qualification Dollars"), and a
-time-limited perk ("when activated by December 31") counts once rather than
+a credit unlocked by spending ("$200 Delta Flight Credit after you spend
+$10,000") or airline status currency ("$2,500 Medallion Qualification
+Dollars"), and a time-limited perk ("when activated by December 31") counts once rather than
 every year.
 The whole extraction is rejected if the card named on the page isn't the target
 card (multi-card pages such as Amex promos or Bilt's lineup).
@@ -194,6 +195,12 @@ COVERAGE = re.compile(
 CREDIT_WORD = re.compile(r"\bcredits?\b", re.I)
 # Airline status currency, not money.
 STATUS_DOLLARS = re.compile(r"\bqualification dollars?\b|\bMQDs?\b", re.I)
+# A credit unlocked by a spending threshold ("after you spend $10,000", "during which
+# you spend at least $20,000") costs spend the scorer doesn't model. Small minimum
+# purchases ("a stay of $500 or more") are not thresholds.
+SPEND_UNLOCK = re.compile(
+    r"\bspend(?:s|ing)? (?:at least |over |more than )?\$\d{1,3}(?:,\d{3})+", re.I
+)
 # "10% back ... up to $250": the amount caps a percentage rebate; it isn't a credit.
 REBATE = re.compile(r"\b\d+(?:\.\d+)?% (?:back|cash back|off|discount|savings)\b", re.I)
 PER_USE = re.compile(
@@ -456,6 +463,11 @@ def _adjust_benefit(row: BenefitOut, result: ValidationResult) -> BenefitOut:
     if STATUS_DOLLARS.search(wording):
         result.skipped.append(
             f"{field}: ${row.amount_stated:g} is airline status currency, not money; no $ value"
+        )
+        return row.model_copy(update={"amount_stated": None})
+    if SPEND_UNLOCK.search(wording):
+        result.skipped.append(
+            f"{field}: ${row.amount_stated:g} is unlocked by a spending threshold; no $ value"
         )
         return row.model_copy(update={"amount_stated": None})
     if COVERAGE.search(wording) and not CREDIT_WORD.search(wording):
