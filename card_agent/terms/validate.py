@@ -163,10 +163,11 @@ def heading_item_problem(multiplier: float, heading: str, item: str, page_key: s
     end before an occurrence of the item, within MAX_LIST_GAP characters, with no
     different rate (same unit) stated in between (that would be another list)."""
     heading_key, item_key = match_key(heading), match_key(item)
-    if not quote_on_page(heading, page_key):
-        return "heading not found on page"
-    if not quote_on_page(item, page_key):
-        return "list item not found on page"
+    for label, key in (("heading", heading_key), ("list item", item_key)):
+        if len(key) < MIN_EVIDENCE_CHARS:
+            return f"{label} quote too short"
+        if key not in page_key:
+            return f"{label} not found on page"
     if not number_in(multiplier, heading):
         return f"heading doesn't state {multiplier:g}"
     if any(abs(value - multiplier) > 1e-6 for value, _unit in rates_in(item_key)):

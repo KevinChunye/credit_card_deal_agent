@@ -123,6 +123,9 @@ def test_heading_too_far_above_the_item_is_rejected():
     )
     near = match_key("Earn 4x points on: select streaming services.")
     assert heading_item_problem(4, "Earn 4x points on:", "select streaming services", near) is None
+    assert heading_item_problem(4, "4x", "select streaming services", near) == (
+        "heading quote too short"
+    )
 
 
 def test_fabricated_heading_or_item_is_rejected():
