@@ -23,7 +23,11 @@ from the page text that states that value. Do not paraphrase, fix typos, change 
 join separate sentences, and prefer quotes that don't cross footnote numbers. If you cannot \
 quote it, leave the value out (null, or omit the row).
 - earn_rates: permanent earning rates only; not sign-up bonuses, limited-time promotions, \
-or referral rewards. multiplier = points or miles per $1, or the percent for cash back. \
+or referral rewards. multiplier = points or miles per $1, or the percent for cash back, \
+in total: a rate stated on top of the base ("2% on purchases" and "In addition, earn 3% on \
+travel booked with Citi Travel") is the sum (5), quoted from a sentence that states it. If \
+a rate depends on a membership the card requires (e.g. "with an eligible Prime \
+membership"), give that rate and leave out the rate without it. \
 Pick one category per row; use not_listed for merchant-specific or co-brand categories \
 (e.g. "at hotels participating in Marriott Bonvoy", "on United purchases") and anything \
 else that doesn't fit. Include the base rate ("all other purchases") as category other. \

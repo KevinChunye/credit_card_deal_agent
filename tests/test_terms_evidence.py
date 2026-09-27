@@ -702,3 +702,30 @@ def test_a_spending_threshold_in_the_benefit_name_also_removes_the_dollar_value(
     }
     result = check_text(quote, benefits=(row,))
     assert [row.amount for row in result.terms.benefits] == [None]
+
+
+# ---------------------------------------------------------------------------
+# Rules from reviewing the first full run's PR (real quotes)
+# ---------------------------------------------------------------------------
+
+
+def test_unlock_up_to_is_a_credit_unlocked_by_spending():
+    # Business Platinum: the page's next words are "after spending $250,000 ...".
+    quote = (
+        "Unlock up to $1,200 in statement credits on flights booked on AmexTravel.com with the "
+        "Business Platinum Card"
+    )
+    result = check_text(quote, benefits=(benefit("travel_credit", 1200, "annual", quote),))
+    assert [row.amount for row in result.terms.benefits] == [None]
+
+
+def test_select_travel_is_not_travel_in_general():
+    aspire = (
+        "7X Points on Select Travel Including flights booked directly with airlines or "
+        "AmexTravel.com and car rentals booked directly with select car rental companies."
+    )
+    result = check_text(aspire, earn("travel_general", 7, aspire), earn("flights", 7, aspire))
+    assert reasons(result) == {
+        "earn.travel_general": '"select travel" is a subset of travel (use its categories)'
+    }
+    assert [(r.category.value, r.multiplier) for r in result.terms.earn] == [("flights", 7)]
