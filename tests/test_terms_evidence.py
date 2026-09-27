@@ -432,7 +432,7 @@ def test_co_brand_and_portal_only_travel_rates():
     assert [(r.category.value, r.multiplier) for r in result.terms.earn] == [("flights", 7)]
 
 
-def test_base_rate_is_uncapped_and_caps_are_not_dropped():
+def test_capped_category_rates_are_not_the_base_rate_and_caps_are_not_dropped():
     ink = (
         "Earn 5% cash back on the first $25,000 spent in combined purchases at office supply "
         "stores and on internet, cable and phone services each account anniversary year."
@@ -449,7 +449,7 @@ def test_base_rate_is_uncapped_and_caps_are_not_dropped():
         earn("rotating", 5, discover),
     )
     assert reasons(result) == {
-        "earn.other": "a capped rate isn't the base rate (use a category or not_listed)",
+        "earn.other": "a capped base rate must cover all purchases (use a category or not_listed)",
         "earn.rotating": "evidence mentions a spending cap that wasn't extracted",
     }
     assert [(r.category.value, r.multiplier) for r in result.terms.earn] == [("other", 1)]
@@ -519,3 +519,77 @@ def test_quote_edges_may_differ_in_punctuation():
     assert quote_on_page("you are eligible for an upgrade to Hertz Five Star Status.", page)
     # ...but every word still has to be there.
     assert not quote_on_page("you are eligible for an upgrade to Hertz Platinum Status.", page)
+
+
+# ---------------------------------------------------------------------------
+# Rules from the second full bootstrap (real quotes, plus near misses)
+# ---------------------------------------------------------------------------
+
+
+def test_a_capped_rate_on_all_purchases_is_the_base_rate():
+    # Blue Business Cash: 2% on everything up to $50,000 a year, then 1%.
+    cash = "2% cash back on all eligible purchases on up to $50,000 per calendar year"
+    then = "then 1% on eligible purchases thereafter."
+    result = check_text(
+        f"{cash}, {then}",
+        earn("other", 2, cash, cap_usd=50000, cap_period="year", cap_evidence=cash),
+        earn("other", 1, then),
+    )
+    assert result.issues == []
+    # The rate after the cap is the overflow the scorer already applies.
+    assert [(r.category.value, r.multiplier, r.cap) for r in result.terms.earn] == [
+        ("other", 2, 50000)
+    ]
+    # Blue Business Plus says it without "all".
+    plus = "Earn 2X points on the first $50,000 in eligible purchases per calendar year"
+    result = check_text(
+        plus, earn("other", 2, plus, cap_usd=50000, cap_period="year", cap_evidence=plus)
+    )
+    assert result.issues == []
+
+
+@pytest.mark.parametrize(
+    ("multiplier", "cap", "quote"),
+    [
+        (5, 25000, "Earn 5% cash back on all eligible purchases at office supply stores on up to $25,000 per year"),
+        (3, 6000, "Earn 3% cash back on eligible purchases on groceries on up to $6,000 per year"),
+    ],
+)  # fmt: skip
+def test_a_capped_rate_on_some_purchases_is_not_the_base_rate(multiplier, cap, quote):
+    row = earn("other", multiplier, quote, cap_usd=cap, cap_period="year", cap_evidence=quote)
+    assert reasons(check_text(quote, row)) == {
+        "earn.other": "a capped base rate must cover all purchases (use a category or not_listed)"
+    }
+
+
+def test_air_travel_and_ground_transportation_name_their_categories():
+    strata = "3 points per dollar spent on Air Travel and Other Hotel Purchases"
+    heading = "5% cash back on two categories you choose"
+    menu = {"choice_group": "five_percent", "choose": 2}
+    result = check_text(
+        f"{strata}. {heading}: Fast food Ground transportation Home utilities",
+        earn("flights", 3, strata),
+        earn("hotels", 3, strata),
+        listed("transit_rideshare", 5, heading, "Ground transportation") | menu,
+        # Fast food is a Cash+ category of its own; dining means restaurants.
+        listed("dining", 5, heading, "Fast food") | menu,
+    )
+    assert reasons(result) == {"earn.dining": "heading and item don't name dining"}
+    assert {r.category.value for r in result.terms.earn} == {
+        "flights",
+        "hotels",
+        "transit_rideshare",
+    }
+
+
+def test_travel_rate_limited_to_the_portal_for_airfare_and_hotels():
+    # Amex Green: airfare, hotels and car rentals earn 3X only on AmexTravel.com (the
+    # rest of the 3X is cruises, tours and third-party sites), so a flight booked
+    # with the airline doesn't earn it: travel_portal, not travel_general.
+    green = (
+        "3X points on travel including airfare, hotels, and car rentals on AmexTravel.com or "
+        "the Amex Travel App™, and cruises, tours, campgrounds, vacation rentals, travel "
+        "purchases on third party travel websites, and travel purchases on AmexTravel.com."
+    )
+    result = check_text(green, earn("travel_general", 3, green))
+    assert [(r.category.value, r.multiplier) for r in result.terms.earn] == [("travel_portal", 3)]

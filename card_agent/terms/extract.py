@@ -42,9 +42,12 @@ give the lowest one as travel_portal.
 - "Choose your category" menus: one row per option, all with the same choice_group label, \
 and choose = how many options earn the rate at once. A menu option that fits no category \
 (e.g. advertising, shipping, software) is not_listed, never other.
-- other is only the base rate on all other purchases; it never has a cap. A capped bonus \
-on specific merchants (e.g. office supply stores) is not_listed. If the page says a rate is \
-capped ("up to the quarterly maximum", "on the first $25,000"), give the cap.
+- other is the base rate on all other purchases, normally uncapped. If the rate on all \
+purchases is capped ("2X on the first $50,000 in eligible purchases per year, then 1X"), \
+other is that capped rate with its cap, and the rate after the cap is left out. A capped \
+bonus on specific merchants (e.g. office supply stores) is not_listed. If the page says a \
+rate is capped ("up to the quarterly maximum", "on the first $25,000"), give the cap, with \
+a cap_evidence quote of the amount from wherever the page states it.
 - Rates at a brand's own hotels or airline (e.g. "at hotels participating in Marriott \
 Bonvoy", "on Delta purchases") are not_listed, never hotels or flights.
 - benefits: recurring credits and perks. amount_stated = the dollar amount per period as \

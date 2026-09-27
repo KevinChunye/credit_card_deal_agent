@@ -10,6 +10,9 @@ A value is kept only if:
 - an earn quote (or its heading or list item) names the rate's category, and a
   rate that only applies to bookings through an issuer's travel portal isn't
   filed as general hotels/flights/travel;
+- a capped rate is the base rate only if it covers all purchases ("2% on all
+  eligible purchases on up to $50,000 per year"), and a cap its quote mentions
+  must be extracted;
 - it is within bounds (multiplier 0.5-15, annual fee 0-1000, credits 0-2000/yr);
 - its category is one of the existing spend categories.
 Benefit amounts are only ever lowered: a coverage limit ("reimbursed up to $800"
@@ -127,10 +130,11 @@ CATEGORY_WORDS: dict[Category, tuple[str, ...]] = {
     Category.ev_charging: ("electricvehicle", "evcharging", "charging"),
     Category.travel_portal: ("travel", "portal"),
     Category.travel_general: ("travel",),
-    Category.flights: ("flight", "airline", "airfare"),
+    Category.flights: ("flight", "airline", "airfare", "airtravel"),
     Category.hotels: ("hotel", "lodging", "resort"),
     Category.transit_rideshare: (
         "transit", "rideshare", "commut", "uber", "lyft", "taxi", "train", "subway", "parking",
+        "groundtransport",
     ),
     Category.streaming: ("stream",),
     Category.drugstores: ("drugstore", "pharmac"),
@@ -163,6 +167,11 @@ CAP_HINT = re.compile(
     r"\bon (?:the first|up to) \$[\d,]+",
     re.I,
 )
+# A capped rate is the base rate only if it covers purchases in general ("2% cash
+# back on all eligible purchases on up to $50,000 per calendar year"), not
+# purchases somewhere ("... purchases at office supply stores") or in a category.
+GENERAL_PURCHASES = re.compile(r"\b(?:all|every|everyday|eligible)(?: \w+){0,2} purchases\b", re.I)
+PURCHASE_PLACE = re.compile(r"\bpurchases (?:at|from|with|made)\b", re.I)
 # Benefit wording that lowers a stated amount.
 COVERAGE = re.compile(
     r"\b(?:protection|insurance|insured|coverage|covered|stolen|damaged|theft|warranty)\b", re.I
@@ -187,6 +196,15 @@ def names_category(category: Category, *quotes: str) -> bool:
         return True
     keys = [match_key(quote or "") for quote in quotes]
     return any(word in key for word in words for key in keys)
+
+
+def capped_base(wording: str) -> bool:
+    """True if a capped rate filed as the base rate covers all purchases."""
+    return (
+        GENERAL_PURCHASES.search(wording) is not None
+        and PURCHASE_PLACE.search(wording) is None
+        and not any(names_category(category, wording) for category in CATEGORY_WORDS)
+    )
 
 
 def plain(text: str) -> str:
@@ -379,8 +397,8 @@ def _check_earn(row: EarnRateOut, page_key: str) -> tuple[EarnRow | None, str | 
         r"\btravel\b", PORTAL.sub(" ", wording), re.I
     ):
         return None, "evidence doesn't name travel in general"
-    if category == Category.other and row.cap_usd is not None:
-        return None, "a capped rate isn't the base rate (use a category or not_listed)"
+    if category == Category.other and row.cap_usd is not None and not capped_base(wording):
+        return None, "a capped base rate must cover all purchases (use a category or not_listed)"
     if row.cap_usd is None and CAP_HINT.search(wording):
         return None, "evidence mentions a spending cap that wasn't extracted"
     if not _in_bounds(row.multiplier, MULTIPLIER_BOUNDS):
