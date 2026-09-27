@@ -17,6 +17,7 @@ from card_agent.terms.llm import (
     Usage,
     estimate_cost,
     get_provider,
+    max_run_cost,
     price_for,
 )
 from card_agent.terms.schema import EarnRow, TermsExtraction
@@ -248,3 +249,13 @@ def test_uncovered_rows_and_menus_are_kept_whole():
         ("gas", "file:choice0"),
         ("drugstores", "file:choice0"),
     }
+
+
+def test_max_run_cost_setting():
+    assert max_run_cost({}) == 1.00
+    assert max_run_cost({"MAX_RUN_COST_USD": " "}) == 1.00
+    assert max_run_cost({"MAX_RUN_COST_USD": "0.25"}) == 0.25
+    with pytest.raises(ValueError, match="must be a number"):
+        max_run_cost({"MAX_RUN_COST_USD": "one dollar"})
+    with pytest.raises(ValueError, match="negative"):
+        max_run_cost({"MAX_RUN_COST_USD": "-1"})

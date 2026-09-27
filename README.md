@@ -96,7 +96,8 @@ The card-terms pipeline runs only in GitHub Actions and reads its settings from 
 | `LLM_MODEL` | variable, optional | Default `gpt-6-luna` (OpenAI's cheapest current model with Structured Outputs). Any model that supports Structured Outputs works |
 | `LLM_REASONING_EFFORT` | variable, optional | e.g. `low` to make runs faster and cheaper; unset uses the model's default |
 | `LLM_PROVIDER` | variable, optional | `openai` (default). `anthropic` is reserved in the provider interface but not implemented |
-| `LLM_PRICE_INPUT_PER_MTOK`, `LLM_PRICE_OUTPUT_PER_MTOK` | env, optional | Only for cost estimates of models missing from the built-in price table |
+| `MAX_RUN_COST_USD` | variable, optional | Spend cap per run, default `1.00`: once a run's estimated cost reaches it, no new LLM calls start (the rest are retried next run) |
+| `LLM_PRICE_INPUT_PER_MTOK`, `LLM_PRICE_OUTPUT_PER_MTOK` | variable, optional | USD per 1M tokens, only for a model missing from the built-in price table (without a price the spend cap can't be enforced, so no calls are made) |
 | `ENABLE_REWARDS_DB` | variable, optional | `true` merges fuermosi777/rewards in the collector (off: no license) |
 
 ## Setup, step by step

@@ -55,6 +55,8 @@ def main(argv: list[str] | None = None) -> int:
         + f"\nFull comparison: `{args.out.name}` (artifact `bootstrap-diff`).\n",
         args.summary_md,
     )
+    if report.budget_note:
+        notice(f"Spend cap: {report.budget_note}", "warning")
     if report.llm_problem:  # e.g. a rejected key: the report compares nothing
         notice(report.llm_problem, "error")
         return 1

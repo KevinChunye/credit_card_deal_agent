@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+import pytest
 import yaml
 
 from card_agent.terms.details import dump_details, terms_from_entry
@@ -430,3 +431,34 @@ def test_a_rejected_key_stops_further_calls():
     assert all(
         pipeline.state.hashes.cards[c].sha256 is None for c in ("amex-gold", "wells-fargo-bilt")
     )
+
+
+def test_spend_cap_stops_new_llm_calls():
+    provider = FakeProvider(
+        {
+            "chase-sapphire-preferred": csp_extraction(),
+            "amex-gold": gold_extraction(),
+            "wells-fargo-bilt": csp_extraction(card_name_on_page="Bilt Blue Card"),
+        }
+    )
+    pipeline, _ = make_pipeline(provider)
+    pipeline.workers = 1  # deterministic order for the test
+    pipeline.max_cost = 0.002  # each fake call is ~$0.0011 at gpt-6-luna prices
+    report = pipeline.run(RunOptions(mode="full"))
+
+    assert provider.calls == ["chase-sapphire-preferred", "amex-gold"]
+    held = by_card(report)["wells-fargo-bilt"]
+    assert held.action == "over_budget"
+    assert held.note.startswith("not sent: estimated cost $0.0022 reached MAX_RUN_COST_USD $0.00")
+    assert report.budget_note.startswith("estimated cost $0.0022")
+    assert pipeline.state.hashes.cards["wells-fargo-bilt"].sha256 is None  # retried next run
+    assert report.cost == pytest.approx(0.0022)
+
+
+def test_spend_cap_needs_a_known_price():
+    provider = FakeProvider({"amex-gold": gold_extraction()}, model="mystery-model")
+    pipeline, _ = make_pipeline(provider)
+    report = pipeline.run(RunOptions(mode="full", cards=["amex-gold"]))
+    assert provider.calls == []
+    assert report.outcomes[0].action == "over_budget"
+    assert "no price is known for 'mystery-model'" in report.budget_note

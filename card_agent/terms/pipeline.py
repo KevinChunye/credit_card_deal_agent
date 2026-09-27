@@ -33,7 +33,14 @@ import httpx
 from card_agent.collector.http import HostThrottle, RobotsCache
 from card_agent.terms.details import DiffRow, apply_terms, diff_terms, terms_from_entry
 from card_agent.terms.extract import extract_terms
-from card_agent.terms.llm import LLMError, LLMResult, Provider, Usage, estimate_cost
+from card_agent.terms.llm import (
+    DEFAULT_MAX_RUN_COST_USD,
+    LLMError,
+    LLMResult,
+    Provider,
+    Usage,
+    estimate_cost,
+)
 from card_agent.terms.page import FetchedPage, fetch_page
 from card_agent.terms.schema import CardTerms, TermsExtraction
 from card_agent.terms.sources import CardSource
@@ -48,6 +55,7 @@ ACTIONS = {
     "extracted": "extracted and validated",
     "rejected": "extraction rejected",
     "llm_error": "LLM call failed (retried next run)",
+    "over_budget": "not sent: run cost cap reached (retried next run)",
     "no_llm": "needs extraction, no LLM configured",
     "unchanged": "page unchanged, re-verified (no LLM call)",
     "unchanged_failed": "page unchanged since a rejected extraction (no LLM call)",
@@ -64,6 +72,13 @@ class RunOptions:
     # Diff every stored extraction, not just this run's (the auto PR is still open,
     # so its unmerged proposals must stay in it).
     include_pending: bool = False
+
+
+@dataclass
+class NotSent:
+    """An LLM call the spend cap stopped before it was made."""
+
+    reason: str
 
 
 @dataclass
@@ -103,6 +118,8 @@ class RunReport:
     diffs: list[DiffRow] = field(default_factory=list)
     queued: dict[str, str] = field(default_factory=dict)  # card id -> post title, left queued
     llm_problem: str | None = None  # a provider error that stopped extraction this run
+    max_cost: float | None = None  # MAX_RUN_COST_USD for this run
+    budget_note: str | None = None  # why the spend cap stopped further LLM calls
 
     @property
     def cost(self) -> float | None:
@@ -130,6 +147,7 @@ class Pipeline:
         provider_note: str | None = None,
         throttle: HostThrottle | None = None,
         workers: int = LLM_WORKERS,
+        max_cost: float = DEFAULT_MAX_RUN_COST_USD,
     ):
         self.client = client
         self.robots = RobotsCache(client)
@@ -141,7 +159,9 @@ class Pipeline:
         self.provider = provider
         self.provider_note = provider_note
         self.workers = workers
+        self.max_cost = max_cost
         self.llm_problem: str | None = None
+        self.budget_note: str | None = None
 
     # ----------------------------------------------------------------- run
 
@@ -182,6 +202,8 @@ class Pipeline:
             diffs=self.proposals(extracted, options.include_pending),
             queued={k: v.reason for k, v in self.state.queue.queued.items()},
             llm_problem=self.llm_problem,
+            max_cost=self.max_cost if self.provider is not None else None,
+            budget_note=self.budget_note,
         )
 
     def select(self, options: RunOptions) -> list[tuple[CardSource, str | None]]:
@@ -251,22 +273,48 @@ class Pipeline:
 
     def extract_all(
         self, pending: list[tuple[CardOutcome, FetchedPage]]
-    ) -> list[LLMResult | LLMError]:
+    ) -> list[LLMResult | LLMError | NotSent]:
         """LLM calls, a few at a time. After a fatal error (bad key, unknown model)
-        the remaining cards aren't sent."""
+        the remaining cards aren't sent. Once the estimated cost of this run's
+        calls reaches max_cost, no new call starts (calls already running finish,
+        so a run can end at most a few calls over the cap)."""
         stopped = threading.Event()
+        lock = threading.Lock()
+        spent = Usage()
 
-        def call(item: tuple[CardOutcome, FetchedPage]) -> LLMResult | LLMError:
+        def budget_problem() -> str | None:
+            cost = estimate_cost(spent, self.provider.model)
+            if cost is None:
+                return (
+                    f"MAX_RUN_COST_USD can't be enforced: no price is known for "
+                    f"{self.provider.model!r}; set LLM_PRICE_INPUT_PER_MTOK and "
+                    "LLM_PRICE_OUTPUT_PER_MTOK"
+                )
+            if cost >= self.max_cost:
+                return f"estimated cost ${cost:.4f} reached MAX_RUN_COST_USD ${self.max_cost:.2f}"
+            return None
+
+        def call(item: tuple[CardOutcome, FetchedPage]) -> LLMResult | LLMError | NotSent:
             outcome, page = item
             if stopped.is_set():
                 return LLMError(f"not sent: {self.llm_problem}")
+            with lock:
+                problem = self.budget_note or budget_problem()
+                if problem:
+                    self.budget_note = problem
+                    return NotSent(problem)
             try:
-                return extract_terms(self.provider, outcome.source, page.text)
+                result = extract_terms(self.provider, outcome.source, page.text)
             except LLMError as exc:
+                with lock:
+                    spent.add(exc.usage)
                 if exc.fatal:
                     self.llm_problem = str(exc)
                     stopped.set()
                 return exc
+            with lock:
+                spent.add(result.usage)
+            return result
 
         with ThreadPoolExecutor(max_workers=self.workers) as pool:
             return list(pool.map(call, pending))
@@ -279,12 +327,16 @@ class Pipeline:
         self,
         outcome: CardOutcome,
         page: FetchedPage,
-        result: LLMResult | LLMError,
+        result: LLMResult | LLMError | NotSent,
         merge_previous: bool = True,
     ) -> None:
         """Validate one extraction and record it. The page hash is stored only once
         an extraction has been judged, so a failed LLM call is retried next run."""
         state = self.card_state(outcome.card_id)
+        if isinstance(result, NotSent):
+            outcome.action, outcome.note = "over_budget", f"not sent: {result.reason}"
+            self.keep_status(outcome)
+            return
         outcome.usage = result.usage
         if isinstance(result, LLMError):
             outcome.action, outcome.note = "llm_error", str(result)

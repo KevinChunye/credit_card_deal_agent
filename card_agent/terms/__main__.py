@@ -73,6 +73,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         args.report_json.write_text(json.dumps(render.report_json(report), indent=1))
     if report.llm_problem:
         notice(report.llm_problem, "warning")  # the run still succeeds; state was saved
+    if report.budget_note:
+        notice(f"Spend cap: {report.budget_note}", "warning")
     return 0
 
 

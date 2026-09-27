@@ -70,12 +70,20 @@ def usage_line(report: RunReport) -> str:
         else "unknown (model not in the price table; set LLM_PRICE_INPUT_PER_MTOK and "
         "LLM_PRICE_OUTPUT_PER_MTOK)"
     )
-    return (
+    cap = f" (cap ${report.max_cost:.2f} per run)" if report.max_cost is not None else ""
+    line = (
         f"**LLM:** `{report.model}` ({report.provider}) · calls: {usage.calls} · "
         f"input tokens: {usage.input_tokens:,} ({usage.cached_input_tokens:,} cached) · "
         f"output tokens: {usage.output_tokens:,} ({usage.reasoning_tokens:,} reasoning) · "
-        f"estimated cost: {cost_text}"
+        f"estimated cost: {cost_text}{cap}"
     )
+    if report.budget_note:
+        held = sum(o.action == "over_budget" for o in report.outcomes)
+        line += (
+            f"\n\n**Spend cap stopped LLM calls:** {report.budget_note}. "
+            f"{plural(held, 'card')} not sent; they're retried next run."
+        )
+    return line
 
 
 def validation_rows(outcomes: list[CardOutcome]) -> list[list[str]]:

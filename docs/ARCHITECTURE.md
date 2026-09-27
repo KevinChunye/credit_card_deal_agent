@@ -83,6 +83,9 @@ hash changed / queued by RSS / --force
   OpenAI is implemented (`OPENAI_API_KEY`, `LLM_MODEL`, default `gpt-6-luna`);
   `LLM_PROVIDER=anthropic` is reserved. No key: extraction is skipped with a notice and
   the run still succeeds. A 401/403/404 stops further calls for the run.
+- **Spend cap**: `MAX_RUN_COST_USD` (default $1.00). Before each call the pipeline adds
+  up the run's estimated cost so far; once it reaches the cap, no new call starts and the
+  remaining cards are retried next run. A model with no known price makes no calls.
 - **Cost**: tokens and an estimated cost are in each run's job summary. A page is about
   5–20k input tokens; a full forced run of 55 pages is roughly $0.10–0.20 at gpt-6-luna prices,
   a normal month (only changed pages) a few cents.
