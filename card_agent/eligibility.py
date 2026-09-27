@@ -95,6 +95,11 @@ class EligibilityChecker:
                 counted += 1
         return counted, undated
 
+    def _names(self, card_ids: list[str]) -> str:
+        return ", ".join(
+            self.cards[cid].display_name if cid in self.cards else cid for cid in card_ids
+        )
+
     def _family_ids(self, family: dict[str, Any] | None, card: Card) -> set[str]:
         if not family:
             return {card.id}
@@ -125,7 +130,7 @@ class EligibilityChecker:
         if kind == "blocked_by_prior":
             prior = sorted(set(check["cards"]) & self.history)
             if prior:
-                return status, f"you have or had {', '.join(prior)}"
+                return status, f"you have or had {self._names(prior)}"
             return None
         if kind == "bonus_window":
             window = check["window_months"]
@@ -139,7 +144,8 @@ class EligibilityChecker:
                 if received and months_between(received, self.today) < window:
                     return (
                         status,
-                        f"bonus on {cid} received {received.isoformat()} (within {window} months)",
+                        f"bonus on {self._names([cid])} received {received.isoformat()} "
+                        f"(within {window} months)",
                     )
             return None
         if kind == "holding_blocks":
@@ -150,7 +156,7 @@ class EligibilityChecker:
             )
             held = sorted(family & self.open_ids)
             if held:
-                return status, f"you currently hold {', '.join(held)}"
+                return status, f"you currently hold {self._names(held)}"
             return None
         raise ValueError(f"Unknown eligibility check type {kind!r}")
 

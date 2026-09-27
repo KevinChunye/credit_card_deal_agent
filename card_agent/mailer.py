@@ -16,7 +16,10 @@ def send_digest(
     text: str,
     period: str,
     client: Any = None,
+    html: str | None = None,
 ) -> dict[str, Any]:
+    """Send the plain-text digest, plus its HTML version when given (mail apps
+    show the HTML; the text part is the fallback and reads cleanly too)."""
     recipient = settings.digest_recipient
     if not recipient:
         raise ValueError("Set OWNER_EMAIL (or DIGEST_TO_EMAIL) to email the digest.")
@@ -24,11 +27,13 @@ def send_digest(
     client = client or make_client(settings)
     # Same month + same content = same key, so a retried run can't double-send.
     digest_hash = hashlib.sha256(text.encode()).hexdigest()[:12]
+    extra = {"html": html} if html else {}
     response = client.inboxes.messages.send(
         inbox_id=settings.agentmail_inbox,
         to=[recipient],
         subject=subject,
         text=text,
         idempotency_key=f"card-digest-{period}-{digest_hash}",
+        **extra,
     )
     return {"to": recipient, "message_id": getattr(response, "message_id", None)}

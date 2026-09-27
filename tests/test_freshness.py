@@ -157,24 +157,22 @@ def test_rank_marks_cards_with_unverified_terms(agent):
 def test_compare_and_explain_show_verification(agent):
     out = agent("compare", "capital-one-venture-x", "chase-sapphire-reserve")
     text = out["display_text"]
-    assert re.search(r"Terms verified\s+2026-09-20\s+⚠ 2026-06-01", text)
+    assert "🔍 Terms verified: 2026-09-20 vs ⚠ 2026-06-01" in text
     assert "⚠ Chase Sapphire Reserve: terms last verified 2026-06-01 (over 60 days ago)." in text
     assert out["a"]["terms_warning"] is None
 
     out = agent("explain", "capital-one-venture-x")
-    assert out["display_text"].endswith(
-        "Terms verified 2026-09-20 against https://www.capitalone.com/credit-cards/venture-x/."
-    )
+    assert out["display_text"].endswith("✔️ Terms verified 2026-09-20 on www.capitalone.com.")
     out = agent("explain", "chase-sapphire-reserve")
     assert out["terms_warning"] == "terms last verified 2026-06-01 (over 60 days ago)"
 
 
 def test_digest_has_a_data_health_line(agent):
     out = agent("digest", "--no-sync")
-    short, full = out["display_text"], out["email_markdown"]
-    assert re.search(r"Data health: 1 card verified this month, \d+ stale\.", short)
+    short, full = out["display_text"], out["email_text"]
+    assert re.search(r"🩺 Data health: 1 card verified this month, \d+ stale\.", short)
     assert len(short) <= 1500
-    assert "## Data health" in full
-    assert "- Chase Sapphire Reserve: terms last verified 2026-06-01 (over 60 days ago)" in full
+    assert "\n🩺 Data health\n" in full
+    assert "• Chase Sapphire Reserve: terms last verified 2026-06-01 (over 60 days ago)" in full
     picks = out["digest"]["sections"]["top_opportunities"]["items"]
     assert all("terms_warning" in pick for pick in picks)

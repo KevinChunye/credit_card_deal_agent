@@ -101,6 +101,39 @@ hash changed / queued by RSS / --force
   5–20k input tokens; a full forced run of 55 pages is roughly $0.10–0.20 at gpt-6-luna prices,
   a normal month (only changed pages) a few cents.
 
+## Agent layer (on Maritime)
+
+The chat model follows `SKILL.md`; the tools do everything that must be exact.
+
+```
+person ──> chat model (SKILL.md: goal → decide → act → observe → evaluate)
+              │  bin/card-agent <command>  →  {"display_text", "next", ...}
+              ▼
+   advise ─> Advisor loop (advisor.py)
+               memory (store.py) → data freshness (snapshot.refresh) → rank (scoring.py)
+               → handoff: Brief → Verifier subagent (verifier.py) → Report
+               → accept / reject and try the next / revise the plan once / ask the person
+               → save the pick to memory → stop
+   every command ─> trace.jsonl (trace.py)  ─> `trace` replays it
+```
+
+- **`next`**: each result tells the chat model what to do: `stop`, `ask_user`, `run` a
+  recovery command once, or `fix_command`. SKILL.md adds the stopping conditions (4
+  commands per message, same failure twice) and the ask-a-person conditions.
+- **Verifier**: gets a `Brief` (card, claimed values, fee limit, total spend, score band,
+  wallet dates) and nothing else; returns pass/warn/fail with evidence per check.
+- **Memory**: SQLite tables `hidden` (cards and issuers to skip, with reason) and
+  `recommendation` (past picks) join the profile, spend, wallet and inbox tables.
+- **Recovery**: `snapshot.refresh` retries transient errors, switches between
+  raw.githubusercontent.com and the contents API, validates before an atomic cache write,
+  and falls back to the saved copy; `matching.suggest` handles typos.
+- **Presentation**: `present.py` (emoji, labels, Unicode bars, the markup lint) and
+  `views.py` (each command's text). The digest email gets a plain-text part and an HTML
+  part with a bar chart. Links come only from `links.py`: curated issuer pages, feed links
+  on the issuer's own domain, and `config/official_links.yaml`.
+
+See [EVALUATION.md](EVALUATION.md) for the evidence and a baseline vs improved run.
+
 ## Layout
 
 ```
@@ -128,17 +161,24 @@ card_agent/
     state.py, rss_trigger.py data-branch state; Doctor of Credit trigger
     pipeline.py, report.py   one run; job summary, PR body, smoke and bootstrap reports
   freshness.py               staleness markers and data-health line
-  snapshot.py                sync from the data branch, local cache, DataView index
-  store.py                   SQLite state (never committed)
-  scoring.py                 EV math + pandas ranking, itemized breakdowns
+  snapshot.py                sync with retry/endpoint switch/saved-copy fallback, DataView
+  store.py                   SQLite state and memory (never committed)
+  scoring.py                 EV math + pandas ranking, itemized breakdowns, wallet_rates
   eligibility.py             issuer rules from config/eligibility_rules.yaml
+  advisor.py                 the advise loop (goal → … → stop/ask), recorded step by step
+  verifier.py                the Verifier subagent: bounded brief in, report out
+  trace.py                   trace.jsonl: one line per command, advise's steps included
+  links.py                   official apply and pre-approval links only
+  credit.py                  credit-health check (5/24, account age, utilization, tips)
+  present.py, views.py       chat-ready text: emoji, bars, labels, markup lint
   email_parse.py, inbox.py   AgentMail inbound: allowlist, regex extraction, phishing flags
   mailer.py, guardrails.py   digest email (owner only), card-number and link scrubbing
-  digest.py                  monthly digest: WhatsApp + email renderings
+  digest.py                  monthly digest: chat text, plain-text and HTML email
   onboard.py, cli.py         setup and the `python -m card_agent` commands
 config/                      rules, allowlists, seed data, example profile
 scripts/probe_issuers.py     one-off issuer probe -> docs/FINDINGS.md
 scripts/bootstrap_extract.py extraction vs hand YAML -> docs/BOOTSTRAP_DIFF.md
+scripts/eval_agent.py        baseline vs improved agent evaluation -> docs/EVALUATION.md
 tests/                       offline pytest suite with recorded fixtures
 ```
 
@@ -148,8 +188,10 @@ Public (snapshot): `Card`, `EarnRate`, `SignupOffer`, `Benefit`, `Protection`,
 `NewsItem`, plus `EligibilityRule` (loaded from config). Bonuses (`offers`) and benefits
 are separate tables because they change at different speeds.
 
-Private (SQLite): `UserProfile`, `MonthlySpend`, `PointValuation`, `UsageHaircut`,
-`WalletCard` (closed cards and product changes kept for issuer rules), `PersonalOffer`.
+Private (SQLite): `UserProfile` (including an optional self-reported score band and
+total credit limit), `MonthlySpend`, `PointValuation`, `UsageHaircut`, `WalletCard`
+(closed cards and product changes kept for issuer rules), `PersonalOffer`, plus the
+`hidden` and `recommendation` tables and the digest log.
 
 ## Scoring (deterministic)
 

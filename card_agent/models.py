@@ -257,6 +257,11 @@ class ChangeSet(BaseModel):
 # --------------------------------------------------------------------------
 
 
+# FICO score ranges (myFICO): poor < 580, fair 580-669, good 670-739,
+# very good 740-799, exceptional 800+. "building" = no score yet or under 580.
+CreditBand = Literal["building", "fair", "good", "very_good", "excellent"]
+
+
 class GoalWeights(BaseModel):
     travel: float = Field(0.3, ge=0)
     cash_back: float = Field(0.2, ge=0)
@@ -287,6 +292,10 @@ class UserProfile(BaseModel):
     )
     notify_day: int = Field(1, ge=1, le=28)
     min_marginal_ev_alert: float = 150.0
+    # Optional, self-reported, used only for credit-health tips (`credit`) and
+    # the Verifier's approval-odds caveat. Never a score from a bureau login.
+    credit_score_band: CreditBand | None = None
+    total_credit_limit: float | None = Field(None, ge=0)  # sum of limits on open cards
 
 
 class MonthlySpend(BaseModel):

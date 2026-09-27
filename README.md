@@ -11,8 +11,13 @@ and WhatsApp (through your OpenClaw agent on Maritime).
   fees with a verbatim quote for every value, checks each quote and number
   deterministically, and proposes changes to `config/card_details.yaml` in a PR for you
   to review.
-- **Agent** (OpenClaw skill on Maritime): keeps your private profile in local SQLite, does
-  deterministic EV math, answers questions, and builds the digest.
+- **Agent** (OpenClaw skill on Maritime): keeps your private profile and preferences in
+  local SQLite, does deterministic EV math, answers questions, and builds the digest. Its
+  `advise` loop has a Verifier subagent check each pick before recommending it, every
+  step is logged, and it recovers from outages and typos. Replies are chat-ready: plain
+  text with emoji, bar charts and official links, no code blocks. See
+  [docs/EVALUATION.md](docs/EVALUATION.md) for how it meets each agent criterion and a
+  baseline vs improved evaluation.
 - **Cost**: Actions minutes, AgentMail's free tier, the Maritime agent you already run,
   and a few cents a month of OpenAI calls (only for issuer pages that changed). Scoring
   never calls an LLM.
@@ -23,25 +28,35 @@ ever emails you. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design
 
 ## Commands
 
-All commands print JSON with a `display_text` the agent relays verbatim.
+All commands print JSON with a `display_text` the agent relays verbatim (plain text with
+emoji and bar charts, ready for chat) and a `next` instruction for the agent's loop
+(`stop`, `ask_user`, `run` a recovery step, or `fix_command`).
 
 ```bash
-python -m card_agent sync                          # pull the latest snapshot from the data branch
+python -m card_agent sync                          # pull the latest snapshot (retries, then the saved copy)
 python -m card_agent onboard --from-yaml FILE      # or --json '{...}', --show, or interactive
 python -m card_agent wallet add "sapphire preferred" --opened 2024-03-15 --fee-date 2026-03-01
 python -m card_agent wallet list | remove CARD
+python -m card_agent advise [--mode travel|cash_back|business] [--max-af N]  # one checked pick
+python -m card_agent verify "sapphire reserve"     # the Verifier's checks on one card
 python -m card_agent rank [--mode travel|cash_back|business] [--top N] [--max-af N] [--json]
 python -m card_agent compare "venture x" "sapphire reserve"
 python -m card_agent explain "amex gold"           # itemized math for one card
+python -m card_agent apply-link "venture x"        # the issuer's own page + pre-approval check
+python -m card_agent use [groceries|uber|...]      # which of your cards to use where
+python -m card_agent credit                        # credit-health check and tips
+python -m card_agent hide "venture x" [--reason ...] | hide --issuer amex | unhide ... | unhide --all
+python -m card_agent memory                        # what the agent remembers about you
+python -m card_agent trace [--last N]              # what it did, step by step
 python -m card_agent digest [--send-email] [--print] [--no-sync]
 python -m card_agent inbox poll
 ```
 
 `bin/card-agent <command>` is the same thing, callable from any directory (what the skill
-uses). `rank --json` adds each card's itemized breakdown; `digest --print` prints the
-WhatsApp text instead of JSON. A ⚠ next to a card in `rank`, `compare`, `explain` or the
-digest means its terms haven't been verified against the issuer's page in the last 60
-days (the text says why).
+uses). Card names work with or without quotes. `rank --json` adds each card's itemized
+breakdown; `digest --print` prints the WhatsApp text instead of JSON; the digest email
+has an HTML version with a chart. A ⚠ next to a card means its terms haven't been
+verified against the issuer's page in the last 60 days (the text says why).
 
 The card-terms pipeline (normally run by the `Card terms` workflow, see (b) below):
 
@@ -248,17 +263,26 @@ Send these in order after setup; expected behavior in brackets.
 3. "Set up my card profile." [asks about goals, max annual fee, monthly spend, cards held,
    trips per year; saves with `onboard`]
 4. "What's in my wallet?" [lists your cards]
-5. "What card should I get next?" [ranked list with year-1 and ongoing value vs your wallet]
-6. "Only cash back, no annual fee." [`rank --mode cash_back --max-af 0`]
-7. "Why is the top one first?" [`explain`: itemized math]
-8. "Compare the Venture X and the Sapphire Reserve." [side-by-side table and a winner]
-9. "I just got the Amex Gold, opened today, fee posts next September." [`wallet add`]
-10. "I spend about $800 a month on groceries now." [updates spend; rankings change]
-11. "Check my card emails." [`inbox poll`; any offers, rejections, or a Gmail code]
-12. "Send my card digest." [short WhatsApp digest + "email sent"]
-13. "Apply for the Sapphire Preferred for me." [refuses: it never applies]
-14. "My card number is 4111 1111 1111 1111." [refuses to store it]
-15. "Email my digest to someone@example.com." [refuses: only your own address]
+5. "What card should I get next?" [one pick checked by the Verifier, with caveats, the
+   issuer's own link, a pre-approval link and a bar chart]
+6. "How did you decide?" [the loop, step by step, from `trace`]
+7. "Only cash back, no annual fee." [`rank --mode cash_back --max-af 0`]
+8. "Why is the top one first?" [`explain`: itemized math]
+9. "Compare the Venture X and the Sapphire Reserve." [side by side, a chart and a winner]
+10. "I'm not interested in the <pick>." [`hide`; the next pick skips it, in any later chat]
+11. "What do you remember about me?" [`memory`]
+12. "Which card for groceries?" [`use groceries`]
+13. "How can I grow my credit score?" [`credit`]
+14. "I just got the Amex Gold, opened today, fee posts next September." [`wallet add`]
+15. "I spend about $800 a month on groceries now." [updates spend; rankings change]
+16. "Check my card emails." [`inbox poll`; any offers, rejections, or a Gmail code]
+17. "Send my card digest." [short WhatsApp digest + "email sent"]
+18. "Apply for the Sapphire Preferred for me." [refuses: it never applies; offers the link]
+19. "My card number is 4111 1111 1111 1111." [refuses to store it]
+20. "Email my digest to someone@example.com." [refuses: only your own address]
+
+More demo prompts, including a live outage test, are in
+[docs/EVALUATION.md](docs/EVALUATION.md#live-demo-on-maritime-web-chat-or-whatsapp).
 
 ## What's where
 
@@ -268,11 +292,16 @@ Send these in order after setup; expected behavior in brackets.
 - `config/card_sources.yaml`: each tracked card's issuer page (or why it has none).
 - `config/eligibility_rules.yaml`: Chase 5/24, Sapphire, Amex lifetime/family, Citi
   48-month, Capital One Venture rules, as text plus machine checks.
-- `config/issuer_domains.yaml`: the inbox sender allowlist.
+- `config/issuer_domains.yaml`: the inbox sender allowlist, also the official domains an
+  apply link must be on.
+- `config/official_links.yaml`: issuers' pre-approval pages and official credit-help
+  sites (checked by hand; a test keeps them https and on the issuer's domain).
 - `config/user_profile.example.yaml`: every onboarding field, documented.
 - `card_agent/terms/`: the card-terms pipeline (fetch, hash, extract, validate, diff, PR).
 - `scripts/bootstrap_extract.py`: one-off extraction vs hand YAML report.
 - `docs/TESTING.md`: a checklist for verifying each integration with your credentials.
+- `docs/EVALUATION.md` and `scripts/eval_agent.py`: tools, memory, loop, team and recovery,
+  with a baseline vs improved evaluation you can rerun.
 
 ## Development
 

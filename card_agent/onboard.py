@@ -19,8 +19,12 @@ def resolve_card_id(query: str, matcher: CardMatcher | None) -> str:
     if card_id:
         return card_id
     if candidates:
-        raise ValueError(f"{query!r} is ambiguous: {', '.join(candidates[:8])}")
-    raise ValueError(f"No card matches {query!r}. Try the id from `rank --json`.")
+        names = "; ".join(matcher.cards[c].display_name for c in candidates[:6])
+        raise ValueError(f"{query!r} could be several cards: {names}. Which one do you mean?")
+    raise ValueError(
+        f"I don't know a card called {query!r}. Could you give its full name, like "
+        '"Chase Sapphire Preferred"?'
+    )
 
 
 def apply_patch(store: Store, patch: dict[str, Any], matcher: CardMatcher | None) -> dict[str, Any]:

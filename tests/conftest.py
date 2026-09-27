@@ -4,11 +4,17 @@ httpx.MockTransport and AgentMail through a fake client."""
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 
 import httpx
 import pytest
+
+from card_agent import cli
+from card_agent.collector import bonuses_api, doc_rss
+from card_agent.collector.run import run_collector, write_outputs
+from card_agent.config import CONFIG_DIR
 
 FIXTURES = Path(__file__).parent / "fixtures"
 # Frozen copies of config/card_details.yaml and card_sources.yaml. The live files
@@ -56,3 +62,58 @@ def feed_pages() -> tuple[bytes, bytes]:
         fixture_path("doc_feed_page1.xml").read_bytes(),
         fixture_path("doc_feed_page2.xml").read_bytes(),
     )
+
+
+@pytest.fixture
+def env(tmp_path, monkeypatch, api_raw, feed_pages):
+    """Two weekly collector runs (so there is a changes file), then an agent DB."""
+    out = tmp_path / "data-branch"
+    client, _ = routed_client(
+        {
+            bonuses_api.DATA_URL: json.dumps(api_raw),
+            doc_rss.FEED_URL: feed_pages[0],
+            f"{doc_rss.FEED_URL}?paged=2": feed_pages[1],
+        }
+    )
+    week1 = NOW - timedelta(days=7)
+    snapshot, changes = run_collector(
+        out, client, week1, with_issuer_pages=False, config_dir=CONFIG_FIXTURE
+    )
+    write_outputs(out, snapshot, changes)
+
+    elevated = [dict(card) for card in api_raw]
+    for card in elevated:
+        if card["name"] == "Venture X":
+            card["offers"] = [dict(card["offers"][0], amount=[{"amount": 100000}])]
+    client2, _ = routed_client(
+        {bonuses_api.DATA_URL: json.dumps(elevated), doc_rss.FEED_URL: feed_pages[0]}
+    )
+    snapshot, changes = run_collector(
+        out, client2, NOW, with_issuer_pages=False, config_dir=CONFIG_FIXTURE
+    )
+    write_outputs(out, snapshot, changes)
+
+    for var in (
+        "AGENTMAIL_API_KEY",
+        "AGENTMAIL_INBOX",
+        "OWNER_EMAIL",
+        "DIGEST_TO_EMAIL",
+        "GITHUB_TOKEN",
+    ):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("CARD_AGENT_DB", str(tmp_path / "state" / "state.db"))
+    return SimpleNamespace(tmp=tmp_path, latest=out / "data" / "latest.json")
+
+
+def run(capsys, *argv, now: datetime = NOW) -> tuple[int, dict]:
+    """Run one CLI command in-process; returns (exit code, JSON output)."""
+    code = cli.main(list(argv), now=now)
+    return code, json.loads(capsys.readouterr().out)
+
+
+def setup_profile(capsys, env):
+    """Load the fixture snapshot and the example profile (config/user_profile.example.yaml)."""
+    code, out = run(capsys, "sync", "--from-file", str(env.latest))
+    assert code == 0, out
+    code, out = run(capsys, "onboard", "--from-yaml", str(CONFIG_DIR / "user_profile.example.yaml"))
+    assert code == 0, out
