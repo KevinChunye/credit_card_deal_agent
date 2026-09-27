@@ -353,11 +353,11 @@ def cmd_digest(args, settings: Settings, store: Store, now: datetime) -> dict[st
     offers = store.personal_offers(since=now - timedelta(days=31))
     result = digest_mod.build_digest(ctx, load_changes(settings), offers, now, warnings)
     payload: dict[str, Any] = {
-        "display_text": result.short,
         "email_markdown": result.full,
         "digest": result.to_dict(),
         "warnings": warnings,
     }
+    emailed = False
     if args.send_email:
         try:
             sent = mailer.send_digest(
@@ -365,13 +365,17 @@ def cmd_digest(args, settings: Settings, store: Store, now: datetime) -> dict[st
             )
             store.log_digest(now, "email", result.period, sent)
             payload["email"] = {"sent": True, **sent}
+            emailed = True
         except (GuardrailError, inbox.InboxNotConfigured, ValueError) as exc:
             payload["email"] = {"sent": False, "error": str(exc)}
         except Exception as exc:  # network/API errors must not lose the WhatsApp text
             payload["email"] = {"sent": False, "error": f"{type(exc).__name__}: {exc}"}
-    store.log_digest(now, "whatsapp", result.period, {"chars": len(result.short)})
+    # Only point to the email when it went out.
+    short = result.short if emailed else result.short.replace(digest_mod.EMAIL_NOTE, "")
+    payload["display_text"] = short
+    store.log_digest(now, "whatsapp", result.period, {"chars": len(short)})
     if args.print:
-        payload["_print"] = result.short
+        payload["_print"] = short
     return payload
 
 

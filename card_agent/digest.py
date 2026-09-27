@@ -28,6 +28,8 @@ from card_agent.scoring import (
 )
 
 WHATSAPP_LIMIT = 1500
+# Dropped from the WhatsApp text unless the email actually went out.
+EMAIL_NOTE = "Full breakdown in your email. "
 FEE_WINDOW_DAYS = 60
 NEWS_WINDOW_DAYS = 35
 # Benefits that are credits you can fail to use (lounge access and status aren't).
@@ -363,7 +365,7 @@ def build_digest(
         news_section(ctx, relevant, now),
     ]
     title = f"Card digest · {now:%B %Y}"
-    footer = 'Full breakdown in your email. Ask me to "compare X Y" or "explain X" for the math.'
+    footer = EMAIL_NOTE + 'Ask me to "compare X Y" or "explain X" for the math.'
     health = data_health(list(ctx.data.cards.values()), now.date())
     per_section = 3
     short = render_short(title, sections, per_section, footer, health.line)
