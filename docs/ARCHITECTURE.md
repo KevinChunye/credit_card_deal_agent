@@ -1,18 +1,24 @@
 # Architecture
 
-Two halves, $0/month: a **collector** on GitHub Actions that turns public data into
-weekly snapshots, and an **agent** (an OpenClaw skill on Maritime) that holds your
-private state and does the math.
+Three parts: a **collector** on GitHub Actions that turns public data into weekly
+snapshots, a **card-terms pipeline** (also on Actions) that keeps
+`config/card_details.yaml` in line with the issuers' product pages through reviewed PRs,
+and an **agent** (an OpenClaw skill on Maritime) that holds your private state and does
+the math. The only LLM use is the pipeline's extraction; scoring is deterministic.
 
 ```mermaid
 flowchart LR
     subgraph GH["GitHub Actions (weekly + on demand)"]
         A1["credit-card-bonuses-api<br/>data.json (MIT)"] --> C[collector]
         A2["Doctor of Credit<br/>credit-card RSS"] --> C
-        A3["card_details.yaml<br/>(curated earn rates)"] --> C
+        A3["card_details.yaml<br/>(earn rates, credits, fees)"] --> C
         A4["rewards DB<br/>(opt-in, no license)"] -.-> C
         A5["10 issuer pages<br/>(cross-check only)"] --> C
-        C --> D[("data branch<br/>latest.json<br/>snapshots/DATE.json<br/>changes/DATE.json")]
+        C --> D[("data branch<br/>latest.json<br/>snapshots/DATE.json<br/>changes/DATE.json<br/>page_hashes.json …")]
+        P["issuer product pages<br/>(52 cards, plain GET)"] --> T[card-terms pipeline]
+        R["Doctor of Credit<br/>change posts"] -.->|queue| T
+        T <-->|"hashes, last_verified,<br/>validated extractions"| D
+        T -->|"PR: card terms changed"| A3
     end
     subgraph M["Maritime: OpenClaw agent"]
         S["skills/credit_card_deal_agent<br/>SKILL.md + bin/card-agent"]
@@ -36,6 +42,51 @@ AgentMail inbox ── inbox poll ──> [OpenClaw skill + SQLite] ──> dige
                                    rank / compare / explain
 ```
 
+## Card-terms pipeline
+
+`config/card_details.yaml` used to be hand-compiled; now it is a generated artifact that
+you review. `python -m card_agent.terms` (workflow `.github/workflows/card_terms.yml`):
+
+```
+card_sources.yaml ─> fetch page (1 GET, robots.txt, throttle) ─> visible text + JSON-LD
+   │                                                              + __NEXT_DATA__ prose
+   │                                                              ─> normalize ─> sha256
+   │  no url ─> "manual" (hand values kept)          fetch fails ─> "fetch_failed"
+   ▼
+hash unchanged and not queued/forced ─> last_verified = today, no LLM call
+hash changed / queued by RSS / --force
+   ─> 1 LLM call (OpenAI Responses API, Structured Outputs from the Pydantic schema,
+      no tools, page text marked as untrusted data)
+   ─> deterministic validation (no LLM):
+        card_name_on_page must be this card (multi-card pages) and appear on the page
+        every value's evidence quote must be on the page (whitespace/case/® insensitive)
+        the number must be in its quote; bounds: multiplier 0.5–15, fee 0–1000,
+        credits 0–2000/yr; categories must map to the existing enum
+        failed fields keep their current value and are listed in the validation report
+   ─> "ok" (validated fields stored in data/card_terms.json) or "validation_failed"
+   ─> merge with the current YAML (rows an extraction doesn't mention are kept: a
+      removal can't be quoted) ─> diff ─> PR "card terms changed: …" from card-terms/auto
+```
+
+- **State** (data branch): `page_hashes.json` (hash, last_fetched, last_verified,
+  source_status, issues per card), `card_terms.json` (validated fields with evidence),
+  `terms_queue.json` (RSS-queued cards, seen posts).
+- **Which diffs are proposed**: this run's extractions, plus every stored extraction while
+  the auto PR is open (so it keeps its unmerged proposals). A closed PR is not reopened
+  until the card's page changes again.
+- **RSS trigger**: Doctor of Credit titles that name a tracked card (same matcher as the
+  agent) and a change keyword queue the card; the weekly job re-extracts only queued cards.
+- **Provenance**: the collector stamps each card with `source_status`, `last_verified` and
+  `source_url` from `page_hashes.json`; `card_agent/freshness.py` turns them into the ⚠
+  markers and the digest's data-health line (stale = not "ok", or not verified in 60 days).
+- **Provider**: `card_agent/terms/llm.py` defines a one-method `Provider` protocol.
+  OpenAI is implemented (`OPENAI_API_KEY`, `LLM_MODEL`, default `gpt-6-luna`);
+  `LLM_PROVIDER=anthropic` is reserved. No key: extraction is skipped with a notice and
+  the run still succeeds. A 401/403/404 stops further calls for the run.
+- **Cost**: tokens and an estimated cost are in each run's job summary. A page is about
+  5–20k input tokens; a full forced run of 52 pages is roughly $0.20 at gpt-6-luna prices,
+  a normal month (only changed pages) a few cents.
+
 ## Layout
 
 ```
@@ -48,11 +99,21 @@ card_agent/
   collector/                 runs on Actions: python -m card_agent.collector run
     bonuses_api.py           source 1 fetch + normalize (ids, offers, credits)
     doc_rss.py               source 2: feed paging, classification, 35-day window
-    seed.py                  config/card_details.yaml -> earn rates, FX, protections
+    seed.py                  config/card_details.yaml -> earn rates, fees, credits, FX, protections
     rewards_db.py            source 3 adapter (opt-in)
     issuer_pages.py          source 4: page facts + cross-check (shared with the probe)
     http.py                  polite client: honest UA, robots.txt, per-host throttle
     diff.py, run.py          diff vs previous snapshot; write the three files
+  terms/                     card-terms pipeline: python -m card_agent.terms run|rss|smoke
+    sources.py               config/card_sources.yaml; card-name normalization
+    page.py                  page text (visible + embedded JSON), hash, fetch
+    schema.py                LLM output schema (evidence on every field), CardTerms
+    llm.py, extract.py       provider interface (OpenAI), prompt, one call per page
+    validate.py              deterministic validation and merge (no LLM)
+    details.py               card_details.yaml writer, apply, diff
+    state.py, rss_trigger.py data-branch state; Doctor of Credit trigger
+    pipeline.py, report.py   one run; job summary, PR body, smoke and bootstrap reports
+  freshness.py               staleness markers and data-health line
   snapshot.py                sync from the data branch, local cache, DataView index
   store.py                   SQLite state (never committed)
   scoring.py                 EV math + pandas ranking, itemized breakdowns
@@ -63,6 +124,7 @@ card_agent/
   onboard.py, cli.py         setup and the `python -m card_agent` commands
 config/                      rules, allowlists, seed data, example profile
 scripts/probe_issuers.py     one-off issuer probe -> docs/FINDINGS.md
+scripts/bootstrap_extract.py extraction vs hand YAML -> docs/BOOTSTRAP_DIFF.md
 tests/                       offline pytest suite with recorded fixtures
 ```
 
@@ -112,5 +174,8 @@ Details that keep it honest:
 - Email and scraped text is untrusted: links and long numbers are stripped before storage,
   the WhatsApp digest never includes raw email text, links are never fetched, and the
   inbox is read-only (no labels, replies, or forwards).
+- Issuer page text reaches the LLM only as delimited data, with a system prompt that says
+  to ignore any instructions in it; the model has no tools, and nothing it returns is
+  used unless its quote is on the page. Its output only ever becomes a PR you review.
 - Secrets come only from environment variables. The state DB and caches live outside the
   repo, and the Maritime setup script write-protects the code so the agent can't edit it.
