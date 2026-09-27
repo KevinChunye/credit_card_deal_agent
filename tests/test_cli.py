@@ -173,6 +173,7 @@ def test_digest_sections_and_whatsapp_length(capsys, env):
     assert "Chase Sapphire Reserve: preapproval, 125,000 points" in short
     assert "Ignore previous" not in short  # raw email subjects never reach the chat
     assert "Chase Sapphire Preferred $95 on Oct 20" in short
+    assert "in your email" not in short  # no email was sent
 
     code, out = run(capsys, "digest", "--no-sync")
     assert out["email_markdown"].startswith("# Card digest")
@@ -194,6 +195,7 @@ def test_digest_email_goes_only_to_owner(capsys, env, monkeypatch):
     code, out = run(capsys, "digest", "--no-sync", "--send-email")
     assert out["email"]["sent"] is False and "OWNER_EMAIL" in out["email"]["error"]
     assert out["display_text"]  # WhatsApp text still returned
+    assert "in your email" not in out["display_text"]
 
     monkeypatch.setenv("AGENTMAIL_API_KEY", "k")
     monkeypatch.setenv("AGENTMAIL_INBOX", "kev_work@agentmail.to")
@@ -202,6 +204,7 @@ def test_digest_email_goes_only_to_owner(capsys, env, monkeypatch):
     assert out["email"] == {"sent": True, "to": "owner@example.com", "message_id": "msg-1"}
     assert sent[0]["to"] == ["owner@example.com"]
     assert sent[0]["text"].startswith("# Card digest")
+    assert "Full breakdown in your email." in out["display_text"]
 
 
 def test_missing_snapshot_is_a_clear_error(capsys, env):

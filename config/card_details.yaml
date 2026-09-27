@@ -26,7 +26,7 @@
 # - cap / cap_period: spend cap for that rate; spend above it earns the `other` rate.
 # - benefits: amount is USD per year (null when the page states no dollar value).
 
-as_of: "2026-06"
+as_of: "2026-09"
 
 cards:
   chase-sapphire-preferred:

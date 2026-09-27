@@ -23,8 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
@@ -36,7 +36,7 @@ jobs:
           args=()
           for pair in $TRY; do args+=(--try "$pair"); done
           python scripts/probe_issuers.py "${args[@]}" --json probe-results.json --summary "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: probe-results
           path: probe-results.json

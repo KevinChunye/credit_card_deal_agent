@@ -410,7 +410,8 @@ class Pipeline:
         return rows
 
     def apply(self, report: RunReport) -> dict[str, Any]:
-        """card_details.yaml content with every proposed card's terms applied."""
+        """card_details.yaml content with every proposed card's terms applied, and
+        as_of set to this run's month."""
         cards = dict(self.details.get("cards") or {})
         for card_id in report.changed_cards:
             state = self.card_state(card_id)
@@ -422,4 +423,4 @@ class Pipeline:
                 state.last_extracted or self.today,
                 state.model,
             )
-        return {**self.details, "cards": cards}
+        return {**self.details, "as_of": self.today.strftime("%Y-%m"), "cards": cards}

@@ -70,8 +70,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
@@ -86,7 +86,7 @@ jobs:
           python -m card_agent.terms smoke \
             --cards chase-sapphire-preferred,capital-one-venture-x,amex-gold \
             --summary-md "$GITHUB_STEP_SUMMARY" --report-json smoke-report.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always() && hashFiles('smoke-report.json') != ''
         with:
           name: smoke-report
@@ -109,8 +109,8 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       PR_BRANCH: card-terms/auto
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
@@ -166,7 +166,7 @@ jobs:
             --write-details --pr-dir pr \
             --summary-md "$GITHUB_STEP_SUMMARY" --report-json card-terms-report.json
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always() && hashFiles('card-terms-report.json') != ''
         with:
           name: card-terms-report
@@ -258,8 +258,8 @@ jobs:
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
@@ -271,7 +271,7 @@ jobs:
           python scripts/bootstrap_extract.py --out BOOTSTRAP_DIFF.md \
             ${CARDS:+--cards "$CARDS"} --summary-md "$GITHUB_STEP_SUMMARY" \
             --report-json bootstrap-report.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always() && hashFiles('BOOTSTRAP_DIFF.md') != ''
         with:
           name: bootstrap-diff
