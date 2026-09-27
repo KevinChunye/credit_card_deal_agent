@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT))
 from card_agent.terms import report as render  # noqa: E402
 from card_agent.terms.details import DETAILS_PATH, load_details  # noqa: E402
 from card_agent.terms.pipeline import PipelineState, RunOptions  # noqa: E402
-from card_agent.terms.runner import card_list, run_pipeline, write_summary  # noqa: E402
+from card_agent.terms.runner import card_list, notice, run_pipeline, write_summary  # noqa: E402
 from card_agent.terms.sources import SOURCES_PATH  # noqa: E402
 
 
@@ -55,6 +55,9 @@ def main(argv: list[str] | None = None) -> int:
         + f"\nFull comparison: `{args.out.name}` (artifact `bootstrap-diff`).\n",
         args.summary_md,
     )
+    if report.llm_problem:  # e.g. a rejected key: the report compares nothing
+        notice(report.llm_problem, "error")
+        return 1
     return 0
 
 

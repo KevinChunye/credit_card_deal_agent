@@ -369,3 +369,21 @@ def test_smoke_fails_when_a_key_is_set_but_nothing_extracts(config, offline, mon
     assert code == 1
     assert "**LLM problem:** OpenAI rejected the API key (HTTP 401)." in summary.read_text()
     assert "::error title=card terms::OpenAI rejected the API key" in capsys.readouterr().out
+
+
+def test_bootstrap_fails_visibly_on_a_rejected_key(config, offline, monkeypatch):
+    rejected = LLMError("OpenAI rejected the API key (HTTP 401).", fatal=True)
+    use_provider(monkeypatch, FakeProvider({card_id: rejected for card_id in sources()}))
+    out = config["tmp"] / "BOOTSTRAP_DIFF.md"
+    code = load_bootstrap().main(
+        [
+            "--out",
+            str(out),
+            "--details",
+            str(config["details"]),
+            "--sources",
+            str(config["sources"]),
+        ]
+    )
+    assert code == 1
+    assert "**LLM problem:** OpenAI rejected the API key (HTTP 401)." in out.read_text()
