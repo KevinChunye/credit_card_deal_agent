@@ -1,6 +1,6 @@
 # Testing checklist
 
-Everything offline is covered by `pytest` (about 150 tests). The boxes below are the
+Everything offline is covered by `pytest` (about 200 tests). The boxes below are the
 parts that need your accounts, in the order to verify them. Each item lists what
 "working" looks like.
 

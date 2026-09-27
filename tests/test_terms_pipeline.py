@@ -88,6 +88,7 @@ def test_apply_writes_only_proposed_cards_and_keeps_hand_owned_keys():
     report = pipeline.run(RunOptions(mode="full", cards=["chase-sapphire-preferred", "amex-gold"]))
     applied = pipeline.apply(report)
 
+    assert applied["as_of"] == TODAY.strftime("%Y-%m")
     gold = applied["cards"]["amex-gold"]
     assert gold["annual_fee"] == 325
     assert gold["evidence"]["annual_fee"] == "Annual Fee: $325."
