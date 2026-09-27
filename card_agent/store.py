@@ -1,8 +1,10 @@
 """Private state in local SQLite (path from CARD_AGENT_DB). Never committed.
 
-Holds only what you tell it (profile, spend, valuations, haircuts, wallet)
-and offers parsed from your own forwarded email. No card numbers, no bank
-credentials: `guardrails.reject_card_numbers` runs on every free-text field.
+Holds only what you tell it (profile, spend, valuations, haircuts, wallet,
+cards or issuers to hide), offers parsed from your own forwarded email, and
+the agent's own history (digests sent, past recommendations). No card
+numbers, no bank credentials: `guardrails.reject_card_numbers` runs on every
+free-text field.
 """
 
 from __future__ import annotations
@@ -12,7 +14,7 @@ import sqlite3
 from datetime import date, datetime
 from pathlib import Path
 
-from card_agent.guardrails import reject_card_numbers
+from card_agent.guardrails import reject_card_numbers, sanitize_untrusted
 from card_agent.models import (
     DEFAULT_HAIRCUTS,
     DEFAULT_VALUATIONS,
@@ -63,6 +65,21 @@ CREATE TABLE IF NOT EXISTS digest_log (
     sent_at TEXT NOT NULL,
     channel TEXT NOT NULL,
     period TEXT NOT NULL,
+    detail TEXT
+);
+CREATE TABLE IF NOT EXISTS hidden (
+    kind TEXT NOT NULL CHECK (kind IN ('card', 'issuer')),
+    value TEXT NOT NULL,
+    reason TEXT,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (kind, value)
+);
+CREATE TABLE IF NOT EXISTS recommendation (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL,
+    goal TEXT NOT NULL,
+    card_id TEXT,
+    verdict TEXT,
     detail TEXT
 );
 """
@@ -122,6 +139,13 @@ class Store:
         """Defaults overlaid with whatever you've set."""
         rows = self.conn.execute("SELECT currency, cpp FROM point_valuation").fetchall()
         return {**DEFAULT_VALUATIONS, **{row["currency"]: row["cpp"] for row in rows}}
+
+    def custom_valuations(self) -> dict[str, float]:
+        """Only the valuations you set yourself (no defaults)."""
+        rows = self.conn.execute(
+            "SELECT currency, cpp FROM point_valuation ORDER BY currency"
+        ).fetchall()
+        return {row["currency"]: row["cpp"] for row in rows}
 
     def set_valuations(self, valuations: dict[str, float]) -> None:
         self.conn.executemany(
@@ -225,3 +249,59 @@ class Store:
             "SELECT * FROM digest_log WHERE channel = ? ORDER BY id DESC LIMIT 1", (channel,)
         ).fetchone()
         return dict(row) if row else None
+
+    # --------------------------------------------------------------- hidden
+    def hide(self, kind: str, value: str, reason: str | None, when: datetime) -> None:
+        if reason:
+            reject_card_numbers(reason)  # refuse, before scrubbing could hide it
+            reason = sanitize_untrusted(reason, 160)
+        self.conn.execute(
+            "INSERT INTO hidden (kind, value, reason, created_at) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(kind, value) DO UPDATE SET reason = excluded.reason",
+            (kind, value, reason, when.isoformat()),
+        )
+        self.conn.commit()
+
+    def unhide(self, kind: str, value: str) -> bool:
+        cursor = self.conn.execute("DELETE FROM hidden WHERE kind = ? AND value = ?", (kind, value))
+        self.conn.commit()
+        return cursor.rowcount > 0
+
+    def hidden(self) -> list[dict]:
+        rows = self.conn.execute("SELECT * FROM hidden ORDER BY created_at, value").fetchall()
+        return [dict(row) for row in rows]
+
+    def hidden_values(self, kind: str) -> set[str]:
+        rows = self.conn.execute("SELECT value FROM hidden WHERE kind = ?", (kind,)).fetchall()
+        return {row["value"] for row in rows}
+
+    # -------------------------------------------------------- recommendations
+    def log_recommendation(
+        self, when: datetime, goal: str, card_id: str | None, verdict: str | None, detail: dict
+    ) -> None:
+        self.conn.execute(
+            "INSERT INTO recommendation (created_at, goal, card_id, verdict, detail) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (when.isoformat(), goal, card_id, verdict, json.dumps(detail)),
+        )
+        self.conn.commit()
+
+    def recommendations(self, limit: int = 5, goal: str | None = None) -> list[dict]:
+        if goal is None:
+            rows = self.conn.execute(
+                "SELECT * FROM recommendation ORDER BY id DESC LIMIT ?", (limit,)
+            ).fetchall()
+        else:
+            rows = self.conn.execute(
+                "SELECT * FROM recommendation WHERE goal = ? ORDER BY id DESC LIMIT ?",
+                (goal, limit),
+            ).fetchall()
+        return [dict(row) | {"detail": json.loads(row["detail"] or "{}")} for row in rows]
+
+    def counts(self) -> dict[str, int]:
+        """Row counts for the memory view."""
+        tables = ("personal_offer", "processed_message", "digest_log", "recommendation")
+        return {
+            table: self.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            for table in tables
+        }

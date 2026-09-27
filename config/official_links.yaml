@@ -1,0 +1,33 @@
+# Official pages the agent may hand you. It never applies, logs in or checks
+# offers for you: these are links for you to open yourself.
+#
+# Card application pages are not listed here. They come from the card's
+# curated issuer page (config/card_sources.yaml, probe-verified) or, failing
+# that, the offer feed's link when it is on the issuer's own domain
+# (config/issuer_domains.yaml). See card_agent/links.py.
+#
+# Every URL below was checked on 2026-09-27 against the issuer's or agency's
+# own site. tests/test_links.py fails if one is not https, or if a
+# pre-qualification page is not on its issuer's domain.
+
+# "See if you're pre-approved" pages. They use a soft inquiry, which does not
+# affect your credit score; a real application is a hard inquiry.
+prequalify:
+  chase: https://creditcards.chase.com/check-for-preapproved-offers
+  amex: https://www.americanexpress.com/us/credit-cards/check-for-offers/
+  capital-one: https://www.capitalone.com/apply/credit-cards/preapprove/
+  discover: https://cards.discover.com/apply/credit-cards/discover/preapprove/
+  citi: https://online.citi.com/US/nga/cards/pre-qualify
+  bofa: https://secure.bankofamerica.com/secure-offers/public/customizedOffers/
+  wells-fargo: https://web.secure.wellsfargo.com/credit-cards/yourinfo/
+
+# Free, official help with credit reports and scores.
+credit_resources:
+  - title: Free credit reports from all three bureaus, every week (the only federally authorized site)
+    url: https://www.annualcreditreport.com/
+  - title: Freeze or unfreeze your credit for free (USAGov, with each bureau's contacts)
+    url: https://www.usa.gov/credit-freeze
+  - title: Understand and fix your credit reports and scores (CFPB)
+    url: https://www.consumerfinance.gov/consumer-tools/credit-reports-and-scores/
+  - title: What goes into a FICO score (myFICO)
+    url: https://www.myfico.com/credit-education/whats-in-your-credit-score

@@ -3,14 +3,27 @@
 Deterministic and conservative: a one-word card name ("Gold", "Platinum",
 "Cash") only counts when its issuer is also mentioned, and when two names
 overlap ("Platinum" inside "Business Platinum") the longer one wins.
+
+`suggest` is the typo fallback ("saphire prefered"): string similarity against
+every card's names, used to offer "did you mean" options, or to read a clear
+typo as the card it obviously is (read-only commands only; see cli.resolve).
 """
 
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from difflib import SequenceMatcher
+
+import pandas as pd
 
 from card_agent.models import Card
+
+# A typo is read as a card only if it is this similar to one card's name and
+# clearly closer to it than to the runner-up.
+CONFIDENT_SIMILARITY = 0.86
+CONFIDENT_MARGIN = 0.06
+SUGGEST_SIMILARITY = 0.6
 
 ISSUER_ALIASES: dict[str, list[str]] = {
     "amex": ["amex", "american express"],
@@ -151,3 +164,31 @@ class CardMatcher:
         if len(candidates) == 1:
             return candidates[0], candidates
         return None, candidates
+
+    def suggest(self, query: str, limit: int = 3) -> pd.DataFrame:
+        """Cards whose names look like `query`, most similar first
+        (columns: card_id, similarity). For typos, not for exact names."""
+        wanted = normalize(query).strip()
+        rows = []
+        for card in self.cards.values():
+            names = name_variants(card.name) | {
+                normalize(f"{issuer} {card.name}").strip()
+                for issuer in ISSUER_ALIASES.get(card.issuer, [card.issuer])
+            }
+            best = max(SequenceMatcher(None, wanted, name).ratio() for name in names)
+            rows.append({"card_id": card.id, "similarity": best})
+        frame = pd.DataFrame(rows, columns=["card_id", "similarity"])
+        frame = frame[frame["similarity"] >= SUGGEST_SIMILARITY]
+        return frame.sort_values(["similarity", "card_id"], ascending=[False, True]).head(limit)
+
+    def confident_guess(self, query: str) -> str | None:
+        """The one card a typo clearly means, else None. Needs two or more
+        words, like the one-word rule above: "platnum" alone stays a question."""
+        top = self.suggest(query, limit=2)
+        if top.empty or len(normalize(query).split()) < 2:
+            return None
+        best = top["similarity"].iloc[0]
+        runner_up = top["similarity"].iloc[1] if len(top) > 1 else 0.0
+        if best >= CONFIDENT_SIMILARITY and best - runner_up >= CONFIDENT_MARGIN:
+            return str(top["card_id"].iloc[0])
+        return None

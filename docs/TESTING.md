@@ -1,6 +1,6 @@
 # Testing checklist
 
-Everything offline is covered by `pytest` (about 200 tests). The boxes below are the
+Everything offline is covered by `pytest` (about 250 tests). The boxes below are the
 parts that need your accounts, in the order to verify them. Each item lists what
 "working" looks like.
 
@@ -15,6 +15,15 @@ parts that need your accounts, in the order to verify them. Each item lists what
       LLM cover hallucinated evidence, bounds violations, the wrong card on a multi-card
       page, an unchanged hash making no LLM call, a missing API key, a rejected key, the
       RSS trigger, the PR body, and the bootstrap report.
+- [ ] Agent layer, offline (`tests/test_agent.py`, `test_recovery.py`,
+      `test_present_links_credit.py`): the advise loop stops on a checked pick, asks when
+      there's no profile or nothing passes, revises when minimum spend keeps failing; the
+      Verifier's brief has only its seven fields; hidden cards stay hidden; the trace keeps
+      onboard JSON out; downloads retry, switch endpoints and fall back to the saved copy;
+      typos are read on reads and questioned on writes; every command's text passes the
+      markup lint.
+- [ ] Baseline vs improved: `python scripts/eval_agent.py --snapshot <latest.json>` (needs
+      the git history for the baseline) → the tables in `docs/EVALUATION.md`.
 
 ## 1. Collector (GitHub Actions)
 
@@ -69,11 +78,14 @@ parts that need your accounts, in the order to verify them. Each item lists what
 
 - [ ] Chat: "Set up my card profile" → the agent asks about goals, spend, and cards, then
       runs `onboard --json ...`. `onboard --show` reflects your answers.
-- [ ] "What card should I get?" → a ranked list; held cards absent; no card above your max
-      annual fee.
+- [ ] "What card should I get?" → one pick with a Verifier line, the issuer's own link and a
+      bar chart; held cards absent; no card above your max annual fee; no code blocks.
+- [ ] "How did you decide?" → the loop from `trace`, with the Verifier handoff.
 - [ ] "Explain <top card>" → itemized lines that add up to the headline number.
-- [ ] "Compare Venture X and Sapphire Reserve" → side-by-side table, a winner for year 1
+- [ ] "Compare Venture X and Sapphire Reserve" → side by side, a chart, a winner for year 1
       and for later years.
+- [ ] "Not interested in <card>" → it disappears from `advise` and `rank`, also in a new
+      chat; "What do you remember about me?" lists it with your reason.
 - [ ] Eligibility sanity: add five personal cards opened within 24 months → Chase cards
       drop out of `rank` (`rank --include-ineligible` shows them as ineligible).
 

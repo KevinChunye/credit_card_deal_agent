@@ -36,6 +36,7 @@ from card_agent.models import (
     UserProfile,
     WalletCard,
 )
+from card_agent.present import currency_label
 from card_agent.snapshot import DataView
 
 FLAT_BASELINE_RATE = 0.02  # a no-annual-fee 2% cash back card
@@ -76,6 +77,9 @@ class ScoringContext:
     wallet: list[WalletCard]
     rules: list[EligibilityRule]
     today: date
+    # Memory: cards and issuers you asked not to see again (`hide`).
+    hidden_cards: set[str] = field(default_factory=set)
+    hidden_issuers: set[str] = field(default_factory=set)
 
     def __post_init__(self) -> None:
         self.open_wallet = [w for w in self.wallet if w.is_open and w.card_id in self.data.cards]
@@ -83,6 +87,16 @@ class ScoringContext:
 
     def annual_spend(self, category: Category) -> float:
         return float(self.spend.get(category, 0.0)) * 12
+
+    def is_hidden(self, card_id: str) -> bool:
+        card = self.data.cards.get(card_id)
+        return card_id in self.hidden_cards or (
+            card is not None and card.issuer in self.hidden_issuers
+        )
+
+    def card_name(self, card_id: str) -> str:
+        card = self.data.cards.get(card_id)
+        return card.display_name if card else card_id
 
 
 @dataclass
@@ -152,8 +166,8 @@ def effective_cpp(
                 unlocked = True
         if not unlocked and cpp > 1.0:
             return 1.0, (
-                f"{card.point_currency} valued at 1.0¢ (not {cpp:g}¢): this card can't transfer "
-                "points and you hold no card that unlocks transfers"
+                f"{currency_label(card.point_currency)} valued at 1.0¢ (not {cpp:g}¢): this card "
+                "can't transfer points and you hold no card that unlocks transfers"
             )
     return cpp, None
 
@@ -379,14 +393,15 @@ def evaluate(card_id: str, ctx: ScoringContext) -> CardEvaluation:
     for category, value in values.items():
         annual = ctx.annual_spend(category)
         new_cents = value * 100 / annual
-        cur_cents, cur_card = held_best.get(category, (0.0, "nothing"))
+        cur_cents, cur_card = held_best.get(category, (0.0, None))
         gain = annual * max(0.0, new_cents - cur_cents) / 100
         incremental += gain
+        on = ctx.card_name(cur_card) if cur_card else "nothing"
         marginal.append(
             Line(
                 f"Earn: {category.value}",
                 gain,
-                f"{new_cents:.2f}¢/$ vs {cur_cents:.2f}¢/$ on {cur_card}; ${annual:,.0f}/yr",
+                f"{new_cents:.2f}¢/$ vs {cur_cents:.2f}¢/$ on {on}; ${annual:,.0f}/yr",
             )
         )
 
@@ -401,8 +416,8 @@ def evaluate(card_id: str, ctx: ScoringContext) -> CardEvaluation:
         benefits_steady += value if recurring else 0.0
         breakdown.append(Line(f"Benefit: {benefit.name}", value, how))
         duplicate = (
-            have_kinds.get(benefit.kind)
-            if benefit.kind != BenefitKind.other
+            ctx.card_name(have_kinds[benefit.kind])
+            if benefit.kind in have_kinds
             else ("a held card" if benefit.name.lower() in have_other else None)
         )
         if duplicate:
@@ -505,17 +520,21 @@ def rank(
     kind: str | None = None,
     max_annual_fee: float | None = None,
     include_ineligible: bool = False,
+    include_hidden: bool = False,
 ) -> tuple[pd.DataFrame, dict[str, CardEvaluation]]:
     """Evaluate every open-to-apply card and rank by score.
 
     kind: personal | business | all (default: all if you have a business,
-    else personal). max_annual_fee defaults to your profile's limit.
+    else personal). max_annual_fee defaults to your profile's limit. Cards and
+    issuers you hid are left out unless include_hidden.
     """
     held_ids = {w.card_id for w in ctx.open_wallet}
     candidates = [
         card_id
         for card_id, card in ctx.data.cards.items()
-        if not card.discontinued and card_id not in held_ids
+        if not card.discontinued
+        and card_id not in held_ids
+        and (include_hidden or not ctx.is_hidden(card_id))
     ]
     evaluations = {card_id: evaluate(card_id, ctx) for card_id in candidates}
     if not evaluations:
@@ -545,6 +564,30 @@ def rank(
         ["score", "marginal_ev_year1", "goal_fit"], ascending=[False, False, False]
     ).reset_index(drop=True)
     return frame, evaluations
+
+
+def wallet_rates(ctx: ScoringContext, category: Category) -> pd.DataFrame:
+    """Your open cards for one spend category, best first: cents back per dollar
+    at your spend level (caps applied), the rate, and the card's name."""
+    annual = ctx.annual_spend(category) or 1200.0  # no spend on file: price $100/mo
+    rows = []
+    for held in ctx.open_wallet:
+        card = ctx.data.cards[held.card_id]
+        cpp, _ = effective_cpp(card, ctx)
+        rates, _ = resolved_rates(card.id, ctx)
+        points, how = points_for(category, annual, rates)
+        rows.append(
+            {
+                "card_id": card.id,
+                "name": card.display_name,
+                "cents": points * cpp / annual,
+                "how": how,
+                "currency": card.point_currency,
+                "cpp": cpp,
+            }
+        )
+    frame = pd.DataFrame(rows, columns=["card_id", "name", "cents", "how", "currency", "cpp"])
+    return frame.sort_values(["cents", "name"], ascending=[False, True]).reset_index(drop=True)
 
 
 def cards_opened_last_12_months(ctx: ScoringContext) -> int:

@@ -5,12 +5,17 @@ bonuses from the latest changes file, personal offers from your inbox,
 annual fees due in the next 60 days (keep/downgrade), credits you're likely
 leaving unused, and relevant Doctor of Credit news.
 
+Both versions are plain text with emoji, so they read cleanly in any chat
+app or mail client; the email also gets an HTML part with a bar chart.
+
 Email and scraped text is untrusted: the short version never includes raw
-email subjects, and every scraped string goes through sanitize_untrusted.
+email subjects, every scraped string goes through sanitize_untrusted, and
+everything in the HTML part is escaped.
 """
 
 from __future__ import annotations
 
+import html
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
@@ -19,6 +24,7 @@ import pandas as pd
 from card_agent.freshness import MARKER, data_health, terms_warning
 from card_agent.guardrails import sanitize_untrusted
 from card_agent.models import BenefitKind, ChangeSet, PersonalOffer
+from card_agent.present import bar_lines
 from card_agent.scoring import (
     ScoringContext,
     benefit_face_usd,
@@ -38,17 +44,26 @@ CREDIT_KINDS = set(BenefitKind) - {BenefitKind.lounge, BenefitKind.elite_status}
 
 @dataclass
 class Item:
-    short: str
-    full: str
+    short: str  # one line in the chat version
+    text: str  # the line in the email
     data: dict = field(default_factory=dict)
+    details: list[str] = field(default_factory=list)  # indented lines under it in the email
+    url: str | None = None  # written out in the text email, linked in the HTML one
+    name: str | None = None  # bold at the start of the HTML line
+    value: float | None = None  # drawn as a bar in the email chart
 
 
 @dataclass
 class Section:
     key: str
     title: str
+    emoji: str
     items: list[Item] = field(default_factory=list)
     note: str | None = None
+
+    @property
+    def heading(self) -> str:
+        return f"{self.emoji} {self.title}"
 
 
 @dataclass
@@ -56,7 +71,8 @@ class Digest:
     period: str
     title: str
     short: str
-    full: str
+    full: str  # plain-text email
+    html: str  # HTML email
     sections: list[Section]
 
     def to_dict(self) -> dict:
@@ -94,9 +110,9 @@ def next_occurrence(anchor: date, today: date) -> date:
 
 def top_opportunities(ctx: ScoringContext, limit: int = 5) -> Section:
     frame, evaluations = rank(ctx)
-    section = Section("top_opportunities", "Top picks for you")
+    section = Section("top_opportunities", "Top picks for you", "🏆")
     if frame.empty:
-        section.note = "No cards to rank yet (run sync, then onboard your spend)."
+        section.note = "No cards to rank yet: I need card data and your spending first."
         return section
     eligible = frame[
         (frame["eligibility"] == "eligible")
@@ -118,21 +134,22 @@ def top_opportunities(ctx: ScoringContext, limit: int = 5) -> Section:
             f"{money(ev.marginal_ev_steady, True)}/yr after{offer}"
             + (f" {MARKER}" if warning else "")
         )
-        math = "\n".join(
-            f"    - {line.label}: {money(line.amount, True)}"
+        math = [
+            f"{line.label}: {money(line.amount, True)}"
             + (f" ({line.detail})" if line.detail else "")
             for line in ev.marginal_breakdown
             if line.amount or line.detail.startswith("already")
-        )
-        full = (
-            f"**{ev.name}** — marginal EV {money(ev.marginal_ev_year1, True)} in year 1, "
+        ]
+        text = (
+            f"{ev.name}: {money(ev.marginal_ev_year1, True)} in year 1 on top of your cards, "
             f"{money(ev.marginal_ev_steady, True)}/yr after; annual fee {money(ev.annual_fee)}{offer}. "
-            f"vs a flat 2% card: {money(ev.vs_flat_2pct_steady, True)}/yr."
+            f"Versus a flat 2% card: {money(ev.vs_flat_2pct_steady, True)}/yr."
             + (f" {MARKER} {warning}." if warning else "")
-            + f"\n{math}"
         )
         data = ev.to_dict() | {"breakdown": None, "terms_warning": warning}
-        section.items.append(Item(short, full, data))
+        section.items.append(
+            Item(short, text, data, details=math, name=ev.name, value=ev.marginal_ev_year1)
+        )
     if not section.items and not section.note:
         section.note = (
             f"Nothing clears your {money(ctx.profile.min_marginal_ev_alert)} threshold this month."
@@ -141,9 +158,9 @@ def top_opportunities(ctx: ScoringContext, limit: int = 5) -> Section:
 
 
 def bonus_changes(ctx: ScoringContext, changes: ChangeSet | None, limit: int = 5) -> Section:
-    section = Section("bonus_changes", "New & elevated bonuses")
+    section = Section("bonus_changes", "New & elevated bonuses", "🆕")
     if changes is None:
-        section.note = "No changes file yet."
+        section.note = "No bonus changes recorded yet."
         return section
     held = {w.card_id for w in ctx.open_wallet}
     rows = [
@@ -159,7 +176,12 @@ def bonus_changes(ctx: ScoringContext, changes: ChangeSet | None, limit: int = 5
     ]
     for change in rows[: limit * 2]:
         card_id = change["card_id"]
-        if card_id in held or card_id not in ctx.data.cards or ctx.data.cards[card_id].discontinued:
+        if (
+            card_id in held
+            or card_id not in ctx.data.cards
+            or ctx.data.cards[card_id].discontinued
+            or ctx.is_hidden(card_id)
+        ):
             continue
         card = ctx.data.cards[card_id]
         status = ctx.checker.check(card).status
@@ -179,13 +201,15 @@ def bonus_changes(ctx: ScoringContext, changes: ChangeSet | None, limit: int = 5
             break
     if changes.is_empty:
         section.note = f"No bonus changes since {changes.previous_date or 'the first snapshot'}."
+    elif not section.items:
+        section.note = "Nothing new for cards you don't already have."
     return section
 
 
 def personal_offers_section(
     offers: list[PersonalOffer], ctx: ScoringContext, limit: int = 5
 ) -> Section:
-    section = Section("personal_offers", "Offers in your inbox (last 31 days)")
+    section = Section("personal_offers", "Offers in your inbox (last 31 days)", "📬")
     real = [o for o in offers if o.kind != "forwarding_confirmation"]
     phishing = [o for o in real if o.suspected_phishing]
     for offer in [o for o in real if not o.suspected_phishing][:limit]:
@@ -201,17 +225,17 @@ def personal_offers_section(
         if offer.expires_at:
             parts.append(f"expires {offer.expires_at:%b %d}")
         short = f"{name}: {', '.join(parts)}"
-        full = f'{short}. Subject: "{sanitize_untrusted(offer.subject, 120)}"'
-        section.items.append(Item(short, full, offer.model_dump(mode="json")))
+        text = f'{short}. Subject: "{sanitize_untrusted(offer.subject, 120)}"'
+        section.items.append(Item(short, text, offer.model_dump(mode="json")))
     if phishing:
-        section.note = f"⚠ {len(phishing)} suspicious email(s) flagged and left out; don't click anything in them."
+        section.note = f"🚩 {len(phishing)} suspicious email(s) flagged and left out; don't click anything in them."
     elif not real:
         section.note = "None received."
     return section
 
 
 def fees_due(ctx: ScoringContext, limit: int = 5) -> Section:
-    section = Section("fees_due", f"Annual fees due in the next {FEE_WINDOW_DAYS} days")
+    section = Section("fees_due", f"Annual fees due in the next {FEE_WINDOW_DAYS} days", "📅")
     for held in ctx.open_wallet:
         card = ctx.data.cards[held.card_id]
         if not held.annual_fee_date or card.annual_fee <= 0:
@@ -243,12 +267,14 @@ def fees_due(ctx: ScoringContext, limit: int = 5) -> Section:
         if len(section.items) >= limit:
             break
     if not section.items:
-        section.note = "Nothing due (add annual_fee_date to wallet cards to track this)."
+        section.note = (
+            "Nothing due. Tell me when each card's annual fee posts and I'll warn you ahead."
+        )
     return section
 
 
 def unused_credits(ctx: ScoringContext, limit: int = 5) -> Section:
-    section = Section("unused_credits", "Credits you may be leaving unused")
+    section = Section("unused_credits", "Credits you may be leaving unused", "🎟️")
     rows = [
         {
             "card_id": held.card_id,
@@ -282,7 +308,7 @@ def unused_credits(ctx: ScoringContext, limit: int = 5) -> Section:
 def news_section(
     ctx: ScoringContext, relevant_ids: set[str], now: datetime, limit: int = 5
 ) -> Section:
-    section = Section("news", "Worth a look (Doctor of Credit)")
+    section = Section("news", "Worth a look (Doctor of Credit)", "🗞️")
     cutoff = now - timedelta(days=NEWS_WINDOW_DAYS)
     for item in ctx.data.snapshot.news:
         if item.published_at < cutoff or {"bank", "expired"} & set(item.tags):
@@ -291,11 +317,13 @@ def news_section(
         if not (linked or item.kind in ("new_bonus", "elevated_bonus")):
             continue
         title = sanitize_untrusted(item.title, 110)
+        url = item.url if item.url.startswith(("https://", "http://")) else None
         section.items.append(
             Item(
                 f'"{title}"',
-                f"[{title}]({item.url}) — {item.published_at:%b %d}",
+                f"{title} ({item.published_at:%b %d})",
                 {"title": title, "url": item.url, "kind": item.kind, "card_ids": item.card_ids},
+                url=url,
             )
         )
         if len(section.items) >= limit:
@@ -310,41 +338,132 @@ def news_section(
 # ---------------------------------------------------------------------------
 
 
+DISCLAIMER = (
+    "Values are estimates from your own spend, point valuations and usage haircuts; bonus "
+    "terms come from public sources and your inbox and can change. This agent never applies "
+    "for cards or logs into accounts. Not financial advice."
+)
+
+
 def render_short(
     title: str, sections: list[Section], per_section: int, footer: str, health: str = ""
 ) -> str:
-    lines = [f"*{title}*"]
+    lines = [f"🗓️ {title}"]
     for section in sections:
         if not section.items and not section.note:
             continue
-        lines += ["", f"*{section.title}*"]
+        lines += ["", section.heading]
         lines += [f"{i}. {item.short}" for i, item in enumerate(section.items[:per_section], 1)]
         if section.note and (section.key != "news" or not section.items):
-            lines.append(f"_{section.note}_")
+            lines.append(section.note)
     if any(MARKER in item.short for section in sections for item in section.items):
         lines += ["", f"{MARKER} = card terms not verified in the last 60 days"]
-    lines += ["", health, footer] if health else ["", footer]
+    lines += ["", f"🩺 {health}", footer] if health else ["", footer]
     return "\n".join(lines)
+
+
+def chart_lines(sections: list[Section]) -> list[str]:
+    """Year-1 value of the top picks as text bars (the email's chart)."""
+    rows = [
+        (item.value, f"{money(item.value, True)} {item.name}")
+        for section in sections
+        for item in section.items
+        if item.value is not None and item.name
+    ]
+    return bar_lines(rows) if rows else []
 
 
 def render_full(
     title: str, sections: list[Section], header: list[str], appendix: list[str] | None = None
 ) -> str:
-    lines = [f"# {title}", "", *header]
+    """The plain-text email: readable as is, no markup."""
+    lines = [f"🗓️ {title}", "", *header]
+    chart = chart_lines(sections)
+    if chart:
+        lines += ["", "📊 Year 1 value of your top picks", *chart]
     for section in sections:
-        lines += ["", f"## {section.title}", ""]
-        lines += [f"- {item.full}" for item in section.items]
+        lines += ["", section.heading]
+        for item in section.items:
+            lines.append(f"• {item.text}")
+            lines += [f"    ◦ {detail}" for detail in item.details]
+            if item.url:
+                lines.append(f"    {item.url}")
         if section.note:
-            lines.append(f"_{section.note}_")
+            lines.append(section.note)
     lines += appendix or []
-    lines += [
-        "",
-        "---",
-        "Values are estimates from your own spend, point valuations and usage haircuts; "
-        "bonus terms come from public sources and your inbox and can change. This agent never "
-        "applies for cards or logs into accounts. Not financial advice.",
-    ]
+    lines += ["", "—", DISCLAIMER]
     return "\n".join(lines)
+
+
+def _html_text(item: Item) -> str:
+    text = html.escape(item.text)
+    if item.name and item.text.startswith(item.name):
+        text = f"<b>{html.escape(item.name)}</b>{html.escape(item.text[len(item.name) :])}"
+    if item.url:
+        text += f' <a href="{html.escape(item.url, quote=True)}">read</a>'
+    return text
+
+
+def render_html(
+    title: str, sections: list[Section], header: list[str], appendix: list[str] | None = None
+) -> str:
+    """The HTML email: the same content, with headings, lists and a bar chart.
+    Every string is escaped; links are only ever http(s)."""
+    esc = html.escape
+    out = [
+        '<!doctype html><html><body style="margin:0;padding:16px;background:#f6f7f9">',
+        '<div style="max-width:640px;margin:auto;background:#ffffff;padding:20px;border-radius:12px;'
+        "font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2937;"
+        'line-height:1.5">',
+        f'<h1 style="font-size:22px;margin:0 0 8px">🗓️ {esc(title)}</h1>',
+    ]
+    out += [f'<p style="margin:4px 0;color:#4b5563">{esc(line)}</p>' for line in header]
+    rows = [
+        item
+        for section in sections
+        for item in section.items
+        if item.value is not None and item.name
+    ]
+    if rows:
+        top = max(max(item.value for item in rows), 1.0)
+        out.append(
+            '<h2 style="font-size:17px;margin:20px 0 8px">📊 Year 1 value of your top picks</h2>'
+        )
+        out.append('<table role="presentation" style="width:100%;border-collapse:collapse">')
+        for item in rows:
+            width = max(0.0, min(item.value, top)) / top * 100
+            out.append(
+                "<tr>"
+                f'<td style="padding:3px 8px 3px 0;font-size:14px">{esc(item.name)}</td>'
+                '<td style="width:45%"><div style="background:#2563eb;height:12px;border-radius:3px;'
+                f'width:{width:.0f}%"></div></td>'
+                f'<td style="padding-left:8px;font-size:14px;white-space:nowrap">'
+                f"{esc(money(item.value, True))}</td>"
+                "</tr>"
+            )
+        out.append("</table>")
+    for section in sections:
+        out.append(f'<h2 style="font-size:17px;margin:20px 0 8px">{esc(section.heading)}</h2>')
+        if section.items:
+            out.append('<ul style="padding-left:20px;margin:0">')
+            for item in section.items:
+                details = ""
+                if item.details:
+                    details = (
+                        '<ul style="color:#4b5563;font-size:13px">'
+                        + "".join(f"<li>{esc(detail)}</li>" for detail in item.details)
+                        + "</ul>"
+                    )
+                out.append(f'<li style="margin:4px 0">{_html_text(item)}{details}</li>')
+            out.append("</ul>")
+        if section.note:
+            out.append(f'<p style="margin:4px 0;color:#6b7280">{esc(section.note)}</p>')
+    for line in appendix or []:
+        if line.strip():
+            out.append(f'<p style="margin:4px 0;color:#4b5563;font-size:13px">{esc(line)}</p>')
+    out.append(f'<p style="margin-top:24px;color:#6b7280;font-size:12px">{esc(DISCLAIMER)}</p>')
+    out.append("</div></body></html>")
+    return "\n".join(out)
 
 
 def build_digest(
@@ -365,7 +484,7 @@ def build_digest(
         news_section(ctx, relevant, now),
     ]
     title = f"Card digest · {now:%B %Y}"
-    footer = EMAIL_NOTE + 'Ask me to "compare X Y" or "explain X" for the math.'
+    footer = "💬 " + EMAIL_NOTE + 'Ask me to "compare X and Y" or "explain X" for the math.'
     health = data_health(list(ctx.data.cards.values()), now.date())
     per_section = 3
     short = render_short(title, sections, per_section, footer, health.line)
@@ -379,13 +498,21 @@ def build_digest(
     header = [
         f"Data as of {snapshot.generated_at:%Y-%m-%d} "
         f"({', '.join(f'{k}: {v.status}' for k, v in snapshot.sources.items())}).",
-        f"{health.line} (Card terms are re-read from issuer pages monthly; "
+        f"🩺 {health.line} (Card terms are re-read from issuer pages monthly; "
         f"{MARKER} marks cards not verified in the last 60 days.)",
         *[f"⚠ {warning}" for warning in warnings or []],
     ]
     appendix = []
     if health.stale:
-        appendix = ["", "## Data health", "", health.line, ""]
-        appendix += [f"- {name}: {reason}" for name, reason in health.stale]
+        appendix = ["", "🩺 Data health", health.line]
+        appendix += [f"• {name}: {reason}" for name, reason in health.stale]
     full = render_full(title, sections, header, appendix)
-    return Digest(period=f"{now:%Y-%m}", title=title, short=short, full=full, sections=sections)
+    html_body = render_html(title, sections, header, appendix)
+    return Digest(
+        period=f"{now:%Y-%m}",
+        title=title,
+        short=short,
+        full=full,
+        html=html_body,
+        sections=sections,
+    )

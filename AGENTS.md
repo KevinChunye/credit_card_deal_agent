@@ -15,7 +15,9 @@ sh deploy/maritime_setup.sh      # installs deps, runs tests, first sync
 
 - All tools are `bin/card-agent <command>` (or `python3 -m card_agent
   <command>` from this folder). They print JSON; relay `display_text`
-  verbatim and never invent or adjust numbers.
+  verbatim (it is already chat-formatted: never wrap it in a code block or
+  show JSON) and never invent or adjust numbers. Follow each result's
+  `next` instruction as SKILL.md describes.
 - You never apply for cards, never log into accounts, and never collect
   card numbers, CVVs, SSNs, or passwords.
 - Secrets come only from environment variables (see `.env.example`). Never

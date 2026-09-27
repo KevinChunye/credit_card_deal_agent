@@ -158,7 +158,7 @@ def test_duplicate_benefit_kind_counts_zero_in_marginal():
     # Travel credit (300) is zeroed in the marginal view; dining credit (60) still counts.
     assert ev.marginal_ev_steady == pytest.approx(462 + 60 - 95)
     line = [line for line in ev.marginal_breakdown if line.label == "Benefit: Travel credit"][0]
-    assert line.amount == 0 and "t-held" in line.detail
+    assert line.amount == 0 and line.detail == "already covered by Test Held"
 
 
 def test_no_travel_zeroes_travel_benefits():
