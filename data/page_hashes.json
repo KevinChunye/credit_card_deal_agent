@@ -1,0 +1,732 @@
+{
+ "updated_at": "2026-09-27T04:32:17.520316Z",
+ "cards": {
+  "chase-sapphire-preferred": {
+   "url": "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
+   "sha256": "f325aa0c195e7a11f0d236120be0b652380a50bffc1ef37dce6b2b7393d8e7e5",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "chase-sapphire-reserve": {
+   "url": "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve",
+   "sha256": "b7136a6c37324e111f1d4d1eb76c3fcfaec2d39320b72ce26f351c86c72c0b6f",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "benefit.elite_status",
+     "reason": "evidence not found on page",
+     "value": "",
+     "evidence": "Benefits include: IHG One Rewards Diamond Elite Status"
+    },
+    {
+     "field": "benefit.elite_status",
+     "reason": "evidence not found on page",
+     "value": "",
+     "evidence": "Benefits include: Southwest Airlines A-list status"
+    }
+   ]
+  },
+  "chase-freedom-unlimited": {
+   "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited",
+   "sha256": "7e26e99dd7e246d70a38a1fd6658d2d93f678549a515d44ea3710837386bbc18",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "chase-freedom-flex": {
+   "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/flex",
+   "sha256": "b7974fadb456336d9262429a1ac3d3a12c4b66f114c6ea73ec8e299f293841d8",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "chase-ink-business-preferred": {
+   "url": "https://creditcards.chase.com/business-credit-cards/ink/business-preferred",
+   "sha256": "62c85116893f05ea0926fafd1c338313ab4bed66f8a039808b1e9d0b9b97c1b2",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "earn.travel_general",
+     "reason": "evidence not found on page",
+     "value": "3x",
+     "evidence": "You'll earn 3 points total for each $1 of the first $150,000 spent each account anniversary year on combined purchases in the following rewards categories: travel"
+    }
+   ]
+  },
+  "chase-ink-business-cash": {
+   "url": "https://creditcards.chase.com/business-credit-cards/ink/cash",
+   "sha256": "5b03d722396aa5fa76a7a70ad8f1c9d4db9196ef388465423cc941261d25be4e",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "chase-ink-business-unlimited": {
+   "url": "https://creditcards.chase.com/business-credit-cards/ink/unlimited",
+   "sha256": "fc5d027e9573c87a5a7d658675f7cc61e5020c2915cf2f83d48ce032658ebe0c",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "chase-ink-business-premier": {
+   "url": "https://creditcards.chase.com/business-credit-cards/ink/premier",
+   "sha256": "f83ab0644f3696893d3847238aaed078f7734f0ffe7e8a3c7013fdd6f16f0a50",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "chase-amazon-prime": {
+   "url": "https://creditcards.chase.com/cash-back-credit-cards/amazon-prime-rewards",
+   "sha256": "9b2af7143e3f0ed8bbd284692c02b8956fbe47f3c7da1da6630ddf70dc1eadd1",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "chase-united-explorer": {
+   "url": "https://creditcards.chase.com/travel-credit-cards/united/united-explorer",
+   "sha256": "f74b6bb064e50708b72b929f0c71f5979f0af4cf97c90a0fa6713db6b315124a",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "benefit.other",
+     "reason": "evidence doesn't state $50",
+     "value": "$50 annual",
+     "evidence": "Earn $25 in United TravelBank cash on your first eligible Avis or Budget purchase and $25 in United TravelBank cash on your second eligible Avis or Budget purchase"
+    }
+   ]
+  },
+  "chase-world-of-hyatt": {
+   "url": "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card",
+   "sha256": "a7c32d38eff0966f12289b180846a2bae0b1c2a55aee89d5facf310ca7fc7420",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "earn.flights",
+     "reason": "evidence not found on page",
+     "value": "2x",
+     "evidence": "2 World of Hyatt Bonus Points for each $1 USD spent on purchases made in any of the following rewards categories: airline tickets when purchased directly with the airline"
+    },
+    {
+     "field": "earn.transit_rideshare",
+     "reason": "evidence not found on page",
+     "value": "2x",
+     "evidence": "2 World of Hyatt Bonus Points for each $1 USD spent on purchases made in any of the following rewards categories: local transit/commuting"
+    }
+   ]
+  },
+  "chase-marriott-bonvoy-boundless": {
+   "url": "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/boundless",
+   "sha256": "834e430a6d9bd4e8e9f62262d541fce5a063acfd14919b018f6ecf40581dee75",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "chase-ihg-premier": {
+   "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+   "sha256": "1b92370d92329911bfc7fbe2a10bc8ba1173c36e45b7f5ee78603d5c0363913e",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "amex-platinum": {
+   "url": "https://www.americanexpress.com/us/credit-cards/card/platinum/",
+   "sha256": "c98a4542db864d3235e5548bee9630886fa6858373ffb93c81597e259746f108",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "earn.flights",
+     "reason": "evidence not found on page",
+     "value": "5x",
+     "evidence": "5X Membership Rewards points on flights purchased directly from airlines or American Express Travel"
+    }
+   ]
+  },
+  "amex-gold": {
+   "url": "https://www.americanexpress.com/us/credit-cards/card/gold-card/",
+   "sha256": "23bbd9c20067fb375d9549488a5d36ee08c79259bbf9091af6ca8b3d253e182f",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "amex-green": {
+   "url": "https://www.americanexpress.com/us/credit-cards/card/green/",
+   "sha256": "c48f6592bd3e32306c1c1a215b53545273c30b43118bf3ba6b6b728e38df1519",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "point_currency",
+     "reason": "evidence not found on page",
+     "value": "Membership Rewards ® points",
+     "evidence": "Earn Membership Rewards ® points on dining, groceries, travel and other eligible purchases."
+    }
+   ]
+  },
+  "amex-blue-cash-preferred": {
+   "url": "https://www.americanexpress.com/us/credit-cards/card/blue-cash-preferred/",
+   "sha256": "bba0af31cd431dc6856935b119bd9ed897e78bd2908da3003b6aa6873e724b7e",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "amex-blue-cash-everyday": {
+   "url": "https://www.americanexpress.com/us/credit-cards/card/blue-cash-everyday/",
+   "sha256": "2be20f031fa34b0fb3e847a39649b27a8ce2b9d1c41e118dd1c2f666069d74df",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "amex-blue-business-plus": {
+   "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-blue-business-plus-credit-card-amex/",
+   "sha256": "cda01ac7904b36a16ed96846fe3148dbf5c7603936f08007a0efa81ed55aa819",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "amex-blue-business-cash": {
+   "url": "https://www.americanexpress.com/en-us/business/credit-cards/blue-business-cash/",
+   "sha256": "e4b1aae893430e417d99ed0b6e7ea44611e5680ff55b34d6df4cbf45efc37aee",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "amex-business-gold": {
+   "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/",
+   "sha256": "8075f4d1d97e999964aaceeb614c04c9a80e5c0bf2c4507e33619020b4d5525b",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "amex-business-platinum": {
+   "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+   "sha256": "eb298b34b8302c097f061a6d9204fb35ab3dd6c982371a4dc24fa4eaded0c78c",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "benefit.other",
+     "reason": "$2400/yr outside (0.0, 2000.0)",
+     "value": "$2400 annual",
+     "evidence": "Unlock up to $2,400 in statement credits for use in the next calendar year on American Express One AP monthly fees"
+    }
+   ]
+  },
+  "amex-hilton-honors": {
+   "url": "https://www.americanexpress.com/us/credit-cards/card/hilton-honors/",
+   "sha256": "c63d57581491af001ace86c290c64d08d225bbf9e72ed24a5f5ee05fd0c4d928",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "amex-hilton-honors-surpass": {
+   "url": "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-surpass/",
+   "sha256": "e295bb4e525da85c50ac865627f4b2569b2110a342c1d3d3223c814ecc39a1af",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "amex-hilton-honors-aspire": {
+   "url": "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/",
+   "sha256": "052f7eaa685166cd88521048d830a55a22820d24dec566319355b2764cc86785",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "amex-marriott-bonvoy-bevy": {
+   "url": "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-bevy/",
+   "sha256": "cdc9b1b93864eead672315af58d4875a4844c0be37cd438039b25ec3180af738",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "amex-marriott-bonvoy-brilliant": {
+   "url": "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-brilliant/",
+   "sha256": "539af9a322b0ac4d71ba60bd646bad43d65524efbe36c2fac168bad02828f24f",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "amex-delta-skymiles-gold": {
+   "url": "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-gold-american-express-card/",
+   "sha256": "85a0267c8e0ee6329de5a04ff9649a8d0ae2fd6a2155ae5e7dbb3a801ab5771b",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "earn.dining",
+     "reason": "evidence not found on page",
+     "value": "2x",
+     "evidence": "Earn 2X Miles at restaurants plus takeout and delivery in the U.S."
+    }
+   ]
+  },
+  "amex-delta-skymiles-platinum": {
+   "url": "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-platinum-american-express-card/",
+   "sha256": "cf5b06004bce50684ff510dbdc751c60af31bbfdceb9026ba02fb93e05c5d0fb",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "amex-delta-skymiles-reserve": {
+   "url": "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-reserve-american-express-card/",
+   "sha256": "4a44ebcc263f1dc68cce8079994bb84c6c897ec2e86d71fe58ef78029642e1ee",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "capital-one-venture-x": {
+   "url": "https://www.capitalone.com/credit-cards/venture-x/",
+   "sha256": "1e97d4238ac9be20cbef1a52d82e9ec57b38fe8a3c2c75941014d8568c5a90b3",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "capital-one-venture-rewards": {
+   "url": "https://www.capitalone.com/credit-cards/venture/",
+   "sha256": "616830a0f317e5e4c87185037f839b902b752084eb0b64f8675433fe803be93b",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "capital-one-ventureone": {
+   "url": "https://www.capitalone.com/credit-cards/ventureone/",
+   "sha256": "97a80f77b89dcb3b86403488704f81661f891c46a426c676c98313581a43f138",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "capital-one-venture-x-business": {
+   "url": "https://www.capitalone.com/small-business/credit-cards/venture-x-business/",
+   "sha256": "e0cd1012eaef7b2649e22081a8e2cfa60e694abf83791037b7758a17efc7c0e3",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "capital-one-savor": {
+   "url": "https://www.capitalone.com/credit-cards/savor/",
+   "sha256": "09689a4b0b4db8371f85c999e7fcf5aeb42912440ce88cf8dc97c9d5e74acfef",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "capital-one-quicksilver": {
+   "url": "https://www.capitalone.com/credit-cards/quicksilver/",
+   "sha256": "17422a4398b66d150f1eff17a2cc2c047c8aa018e52bf4e807639aa4f9c6658f",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "capital-one-spark-2-cash-plus": {
+   "url": "https://www.capitalone.com/small-business/credit-cards/spark-cash-plus/",
+   "sha256": "e3b091279f7e1de18a4fdb19180092c9de98e5f6889d8f3d1e7e7891517dcf8c",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "citi-strata-premier": {
+   "url": "https://www.citi.com/credit-cards/citi-strata-premier-credit-card",
+   "sha256": "54d74d3b8c6e35d048ec77cc60f0990dd92bc0046962d65bd3443ea5ec177401",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "citi-strata-elite": {
+   "url": "https://www.citi.com/credit-cards/citi-strata-elite-credit-card",
+   "sha256": "9ed98225fc4d494ba066472b4c064409d681be6e4c922a894548710609aaa390",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "citi-double-cash": {
+   "url": "https://www.citi.com/credit-cards/citi-double-cash-credit-card",
+   "sha256": "1296cc1d04947ab06a8bc44868795fa4b3e94d9e170cb2aa932306676fbdcc33",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "citi-aadvantage-platinum-select-world-elite": {
+   "url": "https://www.citi.com/credit-cards/citi-aadvantage-platinum-select-world-elite-mastercard",
+   "sha256": "2d501cfd9842729879100dc085085effce12017b41436cf02aa28c566603b79e",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "benefit.other",
+     "reason": "evidence not found on page",
+     "value": "",
+     "evidence": "25% savings on inflight food and beverage purchases on American Airlines flights"
+    }
+   ]
+  },
+  "bofa-customized-cash-rewards": {
+   "url": "https://www.bankofamerica.com/credit-cards/products/cash-back-credit-card/",
+   "sha256": "06b93440d1b0625259de9ac1fcf1ee84403b80a98ab9c7a47c4f6affd93fffd4",
+   "last_fetched": "2026-09-27",
+   "last_verified": null,
+   "source_status": "validation_failed",
+   "extraction_status": "validation_failed",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "card",
+     "reason": "no field passed validation"
+    }
+   ]
+  },
+  "bofa-premium-rewards": {
+   "url": "https://www.bankofamerica.com/credit-cards/products/premium-rewards-credit-card/",
+   "sha256": "ad136117061d5fa31c9ae19264240db94c8a1b23899da568fb3ea8a7d196e4df",
+   "last_fetched": "2026-09-27",
+   "last_verified": null,
+   "source_status": "validation_failed",
+   "extraction_status": "validation_failed",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "card",
+     "reason": "no field passed validation"
+    }
+   ]
+  },
+  "bofa-premium-rewards-elite": {
+   "url": "https://www.bankofamerica.com/credit-cards/products/premium-rewards-elite-credit-card/",
+   "sha256": "1c8b40ea08d0511c7dab47068d16836ef76f05a92603a6aaa9f9b3282ff21141",
+   "last_fetched": "2026-09-27",
+   "last_verified": null,
+   "source_status": "validation_failed",
+   "extraction_status": "validation_failed",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "card",
+     "reason": "no field passed validation"
+    }
+   ]
+  },
+  "bofa-travel-rewards": {
+   "url": "https://www.bankofamerica.com/credit-cards/products/travel-rewards-credit-card/",
+   "sha256": "265bd82c33484250be123871d5c3d9ab231132a10433b0c645cd846af764dc39",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "bofa-unlimited-cash-rewards": {
+   "url": "https://www.bankofamerica.com/credit-cards/products/unlimited-cash-back-credit-card/",
+   "sha256": "b0220a1ad2e3cc345ecbb1eab159689274ac9582d97589454ab5910470ae9d7d",
+   "last_fetched": "2026-09-27",
+   "last_verified": null,
+   "source_status": "validation_failed",
+   "extraction_status": "validation_failed",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "card",
+     "reason": "no field passed validation"
+    }
+   ]
+  },
+  "wells-fargo-active-cash": {
+   "url": "https://creditcards.wellsfargo.com/active-cash-credit-card/",
+   "sha256": "2fdd9e87a68d4dcb3c5ac5a836cc5ecc86acf668c8f8faaa0591b81d4d18f970",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "wells-fargo-autograph": {
+   "url": "https://creditcards.wellsfargo.com/autograph-visa-credit-card",
+   "sha256": "8f20084109d0ae13c9f67e46eaadd660fb3100559809f3f6f00d546bbdd420d8",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "wells-fargo-autograph-journey": {
+   "url": "https://creditcards.wellsfargo.com/autograph-journey-visa-credit-card",
+   "sha256": "c8c08d3e3b82bcdccca60238f1327ab9ee96bbccc15fdd1976eabef750f1065c",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "foreign_tx_fee",
+     "reason": "evidence doesn't mention foreign transactions",
+     "value": "False",
+     "evidence": "We won’t charge a fee for converting your purchases to U.S. dollars."
+    },
+    {
+     "field": "earn.hotels",
+     "reason": "evidence doesn't state 5",
+     "value": "5x",
+     "evidence": "Five rewards points (1 base point plus 4 bonus points) are earned per $1 spent on net purchases (purchases minus returns/credits) at Hotels"
+    }
+   ]
+  },
+  "us-bank-altitude-go": {
+   "url": "https://www.usbank.com/credit-cards/altitude-go-visa-signature-credit-card.html",
+   "sha256": "f97ba4d1f526987596ac04ee855d62c3441345432fb3c511995edea1d4900028",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "us-bank-cash": {
+   "url": "https://www.usbank.com/credit-cards/cash-plus-visa-signature-credit-card.html",
+   "sha256": "3f1532d75f744eba1258943ab471db1768eeb3f56d296ac2ff2b1be8b8910ef3",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "barclays-jetblue-plus": {
+   "url": "https://cards.barclaycardus.com/banking/cards/jetblue-plus-card/",
+   "sha256": "a092ef0910013eb26e1425f38da13c8c7632eb29cea747f7b41627f43bf885a7",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  },
+  "discover-discover-it": {
+   "url": "https://www.discover.com/credit-cards/cash-back/it-card.html",
+   "sha256": "3948484782a7c10396116e72eac6f945ea095d7bc288c3bd4b32f6316d4c2473",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "earn.rotating",
+     "reason": "evidence mentions a spending cap that wasn't extracted",
+     "value": "5x",
+     "evidence": "Earn 5% cash back on everyday purchases at different places you shop each quarter, up to the quarterly maximum when you activate."
+    }
+   ]
+  },
+  "apple-card": {
+   "url": "https://www.apple.com/apple-card/",
+   "sha256": "ed5c0b9691e96a156687cba6a6a807119fcd358672c3da67d73e78265233a8c7",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": [
+    {
+     "field": "benefit.travel_credit",
+     "reason": "evidence not found on page",
+     "value": "",
+     "evidence": "Get 2% in Booking.com Travel Credits on eligible stays and car rentals, fulfilled by Booking.com."
+    }
+   ]
+  },
+  "robinhood-gold-card": {
+   "url": "https://robinhood.com/creditcard/",
+   "sha256": "1aa49ee71fb7aca25a79b62c28bbcd7b58587bf1b2ac937f700126a02477f10d",
+   "last_fetched": "2026-09-27",
+   "last_verified": "2026-09-27",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-09-27",
+   "model": "gpt-6-luna",
+   "issues": []
+  }
+ }
+}
