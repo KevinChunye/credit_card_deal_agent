@@ -147,6 +147,7 @@ class ValidationResult:
     rejected: bool = False
     reason: str | None = None
     terms: CardTerms | None = None  # merged with previous values; None if rejected
+    validated: CardTerms | None = None  # only the values that passed; None if rejected
     issues: list[Issue] = field(default_factory=list)
     accepted_fields: list[str] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)  # not_listed categories etc. (informational)
@@ -356,16 +357,14 @@ def validate_extraction(
         return result
 
     # 5. Merge: failed or missing fields keep their previous value.
-    result.terms = merge_with_previous(
-        terms,
-        evidence,
-        valid_earn,
-        valid_benefits,
-        failed_categories,
-        failed_kinds,
-        result,
-        previous,
-    )
+    terms.earn = valid_earn or None
+    terms.benefits = valid_benefits or None
+    terms.evidence = evidence
+    result.validated = terms
+    result.terms, kept = merge_terms(terms, previous)
+    failed = {f"earn.{c.value}" for c in failed_categories}
+    failed |= {f"benefit.{k.value}" for k in failed_kinds}
+    result.kept_from_file = [key for key in kept if key not in failed]
     return result
 
 
@@ -439,42 +438,35 @@ def uncovered_earn(previous: list[EarnRow], covered: set[Category]) -> list[Earn
     ]
 
 
-def merge_with_previous(
-    terms: CardTerms,
-    evidence: dict[str, str],
-    valid_earn: list[EarnRow],
-    valid_benefits: list[BenefitRow],
-    failed_categories: set[Category],
-    failed_kinds: set[BenefitKind],
-    result: ValidationResult,
-    previous: CardTerms,
-) -> CardTerms:
-    """Validated values win; everything else keeps its previous value (fields that
-    failed validation and fields this extraction didn't mention alike)."""
+def merge_terms(validated: CardTerms, previous: CardTerms) -> tuple[CardTerms, list[str]]:
+    """Validated values over previous ones: scalars the extraction lacks, and earn
+    categories or benefit kinds it doesn't cover, keep their previous values.
+    Returns the merged terms and the earn/benefit keys kept from `previous`.
+
+    The pipeline stores only `validated` and merges it with the current
+    card_details.yaml when it diffs, so hand edits to fields an extraction
+    didn't validate are never proposed back."""
+    merged = CardTerms(evidence=dict(validated.evidence))
     for name in ("annual_fee", "foreign_tx_fee", "point_currency"):
-        if name not in result.accepted_fields and getattr(previous, name) is not None:
-            setattr(terms, name, getattr(previous, name))
-            if name in previous.evidence:
-                evidence[name] = previous.evidence[name]
-    terms.evidence = evidence
+        value = getattr(validated, name)
+        if value is None:
+            value = getattr(previous, name)
+            if value is not None and name in previous.evidence:
+                merged.evidence[name] = previous.evidence[name]
+        setattr(merged, name, value)
 
-    if valid_earn:
-        kept = uncovered_earn(previous.earn or [], {row.category for row in valid_earn})
-        result.kept_from_file += [
-            f"earn.{row.category.value}" for row in kept if row.category not in failed_categories
-        ]
-        terms.earn = valid_earn + kept
+    kept: list[str] = []
+    if validated.earn:
+        rows = uncovered_earn(previous.earn or [], {row.category for row in validated.earn})
+        kept += [f"earn.{row.category.value}" for row in rows]
+        merged.earn = validated.earn + rows
     else:
-        terms.earn = previous.earn
-
-    if valid_benefits:
-        covered_kinds = {row.kind for row in valid_benefits}
-        kept_benefits = [row for row in previous.benefits or [] if row.kind not in covered_kinds]
-        result.kept_from_file += [
-            f"benefit.{row.kind.value}" for row in kept_benefits if row.kind not in failed_kinds
-        ]
-        terms.benefits = valid_benefits + kept_benefits
+        merged.earn = previous.earn
+    if validated.benefits:
+        covered = {row.kind for row in validated.benefits}
+        others = [row for row in previous.benefits or [] if row.kind not in covered]
+        kept += [f"benefit.{row.kind.value}" for row in others]
+        merged.benefits = validated.benefits + others
     else:
-        terms.benefits = previous.benefits
-    result.kept_from_file = sorted(set(result.kept_from_file))
-    return terms
+        merged.benefits = previous.benefits
+    return merged, sorted(set(kept))

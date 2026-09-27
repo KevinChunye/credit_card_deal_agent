@@ -1,0 +1,491 @@
+# Card terms the bonuses API doesn't carry: per-category earn rates, annual fees,
+# credits/benefits, foreign transaction fees, rewards currency, protections, and
+# product-change (downgrade) paths. Also defines a few cards the API lacks.
+#
+# GENERATED + REVIEWED. For cards with an issuer page in config/card_sources.yaml,
+# the card-terms pipeline (card_agent/terms) re-reads the page when it changes,
+# extracts the terms with an LLM, checks every value deterministically against a
+# verbatim quote from the page, and proposes changes to this file in a PR titled
+# "card terms changed: ...". Merge the PR to accept them.
+# - Pipeline-owned keys: annual_fee, foreign_tx_fee, point_currency, earn,
+#   benefits, evidence, terms_source. Hand edits to these are overwritten by the
+#   next accepted extraction; to maintain a card by hand, set its url to null in
+#   card_sources.yaml.
+# - Hand-owned keys (kept as is): define, override, notes, transferable,
+#   protections, downgrade_to.
+#
+# Conventions
+# - Keys are our card ids (issuer slug + name slug, as the collector builds them).
+# - multiplier: points/miles per $ for points cards, percent for cash-back cards.
+# - Co-brand bonus categories ("6x at Marriott") are left out: they don't map to
+#   a general spend category, so the scorer undercounts rather than overcounts.
+#   When a category has several rates (portal hotels 10x vs portal flights 5x),
+#   the lower one is kept.
+# - choice: a menu; the scorer applies the rate to the `choose` categories that
+#   are worth the most for your spending (Custom Cash, Customized Cash, Cash+).
+# - cap / cap_period: spend cap for that rate; spend above it earns the `other` rate.
+# - benefits: amount is USD per year (null when the page states no dollar value).
+
+as_of: "2026-06"
+
+cards:
+  chase-sapphire-preferred:
+    foreign_tx_fee: false
+    earn:
+      - {category: travel_portal, multiplier: 5, notes: "Chase Travel"}
+      - {category: dining, multiplier: 3}
+      - {category: gas, multiplier: 3, notes: "Gas stations and EV charging (confirmed on chase.com, 2026-09 probe)"}
+      - {category: ev_charging, multiplier: 3}
+      - {category: online_groceries, multiplier: 3, notes: "Excludes Target, Walmart, wholesale clubs"}
+      - {category: streaming, multiplier: 3, notes: "Select streaming services"}
+      - {category: travel_general, multiplier: 2}
+      - {category: other, multiplier: 1}
+    protections: [primary_rental, trip_delay, trip_cancel, purchase, extended_warranty]
+    downgrade_to: [chase-freedom-unlimited, chase-freedom-flex]
+
+  chase-sapphire-reserve:
+    foreign_tx_fee: false
+    earn:
+      - {category: travel_portal, multiplier: 8, notes: "Chase Travel"}
+      - {category: flights, multiplier: 4, notes: "Booked directly with airlines"}
+      - {category: hotels, multiplier: 4, notes: "Booked directly with hotels"}
+      - {category: dining, multiplier: 3}
+      - {category: other, multiplier: 1}
+    protections: [primary_rental, trip_delay, trip_cancel, purchase, extended_warranty]
+    downgrade_to: [chase-sapphire-preferred, chase-freedom-unlimited, chase-freedom-flex]
+
+  chase-freedom-unlimited:
+    transferable: false
+    foreign_tx_fee: true
+    earn:
+      - {category: travel_portal, multiplier: 5, notes: "Chase Travel"}
+      - {category: dining, multiplier: 3}
+      - {category: drugstores, multiplier: 3}
+      - {category: other, multiplier: 1.5}
+    protections: [secondary_rental, purchase, extended_warranty]
+
+  chase-freedom-flex:
+    transferable: false
+    foreign_tx_fee: true
+    earn:
+      - {category: rotating, multiplier: 5, cap: 1500, cap_period: quarter, notes: "Quarterly categories; activation required"}
+      - {category: travel_portal, multiplier: 5, notes: "Chase Travel"}
+      - {category: dining, multiplier: 3}
+      - {category: drugstores, multiplier: 3}
+      - {category: other, multiplier: 1}
+    protections: [cell_phone, secondary_rental, trip_cancel, purchase, extended_warranty]
+
+  chase-ink-business-preferred:
+    foreign_tx_fee: false
+    earn:
+      - {category: travel_general, multiplier: 3, cap: 150000, cap_period: year, notes: "Also shipping, internet/cable/phone, social & search ads; $150k combined cap"}
+      - {category: other, multiplier: 1}
+    protections: [primary_rental, cell_phone, trip_cancel, purchase, extended_warranty]
+    downgrade_to: [chase-ink-business-cash, chase-ink-business-unlimited]
+
+  chase-ink-business-cash:
+    transferable: false
+    foreign_tx_fee: true
+    earn:
+      - {category: gas, multiplier: 2, cap: 25000, cap_period: year, notes: "$25k combined with dining; 5x office supply & internet/cable/phone not modeled"}
+      - {category: dining, multiplier: 2, cap: 25000, cap_period: year}
+      - {category: other, multiplier: 1}
+    protections: [primary_rental, purchase, extended_warranty]
+
+  chase-ink-business-unlimited:
+    transferable: false
+    foreign_tx_fee: true
+    earn:
+      - {category: other, multiplier: 1.5}
+    protections: [primary_rental, purchase, extended_warranty]
+
+  chase-ink-business-premier:
+    earn:
+      - {category: other, multiplier: 2, notes: "2.5% on purchases of $5,000+ not modeled"}
+
+  chase-amazon-prime:
+    foreign_tx_fee: false
+    earn:
+      - {category: travel_portal, multiplier: 5, notes: "Chase Travel; 5% at Amazon/Whole Foods not modeled"}
+      - {category: dining, multiplier: 2}
+      - {category: gas, multiplier: 2}
+      - {category: transit_rideshare, multiplier: 2, notes: "Local transit and commuting"}
+      - {category: other, multiplier: 1}
+
+  chase-united-explorer:
+    foreign_tx_fee: false
+    earn:
+      - {category: dining, multiplier: 2}
+      - {category: hotels, multiplier: 2, notes: "Booked directly with hotels; 2x United not modeled"}
+      - {category: other, multiplier: 1}
+    downgrade_to: [chase-united-gateway]
+
+  chase-world-of-hyatt:
+    foreign_tx_fee: false
+    earn:
+      - {category: dining, multiplier: 2}
+      - {category: flights, multiplier: 2, notes: "Purchased directly from airlines"}
+      - {category: transit_rideshare, multiplier: 2, notes: "Local transit and commuting"}
+      - {category: other, multiplier: 1}
+    downgrade_to: [chase-freedom-unlimited, chase-freedom-flex]
+
+  chase-marriott-bonvoy-boundless:
+    foreign_tx_fee: false
+    earn:
+      - {category: groceries, multiplier: 3, cap: 6000, cap_period: year, notes: "$6k combined with gas and dining"}
+      - {category: gas, multiplier: 3, cap: 6000, cap_period: year}
+      - {category: dining, multiplier: 3, cap: 6000, cap_period: year}
+      - {category: other, multiplier: 2}
+    downgrade_to: [chase-marriott-bonvoy-bold]
+
+  chase-ihg-premier:
+    foreign_tx_fee: false
+    earn:
+      - {category: travel_general, multiplier: 5}
+      - {category: gas, multiplier: 5}
+      - {category: dining, multiplier: 5}
+      - {category: other, multiplier: 3}
+    downgrade_to: [chase-ihg-traveler]
+
+  amex-platinum:
+    foreign_tx_fee: false
+    earn:
+      - {category: flights, multiplier: 5, cap: 500000, cap_period: year, notes: "Booked directly with airlines or via Amex Travel"}
+      - {category: travel_portal, multiplier: 5, notes: "Flights and prepaid hotels via Amex Travel"}
+      - {category: other, multiplier: 1}
+    protections: [trip_delay, trip_cancel, secondary_rental, cell_phone, purchase, extended_warranty]
+    downgrade_to: [amex-gold, amex-green]
+
+  amex-gold:
+    foreign_tx_fee: false
+    earn:
+      - {category: dining, multiplier: 4, cap: 50000, cap_period: year}
+      - {category: groceries, multiplier: 4, cap: 25000, cap_period: year, notes: "U.S. supermarkets"}
+      - {category: flights, multiplier: 3, notes: "Booked directly with airlines or via Amex Travel"}
+      - {category: travel_portal, multiplier: 2, notes: "Prepaid hotels and other Amex Travel bookings"}
+      - {category: other, multiplier: 1}
+    protections: [trip_delay, secondary_rental, purchase, extended_warranty]
+    downgrade_to: [amex-green]
+
+  amex-green:
+    foreign_tx_fee: false
+    earn:
+      - {category: travel_general, multiplier: 3}
+      - {category: transit_rideshare, multiplier: 3}
+      - {category: dining, multiplier: 3}
+      - {category: other, multiplier: 1}
+    protections: [trip_delay, secondary_rental, purchase, extended_warranty]
+
+  amex-blue-cash-preferred:
+    foreign_tx_fee: true
+    earn:
+      - {category: groceries, multiplier: 6, cap: 6000, cap_period: year, notes: "U.S. supermarkets"}
+      - {category: streaming, multiplier: 6, notes: "Select U.S. streaming"}
+      - {category: gas, multiplier: 3}
+      - {category: transit_rideshare, multiplier: 3}
+      - {category: other, multiplier: 1}
+    protections: [secondary_rental, purchase, extended_warranty]
+    downgrade_to: [amex-blue-cash-everyday]
+
+  amex-blue-cash-everyday:
+    foreign_tx_fee: true
+    earn:
+      - {category: groceries, multiplier: 3, cap: 6000, cap_period: year, notes: "U.S. supermarkets; 3% U.S. online retail not modeled"}
+      - {category: gas, multiplier: 3, cap: 6000, cap_period: year}
+      - {category: other, multiplier: 1}
+    protections: [secondary_rental, purchase, extended_warranty]
+
+  amex-blue-business-plus:
+    foreign_tx_fee: true
+    earn:
+      - {category: other, multiplier: 2, cap: 50000, cap_period: year, notes: "1x after $50k"}
+
+  amex-blue-business-cash:
+    foreign_tx_fee: true
+    earn:
+      - {category: other, multiplier: 2, cap: 50000, cap_period: year, notes: "1% after $50k"}
+
+  amex-business-gold:
+    foreign_tx_fee: false
+    earn:
+      - {choice: [dining, gas, transit_rideshare], choose: 2, multiplier: 4, cap: 150000, cap_period: year, notes: "4x on your top 2 of 6 eligible categories each cycle; ads, shipping, electronics not modeled"}
+      - {category: travel_portal, multiplier: 3, notes: "Flights and prepaid hotels via Amex Travel"}
+      - {category: other, multiplier: 1}
+
+  amex-business-platinum:
+    foreign_tx_fee: false
+    earn:
+      - {category: travel_portal, multiplier: 5, notes: "Flights and prepaid hotels via Amex Travel"}
+      - {category: other, multiplier: 1, notes: "1.5x on $5k+ purchases not modeled"}
+
+  amex-hilton-honors:
+    foreign_tx_fee: false
+    earn:
+      - {category: dining, multiplier: 5}
+      - {category: groceries, multiplier: 5}
+      - {category: gas, multiplier: 5}
+      - {category: other, multiplier: 3}
+
+  amex-hilton-honors-surpass:
+    foreign_tx_fee: false
+    earn:
+      - {category: dining, multiplier: 6}
+      - {category: groceries, multiplier: 6}
+      - {category: gas, multiplier: 6}
+      - {category: other, multiplier: 3}
+    downgrade_to: [amex-hilton-honors]
+
+  amex-hilton-honors-aspire:
+    foreign_tx_fee: false
+    earn:
+      - {category: flights, multiplier: 7, notes: "Directly with airlines or via Amex Travel"}
+      - {category: dining, multiplier: 7}
+      - {category: other, multiplier: 3}
+    downgrade_to: [amex-hilton-honors-surpass, amex-hilton-honors]
+
+  amex-marriott-bonvoy-bevy:
+    foreign_tx_fee: false
+    earn:
+      - {category: dining, multiplier: 4, cap: 15000, cap_period: year, notes: "$15k combined with groceries"}
+      - {category: groceries, multiplier: 4, cap: 15000, cap_period: year}
+      - {category: other, multiplier: 2}
+
+  amex-marriott-bonvoy-brilliant:
+    foreign_tx_fee: false
+    earn:
+      - {category: dining, multiplier: 3}
+      - {category: flights, multiplier: 3}
+      - {category: other, multiplier: 2}
+
+  amex-delta-skymiles-gold:
+    foreign_tx_fee: false
+    earn:
+      - {category: dining, multiplier: 2}
+      - {category: groceries, multiplier: 2, notes: "U.S. supermarkets"}
+      - {category: other, multiplier: 1}
+    downgrade_to: [amex-delta-skymiles-blue]
+
+  amex-delta-skymiles-platinum:
+    downgrade_to: [amex-delta-skymiles-gold, amex-delta-skymiles-blue]
+
+  amex-delta-skymiles-reserve:
+    downgrade_to: [amex-delta-skymiles-platinum, amex-delta-skymiles-gold, amex-delta-skymiles-blue]
+
+  capital-one-venture-x:
+    foreign_tx_fee: false
+    earn:
+      - {category: travel_portal, multiplier: 5, notes: "Capital One Travel flights; 10x on hotels and rental cars there"}
+      - {category: other, multiplier: 2}
+    protections: [primary_rental, trip_delay, trip_cancel, cell_phone, purchase, extended_warranty]
+    downgrade_to: [capital-one-venture-rewards, capital-one-ventureone]
+
+  capital-one-venture-rewards:
+    foreign_tx_fee: false
+    earn:
+      - {category: other, multiplier: 2, notes: "5x on hotels, vacation rentals and rental cars via Capital One Travel"}
+    protections: [secondary_rental, extended_warranty]
+    downgrade_to: [capital-one-ventureone]
+
+  capital-one-ventureone:
+    foreign_tx_fee: false
+    earn:
+      - {category: other, multiplier: 1.25, notes: "5x on hotels and rental cars via Capital One Travel"}
+
+  capital-one-venture-x-business:
+    foreign_tx_fee: false
+    earn:
+      - {category: travel_portal, multiplier: 5, notes: "Capital One Travel flights; 10x on hotels and rental cars there"}
+      - {category: other, multiplier: 2}
+
+  capital-one-savor:
+    foreign_tx_fee: false
+    earn:
+      - {category: dining, multiplier: 3}
+      - {category: groceries, multiplier: 3, notes: "Excludes superstores like Walmart and Target"}
+      - {category: streaming, multiplier: 3}
+      - {category: other, multiplier: 1, notes: "3% entertainment; 5% hotels/cars via Capital One Travel"}
+    protections: [extended_warranty]
+
+  capital-one-quicksilver:
+    foreign_tx_fee: false
+    earn:
+      - {category: other, multiplier: 1.5, notes: "5% hotels/cars via Capital One Travel"}
+    protections: [extended_warranty]
+
+  capital-one-spark-2-cash-plus:
+    earn:
+      - {category: other, multiplier: 2}
+
+  citi-strata-premier:
+    foreign_tx_fee: false
+    earn:
+      - {category: flights, multiplier: 3, notes: "Air travel; 10x hotels, cars and attractions via Citi Travel"}
+      - {category: hotels, multiplier: 3}
+      - {category: dining, multiplier: 3}
+      - {category: groceries, multiplier: 3, notes: "Supermarkets"}
+      - {category: gas, multiplier: 3}
+      - {category: ev_charging, multiplier: 3}
+      - {category: other, multiplier: 1}
+    protections: [trip_delay, trip_cancel, purchase, extended_warranty]
+    downgrade_to: [citi-double-cash, citi-custom-cash, citi-strata]
+
+  citi-strata-elite:
+    foreign_tx_fee: false
+    earn:
+      - {category: travel_portal, multiplier: 6, notes: "Air via Citi Travel; 12x hotels, cars, attractions"}
+      - {category: dining, multiplier: 3, notes: "6x Fri/Sat 6pm-6am not modeled"}
+      - {category: other, multiplier: 1.5}
+    downgrade_to: [citi-strata-premier, citi-strata]
+
+  citi-double-cash:
+    foreign_tx_fee: true
+    earn:
+      - {category: other, multiplier: 2, notes: "1% when you buy + 1% when you pay"}
+
+  citi-custom-cash:
+    foreign_tx_fee: true
+    earn:
+      - {choice: [dining, groceries, gas, travel_general, transit_rideshare, streaming, drugstores], choose: 1, multiplier: 5, cap: 500, cap_period: month, notes: "5% on your single top eligible category each billing cycle"}
+      - {category: other, multiplier: 1}
+
+  citi-aadvantage-platinum-select-world-elite:
+    foreign_tx_fee: false
+    earn:
+      - {category: dining, multiplier: 2}
+      - {category: gas, multiplier: 2}
+      - {category: other, multiplier: 1, notes: "2x American Airlines not modeled"}
+
+  bofa-customized-cash-rewards:
+    foreign_tx_fee: true
+    earn:
+      - {choice: [gas, dining, travel_general, drugstores, streaming], choose: 1, multiplier: 3, cap: 2500, cap_period: quarter, notes: "3% choice category; $2,500/qtr shared with the 2% grocery rate"}
+      - {category: groceries, multiplier: 2, cap: 2500, cap_period: quarter, notes: "Grocery stores and wholesale clubs"}
+      - {category: other, multiplier: 1}
+
+  bofa-premium-rewards:
+    foreign_tx_fee: false
+    earn:
+      - {category: travel_general, multiplier: 2}
+      - {category: dining, multiplier: 2}
+      - {category: other, multiplier: 1.5}
+    protections: [trip_delay, trip_cancel, secondary_rental, purchase, extended_warranty]
+    downgrade_to: [bofa-travel-rewards, bofa-unlimited-cash-rewards]
+
+  bofa-premium-rewards-elite:
+    foreign_tx_fee: false
+    earn:
+      - {category: travel_general, multiplier: 2}
+      - {category: dining, multiplier: 2}
+      - {category: other, multiplier: 1.5}
+    downgrade_to: [bofa-premium-rewards, bofa-travel-rewards]
+
+  bofa-travel-rewards:
+    foreign_tx_fee: false
+    earn:
+      - {category: other, multiplier: 1.5}
+
+  bofa-unlimited-cash-rewards:
+    foreign_tx_fee: true
+    earn:
+      - {category: other, multiplier: 1.5}
+
+  wells-fargo-active-cash:
+    foreign_tx_fee: true
+    earn:
+      - {category: other, multiplier: 2}
+    protections: [cell_phone, secondary_rental]
+
+  wells-fargo-autograph:
+    foreign_tx_fee: false
+    earn:
+      - {category: dining, multiplier: 3}
+      - {category: travel_general, multiplier: 3}
+      - {category: gas, multiplier: 3}
+      - {category: ev_charging, multiplier: 3}
+      - {category: transit_rideshare, multiplier: 3}
+      - {category: streaming, multiplier: 3}
+      - {category: other, multiplier: 1, notes: "3x phone plans not modeled"}
+    protections: [cell_phone, secondary_rental]
+
+  wells-fargo-autograph-journey:
+    foreign_tx_fee: false
+    earn:
+      - {category: hotels, multiplier: 5}
+      - {category: flights, multiplier: 4}
+      - {category: travel_general, multiplier: 3}
+      - {category: dining, multiplier: 3}
+      - {category: other, multiplier: 1}
+    protections: [cell_phone, trip_cancel, secondary_rental]
+    downgrade_to: [wells-fargo-autograph, wells-fargo-active-cash]
+
+  wells-fargo-bilt:
+    override:
+      point_currency: bilt
+      transferable: true
+    notes: "Legacy Bilt Mastercard terms. biltrewards.com/card now shows the 2026 lineup (Bilt Blue $0, Palladium $495, up to 1.25x on rent/mortgage) issued by Cardless; update this entry for the card you hold."
+    foreign_tx_fee: false
+    earn:
+      - {category: rent, multiplier: 1, notes: "No fee on rent; up to 100k points/yr; 5 transactions per statement required"}
+      - {category: dining, multiplier: 3}
+      - {category: travel_general, multiplier: 2}
+      - {category: other, multiplier: 1}
+
+  us-bank-altitude-go:
+    foreign_tx_fee: false
+    earn:
+      - {category: dining, multiplier: 4, cap: 2000, cap_period: quarter}
+      - {category: groceries, multiplier: 2}
+      - {category: gas, multiplier: 2}
+      - {category: ev_charging, multiplier: 2}
+      - {category: streaming, multiplier: 2}
+      - {category: other, multiplier: 1}
+
+  us-bank-cash:
+    notes: "Cash+ Visa Signature"
+    foreign_tx_fee: true
+    earn:
+      - {choice: [streaming, transit_rideshare], choose: 2, multiplier: 5, cap: 2000, cap_period: quarter, notes: "5% on two chosen categories; utilities, cell phone, fast food etc. not modeled"}
+      - {choice: [gas, groceries, dining], choose: 1, multiplier: 2, notes: "2% on one everyday category"}
+      - {category: travel_portal, multiplier: 5, notes: "Prepaid travel via the Rewards Travel Center"}
+      - {category: other, multiplier: 1}
+
+  barclays-jetblue-plus:
+    foreign_tx_fee: false
+    earn:
+      - {category: dining, multiplier: 2}
+      - {category: groceries, multiplier: 2}
+      - {category: other, multiplier: 1, notes: "6x JetBlue not modeled"}
+
+  discover-discover-it:
+    foreign_tx_fee: false
+    earn:
+      - {category: rotating, multiplier: 5, cap: 1500, cap_period: quarter, notes: "Quarterly categories; activation required; first-year Cashback Match"}
+      - {category: other, multiplier: 1}
+
+  apple-card:
+    define:
+      issuer: apple
+      name: "Apple Card"
+      network: mastercard
+      annual_fee: 0
+      point_currency: usd
+      apply_url: "https://www.apple.com/apple-card/"
+      notes: "Issued by Goldman Sachs; announced move to Chase."
+    foreign_tx_fee: false
+    earn:
+      - {category: mobile_wallet, multiplier: 2, notes: "With Apple Pay; 3% at Apple and select merchants not modeled"}
+      - {category: other, multiplier: 1}
+
+  robinhood-gold-card:
+    define:
+      issuer: robinhood
+      name: "Gold Card"
+      network: visa
+      annual_fee: 50
+      point_currency: usd
+      apply_url: "https://robinhood.com/creditcard/"
+      notes: "No card fee, but requires Robinhood Gold ($50/yr), counted here as the annual fee. Issued by Coastal Community Bank."
+    foreign_tx_fee: false
+    earn:
+      - {category: travel_portal, multiplier: 5, notes: "Robinhood travel portal"}
+      - {category: other, multiplier: 3}

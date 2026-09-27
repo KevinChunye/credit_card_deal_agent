@@ -37,7 +37,7 @@ from card_agent.terms.page import FetchedPage, fetch_page
 from card_agent.terms.schema import CardTerms, TermsExtraction
 from card_agent.terms.sources import CardSource
 from card_agent.terms.state import CardState, CardTermsStore, PageHashes, TermsQueue
-from card_agent.terms.validate import ValidationResult, validate_extraction
+from card_agent.terms.validate import ValidationResult, merge_terms, validate_extraction
 
 MODES = ("full", "queue", "smoke", "bootstrap")
 LLM_WORKERS = 4
@@ -297,7 +297,7 @@ class Pipeline:
         outcome.action, outcome.status = "extracted", "ok"
         if validation.issues:
             outcome.note = f"{len(validation.issues)} field(s) failed validation; kept on file"
-        self.state.terms.cards[outcome.card_id] = validation.terms
+        self.state.terms.cards[outcome.card_id] = validation.validated
 
     def keep_status(self, outcome: CardOutcome) -> None:
         """Fetched but not (re-)extracted: the status of the last judged extraction
@@ -317,6 +317,14 @@ class Pipeline:
 
     # ------------------------------------------------------------ proposals
 
+    def proposed_terms(self, card_id: str) -> tuple[CardTerms, CardTerms] | None:
+        """(terms on file, terms with the stored extraction applied), if both exist."""
+        stored = self.state.terms.cards.get(card_id)
+        on_file = self.previous_terms(card_id)
+        if stored is None or on_file is None:
+            return None
+        return on_file, merge_terms(stored, on_file)[0]
+
     def proposals(self, extracted_now: set[str], include_pending: bool) -> list[DiffRow]:
         """Validated terms that differ from config/card_details.yaml.
 
@@ -330,11 +338,10 @@ class Pipeline:
             candidates |= set(self.state.terms.cards)
         rows: list[DiffRow] = []
         for card_id, source in self.sources.items():
-            terms = self.state.terms.cards.get(card_id)
-            previous = self.previous_terms(card_id)
-            if card_id not in candidates or source.is_manual or terms is None or previous is None:
+            pair = self.proposed_terms(card_id) if card_id in candidates else None
+            if pair is None or source.is_manual:
                 continue
-            rows += diff_terms(card_id, previous, terms, source.url or "")
+            rows += diff_terms(card_id, pair[0], pair[1], source.url or "")
         return rows
 
     def apply(self, report: RunReport) -> dict[str, Any]:
@@ -342,9 +349,10 @@ class Pipeline:
         cards = dict(self.details.get("cards") or {})
         for card_id in report.changed_cards:
             state = self.card_state(card_id)
+            _on_file, proposed = self.proposed_terms(card_id)
             cards[card_id] = apply_terms(
                 cards[card_id],
-                self.state.terms.cards[card_id],
+                proposed,
                 self.sources[card_id].url,
                 state.last_extracted or self.today,
                 state.model,

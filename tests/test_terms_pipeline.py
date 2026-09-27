@@ -21,6 +21,7 @@ from tests.terms_fakes import (
     earn,
     failing,
     gold_extraction,
+    hand_details,
     make_pipeline,
 )
 
@@ -388,3 +389,21 @@ def test_smoke_and_bootstrap_modes_leave_the_queue_alone():
     pipeline, _ = make_pipeline(FakeProvider({"amex-gold": gold_extraction()}), state=state)
     pipeline.run(RunOptions(mode="smoke", cards=["amex-gold"]))
     assert "amex-gold" in pipeline.state.queue.queued
+
+
+def test_hand_edits_to_unvalidated_fields_are_not_proposed_back():
+    pipeline, _ = make_pipeline(FakeProvider({"chase-sapphire-preferred": csp_extraction()}))
+    pipeline.run(RunOptions(mode="full", cards=["chase-sapphire-preferred"]))
+    stored = pipeline.state.terms.cards["chase-sapphire-preferred"]
+    assert all(row.category.value != "streaming" for row in stored.earn)  # validated only
+
+    # Later someone edits streaming (not on the page) by hand on main.
+    edited = hand_details()
+    for row in edited["cards"]["chase-sapphire-preferred"]["earn"]:
+        if row.get("category") == "streaming":
+            row["multiplier"] = 4
+    again, _ = make_pipeline(FakeProvider({}), state=pipeline.state, details=edited)
+    report = again.run(
+        RunOptions(mode="full", cards=["chase-sapphire-preferred"], include_pending=True)
+    )
+    assert report.diffs == []
