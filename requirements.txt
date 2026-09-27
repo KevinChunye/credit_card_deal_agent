@@ -1,0 +1,6 @@
+httpx>=0.27
+pydantic>=2.5
+pandas>=2.1
+feedparser>=6.0
+pyyaml>=6.0
+agentmail>=2.0

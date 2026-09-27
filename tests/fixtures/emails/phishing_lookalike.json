@@ -1,0 +1,17 @@
+{
+ "message_id": "<phish-003@chase-secure-verify.com>",
+ "inbox_id": "kev_work@agentmail.to",
+ "thread_id": "t3",
+ "labels": [
+  "received"
+ ],
+ "timestamp": "2026-09-23T08:00:00Z",
+ "from_": "Chase Security <alerts@chase-secure-verify.com>",
+ "to": [
+  "kev_work@agentmail.to"
+ ],
+ "subject": "Your card has been suspended - verify your account",
+ "text": "Unusual sign-in detected. Verify your account within 24 hours or it will be closed.",
+ "html": "<a href=\"https://chase-secure-verify.com/login\">Verify</a>",
+ "headers": {}
+}

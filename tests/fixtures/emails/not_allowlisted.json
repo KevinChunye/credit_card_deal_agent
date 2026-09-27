@@ -1,0 +1,17 @@
+{
+ "message_id": "<promo-005@offers.example>",
+ "inbox_id": "kev_work@agentmail.to",
+ "thread_id": "t5",
+ "labels": [
+  "received"
+ ],
+ "timestamp": "2026-09-24T09:00:00Z",
+ "from_": "Card Deals <promo@creditcardoffers.example>",
+ "to": [
+  "kev_work@agentmail.to"
+ ],
+ "subject": "The 10 best cards this month",
+ "text": "Earn 200,000 points!",
+ "html": null,
+ "headers": {}
+}

@@ -1,0 +1,3 @@
+-r requirements.txt
+pytest>=8
+ruff==0.15.8  # pinned so `ruff format --check` is reproducible in CI

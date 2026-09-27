@@ -1,0 +1,17 @@
+{
+ "message_id": "<sent-008@agentmail.to>",
+ "inbox_id": "kev_work@agentmail.to",
+ "thread_id": "t8",
+ "labels": [
+  "sent"
+ ],
+ "timestamp": "2026-09-01T10:00:00Z",
+ "from_": "kev_work@agentmail.to",
+ "to": [
+  "owner@example.com"
+ ],
+ "subject": "Your card digest",
+ "text": "digest",
+ "html": null,
+ "headers": {}
+}

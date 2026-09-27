@@ -1,0 +1,227 @@
+"""Private state in local SQLite (path from CARD_AGENT_DB). Never committed.
+
+Holds only what you tell it (profile, spend, valuations, haircuts, wallet)
+and offers parsed from your own forwarded email. No card numbers, no bank
+credentials: `guardrails.reject_card_numbers` runs on every free-text field.
+"""
+
+from __future__ import annotations
+
+import json
+import sqlite3
+from datetime import date, datetime
+from pathlib import Path
+
+from card_agent.guardrails import reject_card_numbers
+from card_agent.models import (
+    DEFAULT_HAIRCUTS,
+    DEFAULT_VALUATIONS,
+    BenefitKind,
+    Category,
+    PersonalOffer,
+    UserProfile,
+    WalletCard,
+)
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS user_profile (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    data TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS monthly_spend (
+    category TEXT PRIMARY KEY,
+    amount REAL NOT NULL CHECK (amount >= 0)
+);
+CREATE TABLE IF NOT EXISTS point_valuation (
+    currency TEXT PRIMARY KEY,
+    cpp REAL NOT NULL CHECK (cpp > 0)
+);
+CREATE TABLE IF NOT EXISTS usage_haircut (
+    kind TEXT PRIMARY KEY,
+    factor REAL NOT NULL CHECK (factor >= 0 AND factor <= 1)
+);
+CREATE TABLE IF NOT EXISTS wallet_card (
+    card_id TEXT PRIMARY KEY,
+    opened_on TEXT,
+    annual_fee_date TEXT,
+    bonus_received_on TEXT,
+    product_changed_from TEXT,
+    closed_on TEXT
+);
+CREATE TABLE IF NOT EXISTS personal_offer (
+    message_id TEXT PRIMARY KEY,
+    received_at TEXT NOT NULL,
+    data TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS processed_message (
+    message_id TEXT PRIMARY KEY,
+    processed_at TEXT NOT NULL,
+    outcome TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS digest_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sent_at TEXT NOT NULL,
+    channel TEXT NOT NULL,
+    period TEXT NOT NULL,
+    detail TEXT
+);
+"""
+
+
+def _iso(value: date | None) -> str | None:
+    return value.isoformat() if value else None
+
+
+class Store:
+    def __init__(self, path: Path):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        self.path = path
+        self.conn = sqlite3.connect(path)
+        self.conn.row_factory = sqlite3.Row
+        self.conn.executescript(SCHEMA)
+        self.conn.commit()
+
+    def close(self) -> None:
+        self.conn.close()
+
+    # ------------------------------------------------------------- profile
+    def get_profile(self) -> UserProfile:
+        row = self.conn.execute("SELECT data FROM user_profile WHERE id = 1").fetchone()
+        return UserProfile.model_validate_json(row["data"]) if row else UserProfile()
+
+    def has_profile(self) -> bool:
+        return self.conn.execute("SELECT 1 FROM user_profile WHERE id = 1").fetchone() is not None
+
+    def save_profile(self, profile: UserProfile) -> None:
+        body = profile.model_dump_json()
+        reject_card_numbers(body)
+        self.conn.execute(
+            "INSERT INTO user_profile (id, data) VALUES (1, ?) "
+            "ON CONFLICT(id) DO UPDATE SET data = excluded.data",
+            (body,),
+        )
+        self.conn.commit()
+
+    # --------------------------------------------------------------- spend
+    def get_spend(self) -> dict[Category, float]:
+        rows = self.conn.execute("SELECT category, amount FROM monthly_spend").fetchall()
+        return {Category(row["category"]): row["amount"] for row in rows}
+
+    def set_spend(self, spend: dict[Category, float], replace: bool = False) -> None:
+        if replace:
+            self.conn.execute("DELETE FROM monthly_spend")
+        self.conn.executemany(
+            "INSERT INTO monthly_spend (category, amount) VALUES (?, ?) "
+            "ON CONFLICT(category) DO UPDATE SET amount = excluded.amount",
+            [(Category(category).value, float(amount)) for category, amount in spend.items()],
+        )
+        self.conn.commit()
+
+    # ---------------------------------------------------------- valuations
+    def get_valuations(self) -> dict[str, float]:
+        """Defaults overlaid with whatever you've set."""
+        rows = self.conn.execute("SELECT currency, cpp FROM point_valuation").fetchall()
+        return {**DEFAULT_VALUATIONS, **{row["currency"]: row["cpp"] for row in rows}}
+
+    def set_valuations(self, valuations: dict[str, float]) -> None:
+        self.conn.executemany(
+            "INSERT INTO point_valuation (currency, cpp) VALUES (?, ?) "
+            "ON CONFLICT(currency) DO UPDATE SET cpp = excluded.cpp",
+            [(currency, float(cpp)) for currency, cpp in valuations.items()],
+        )
+        self.conn.commit()
+
+    # ------------------------------------------------------------ haircuts
+    def get_haircuts(self) -> dict[BenefitKind, float]:
+        rows = self.conn.execute("SELECT kind, factor FROM usage_haircut").fetchall()
+        return {**DEFAULT_HAIRCUTS, **{BenefitKind(row["kind"]): row["factor"] for row in rows}}
+
+    def set_haircuts(self, haircuts: dict[BenefitKind, float]) -> None:
+        self.conn.executemany(
+            "INSERT INTO usage_haircut (kind, factor) VALUES (?, ?) "
+            "ON CONFLICT(kind) DO UPDATE SET factor = excluded.factor",
+            [(BenefitKind(kind).value, float(factor)) for kind, factor in haircuts.items()],
+        )
+        self.conn.commit()
+
+    # -------------------------------------------------------------- wallet
+    def list_wallet(self, include_closed: bool = True) -> list[WalletCard]:
+        rows = self.conn.execute("SELECT * FROM wallet_card ORDER BY card_id").fetchall()
+        cards = [WalletCard.model_validate(dict(row)) for row in rows]
+        return cards if include_closed else [card for card in cards if card.is_open]
+
+    def upsert_wallet_card(self, card: WalletCard) -> None:
+        reject_card_numbers(card.model_dump_json())
+        self.conn.execute(
+            "INSERT INTO wallet_card (card_id, opened_on, annual_fee_date, bonus_received_on, "
+            "product_changed_from, closed_on) VALUES (?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(card_id) DO UPDATE SET opened_on = excluded.opened_on, "
+            "annual_fee_date = excluded.annual_fee_date, "
+            "bonus_received_on = excluded.bonus_received_on, "
+            "product_changed_from = excluded.product_changed_from, "
+            "closed_on = excluded.closed_on",
+            (
+                card.card_id,
+                _iso(card.opened_on),
+                _iso(card.annual_fee_date),
+                _iso(card.bonus_received_on),
+                card.product_changed_from,
+                _iso(card.closed_on),
+            ),
+        )
+        self.conn.commit()
+
+    def remove_wallet_card(self, card_id: str) -> bool:
+        cursor = self.conn.execute("DELETE FROM wallet_card WHERE card_id = ?", (card_id,))
+        self.conn.commit()
+        return cursor.rowcount > 0
+
+    # ------------------------------------------------------ personal offers
+    def is_processed(self, message_id: str) -> bool:
+        row = self.conn.execute(
+            "SELECT 1 FROM processed_message WHERE message_id = ?", (message_id,)
+        ).fetchone()
+        return row is not None
+
+    def mark_processed(self, message_id: str, outcome: str, when: datetime) -> None:
+        self.conn.execute(
+            "INSERT OR REPLACE INTO processed_message (message_id, processed_at, outcome) "
+            "VALUES (?, ?, ?)",
+            (message_id, when.isoformat(), outcome),
+        )
+        self.conn.commit()
+
+    def save_personal_offer(self, offer: PersonalOffer) -> None:
+        body = offer.model_dump_json()
+        reject_card_numbers(body)
+        self.conn.execute(
+            "INSERT OR REPLACE INTO personal_offer (message_id, received_at, data) VALUES (?, ?, ?)",
+            (offer.message_id, offer.received_at.isoformat(), body),
+        )
+        self.conn.commit()
+
+    def personal_offers(self, since: datetime | None = None) -> list[PersonalOffer]:
+        if since is None:
+            rows = self.conn.execute(
+                "SELECT data FROM personal_offer ORDER BY received_at DESC"
+            ).fetchall()
+        else:
+            rows = self.conn.execute(
+                "SELECT data FROM personal_offer WHERE received_at >= ? ORDER BY received_at DESC",
+                (since.isoformat(),),
+            ).fetchall()
+        return [PersonalOffer.model_validate_json(row["data"]) for row in rows]
+
+    # --------------------------------------------------------------- digest
+    def log_digest(self, when: datetime, channel: str, period: str, detail: dict) -> None:
+        self.conn.execute(
+            "INSERT INTO digest_log (sent_at, channel, period, detail) VALUES (?, ?, ?, ?)",
+            (when.isoformat(), channel, period, json.dumps(detail)),
+        )
+        self.conn.commit()
+
+    def last_digest(self, channel: str) -> dict | None:
+        row = self.conn.execute(
+            "SELECT * FROM digest_log WHERE channel = ? ORDER BY id DESC LIMIT 1", (channel,)
+        ).fetchone()
+        return dict(row) if row else None

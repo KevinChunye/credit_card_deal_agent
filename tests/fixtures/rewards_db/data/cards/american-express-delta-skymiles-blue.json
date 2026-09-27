@@ -1,0 +1,25 @@
+{
+  "_comment": "Synthetic fixture in the fuermosi777/rewards card schema; values are made up for tests, not copied.",
+  "id": "american-express-delta-skymiles-blue",
+  "issuerId": "american-express",
+  "name": "Delta SkyMiles Blue",
+  "network": "American Express",
+  "variant": "personal",
+  "annualFee": {"amount": 0, "currency": "USD", "waivedFirstYear": false},
+  "status": "active",
+  "foreignTransactionFee": false,
+  "earningRates": [
+    {"multiplier": 2, "rewardUnit": "miles", "eligibleCategories": ["dining"], "sourceUrl": "https://example.com"},
+    {"multiplier": 2, "rewardUnit": "miles", "eligibleCategories": ["delta_purchases"], "sourceUrl": "https://example.com"},
+    {"multiplier": 1, "rewardUnit": "miles", "eligibleCategories": ["everything_else"], "sourceUrl": "https://example.com"}
+  ],
+  "benefits": [
+    {"id": "t1", "name": "Inflight Purchase Credit", "benefitType": "statement_credit", "category": "travel",
+     "renewalPeriod": {"unit": "month", "count": 1, "anchor": "calendar"},
+     "statementCreditDetail": {"amount": 5, "currency": "USD"}},
+    {"id": "t2", "name": "Car Rental Loss and Damage Insurance", "benefitType": "insurance", "category": "travel",
+     "isOneTime": true, "description": "Secondary coverage for rental cars."},
+    {"id": "t3", "name": "Purchase Protection", "benefitType": "insurance", "category": "shopping",
+     "isOneTime": true, "description": "Covers eligible purchases against theft and damage."}
+  ]
+}
