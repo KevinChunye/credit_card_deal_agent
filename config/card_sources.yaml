@@ -103,7 +103,7 @@ cards:
   capital-one-quicksilver:
     {issuer: capital-one, name: Capital One Quicksilver, url: "https://www.capitalone.com/credit-cards/quicksilver/", page_names: [Quicksilver, Quicksilver Cash Rewards]}
   capital-one-spark-2-cash-plus:
-    {issuer: capital-one, name: Capital One Spark Cash Plus, url: "https://www.capitalone.com/small-business/credit-cards/spark-cash-plus/", page_names: [Spark Cash Plus, Spark 2% Cash Plus]}
+    {issuer: capital-one, name: Capital One Spark Cash Plus, url: "https://www.capitalone.com/small-business/credit-cards/spark-cash-plus/", page_names: [Spark Cash Plus, Spark 2% Cash Plus, Spark Cash Plus Business]}
 
   # ------------------------------------------------------------------ Citi
   citi-strata-premier:

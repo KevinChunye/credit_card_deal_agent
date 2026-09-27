@@ -13,7 +13,12 @@ from card_agent.terms.pipeline import RunOptions
 from card_agent.terms.report import pr_body
 from card_agent.terms.schema import TermsExtraction
 from card_agent.terms.sources import CardSource
-from card_agent.terms.validate import heading_item_problem, match_key, validate_extraction
+from card_agent.terms.validate import (
+    heading_item_problem,
+    match_key,
+    quote_on_page,
+    validate_extraction,
+)
 from tests.terms_fakes import CSP_URL, FakeProvider, earn, make_pipeline, page, sources
 
 HEADING = "3x points on:"
@@ -40,6 +45,7 @@ def extraction(
     *rates: dict[str, Any],
     ftf: dict[str, Any] | None = None,
     name: str = "Chase Sapphire Preferred® Card",
+    benefits: tuple[dict[str, Any], ...] = (),
 ) -> TermsExtraction:
     return TermsExtraction.model_validate(
         {
@@ -48,7 +54,7 @@ def extraction(
             "foreign_tx_fee": ftf,
             "point_currency": None,
             "earn_rates": list(rates),
-            "benefits": [],
+            "benefits": list(benefits),
         }
     )
 
@@ -99,7 +105,8 @@ def test_heading_from_a_different_section_is_rejected():
         extraction(
             # The 5x line comes before the list, but the "3x points on:" heading sits in between.
             listed("dining", 5, "5x total points on travel purchased through Chase Travel", DINING),
-            # "2x points on:" is a heading, but it comes after the item.
+            # "2x points on:" comes after the list; the next mention of the item is in the
+            # terms below, with the "3X points" lead-in in between.
             listed("streaming", 2, "2x points on:", "top streaming services"),
             # A real heading that doesn't state the claimed rate.
             listed("gas", 4, HEADING, "gas stations;"),
@@ -108,7 +115,7 @@ def test_heading_from_a_different_section_is_rejected():
     )
     assert reasons(result) == {
         "earn.dining": "another rate is stated between the heading and the item",
-        "earn.streaming": "heading isn't within 1,500 characters before the item",
+        "earn.streaming": "another rate is stated between the heading and the item",
         "earn.gas": "heading doesn't state 4",
     }
 
@@ -208,3 +215,301 @@ def test_venture_x_no_fee_sentence_is_accepted():
 )  # fmt: skip
 def test_foreign_fee_quotes_that_are_rejected(charged, quote, reason):
     assert reasons(ftf_result(charged, quote)) == {"foreign_tx_fee": reason}
+
+
+def test_heading_after_the_item_is_rejected():
+    page_key = match_key("dining at restaurants and takeout. 3x points on: gas stations.")
+    assert (
+        heading_item_problem(3, "3x points on:", "dining at restaurants", page_key)
+        == "heading isn't within 1,500 characters before the item"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Rules found in the first live runs (quotes are the pages' own sentences)
+# ---------------------------------------------------------------------------
+
+LEAD_IN = (
+    "3 points (“3X points”): You’ll earn 3 points for each $1 spent on purchases in the "
+    "following rewards categories: vacation homes at top brands"
+)
+AMEX_GOLD = sources()["amex-gold"]
+
+
+def test_an_earn_quote_must_name_its_category():
+    result = validate(
+        "chase_heading_list.html",
+        extraction(
+            # States 3x, but about vacation homes: not evidence for gas.
+            earn("gas", 3, LEAD_IN),
+            # The same lead-in as a heading over the list item that names the category.
+            listed("dining", 3, LEAD_IN, "dining at restaurants including takeout"),
+            earn("travel_portal", 5, "5x total points on travel purchased through Chase Travel"),
+        ),
+    )
+    assert reasons(result) == {"earn.gas": "evidence doesn't name gas"}
+    dining = next(row for row in result.terms.earn if row.category.value == "dining")
+    assert dining.evidence == f"{LEAD_IN} … dining at restaurants including takeout"
+
+
+def test_portal_only_rates_count_as_travel_portal():
+    venture = validate(
+        "capital_one_venture_x.html",
+        extraction(
+            earn(
+                "hotels",
+                10,
+                "Earn 10X miles on hotels and rental cars booked through Capital One Travel.",
+            ),
+            earn(
+                "flights",
+                5,
+                "Earn 5X miles on flights and vacation rentals booked through Capital One Travel.",
+            ),
+            earn("other", 2, "Earn unlimited 2X miles on every purchase, every day."),
+            name="Capital One Venture X Rewards Credit Card",
+        ),
+        VENTURE_X,
+    )
+    assert venture.issues == []
+    # Both portal rates land in travel_portal, and the lower one covers every booking.
+    rates = {(r.category.value, r.multiplier) for r in venture.terms.earn}
+    assert rates == {("travel_portal", 5), ("other", 2)}
+    assert any("counted as travel_portal" in note for note in venture.skipped)
+
+    gold = validate(
+        "amex_mixed_promo.html",
+        extraction(
+            earn(
+                "hotels",
+                5,
+                "5X Membership Rewards® points per dollar spent on prepaid hotels booked "
+                "through AmexTravel.com",
+            ),
+            # Also "purchased directly from airlines": a general flights rate.
+            earn(
+                "flights",
+                3,
+                "3X Membership Rewards® points per dollar spent on flights booked through "
+                "AmexTravel.com or the Amex Travel App™ or purchased directly from airlines.",
+            ),
+            name="American Express® Gold Card",
+        ),
+        AMEX_GOLD,
+    )
+    assert {(r.category.value, r.multiplier) for r in gold.terms.earn} == {
+        ("travel_portal", 5),
+        ("flights", 3),
+    }
+
+
+def benefit(kind: str, amount: float, cadence: str, quote: str) -> dict[str, Any]:
+    return {
+        "kind": kind,
+        "name": kind,
+        "amount_stated": amount,
+        "cadence": cadence,
+        "evidence": quote,
+    }
+
+
+def test_benefit_amounts_are_only_ever_lowered():
+    venture = validate(
+        "capital_one_venture_x.html",
+        extraction(
+            name="Capital One Venture X Rewards Credit Card",
+            benefits=(
+                benefit(
+                    "other",
+                    800,
+                    "one-time",
+                    "If it’s stolen or damaged, you’ll get reimbursed up to $800.",
+                ),
+            ),
+        ),
+        VENTURE_X,
+    )
+    assert venture.terms.benefits[0].amount is None  # a coverage limit, not a credit
+    assert any("coverage limit" in note for note in venture.skipped)
+
+    csp = validate(
+        "chase_heading_list.html",
+        extraction(
+            benefits=(
+                benefit(
+                    "streaming_credit",
+                    156,
+                    "annual",
+                    "Get a year of complimentary Apple TV when activated by December 31, 2026 - "
+                    "a value of $156.",
+                ),
+                benefit(
+                    "dining_membership",
+                    120,
+                    "annual",
+                    "Get a complimentary DashPass membership, a $120 value for 12 months.",
+                ),
+            ),
+        ),
+    )
+    once = {row.kind.value: (row.amount, row.cadence.value) for row in csp.terms.benefits}
+    assert once == {"streaming_credit": (156, "one-time"), "dining_membership": (120, "one-time")}
+
+    gold = validate(
+        "amex_mixed_promo.html",
+        extraction(
+            name="American Express® Gold Card",
+            benefits=(
+                benefit(
+                    "hotel_credit",
+                    100,
+                    "one-time",
+                    "a $100 credit towards eligible charges at over 1,300 upscale hotels "
+                    "worldwide every time you book The Hotel Collection",
+                ),
+                benefit(
+                    "rideshare_credit",
+                    10,
+                    "monthly",
+                    "get $10 in Uber Cash each month for U.S. Uber Eats orders",
+                ),
+            ),
+        ),
+        AMEX_GOLD,
+    )
+    amounts = {row.kind.value: row.amount for row in gold.terms.benefits}
+    # Per use, so no yearly value; a real monthly credit is unchanged.
+    assert amounts == {"hotel_credit": None, "rideshare_credit": 120}
+
+
+# ---------------------------------------------------------------------------
+# Rules from the first full bootstrap (each quote is from a real issuer page)
+# ---------------------------------------------------------------------------
+
+TEST_CARD = CardSource(
+    card_id="test-card", issuer="test", name="Test Card", url="https://bank.example/card",
+    page_names=["Test Card"],
+)  # fmt: skip
+
+
+def check_text(page: str, *rates: dict[str, Any], fee: dict[str, Any] | None = None):
+    found = TermsExtraction.model_validate(
+        {
+            "card_name_on_page": "Test Card",
+            "annual_fee": fee,
+            "foreign_tx_fee": None,
+            "point_currency": None,
+            "earn_rates": list(rates),
+            "benefits": [],
+        }
+    )
+    return validate_extraction(found, f"Test Card. {page}", TEST_CARD, previous=None)
+
+
+def test_co_brand_and_portal_only_travel_rates():
+    marriott = "Card Members can earn 6X points on each dollar of eligible purchases at hotels participating in Marriott Bonvoy."
+    aspire = (
+        "Card Members can earn 7x Points on purchases of Flights booked directly with airlines "
+        "or flights booked through American Express Travel and Car rentals purchases directly "
+        "from select car rental companies."
+    )
+    result = check_text(
+        f"{marriott} {aspire}",
+        earn("hotels", 6, marriott),
+        earn("travel_general", 7, aspire),
+        earn("flights", 7, aspire),
+    )
+    assert reasons(result) == {
+        "earn.hotels": "co-brand rate filed as hotels (use not_listed)",
+        "earn.travel_general": "evidence doesn't name travel in general",
+    }
+    assert [(r.category.value, r.multiplier) for r in result.terms.earn] == [("flights", 7)]
+
+
+def test_base_rate_is_uncapped_and_caps_are_not_dropped():
+    ink = (
+        "Earn 5% cash back on the first $25,000 spent in combined purchases at office supply "
+        "stores and on internet, cable and phone services each account anniversary year."
+    )
+    base = "Earn 1% cash back on all other card purchases with no limit to the amount you can earn."
+    discover = (
+        "Earn 5% cash back on everyday purchases at different places you shop each quarter, "
+        "up to the quarterly maximum when you activate."
+    )
+    result = check_text(
+        f"{ink} {base} {discover}",
+        earn("other", 5, ink, cap_usd=25000, cap_period="year", cap_evidence=ink),
+        earn("other", 1, base),
+        earn("rotating", 5, discover),
+    )
+    assert reasons(result) == {
+        "earn.other": "a capped rate isn't the base rate (use a category or not_listed)",
+        "earn.rotating": "evidence mentions a spending cap that wasn't extracted",
+    }
+    assert [(r.category.value, r.multiplier) for r in result.terms.earn] == [("other", 1)]
+
+
+def test_menu_options_outside_the_categories_are_left_out():
+    menu = (
+        "Earn 4X Membership Rewards points on the 2 categories where your business spends the "
+        "most in each billing cycle from 6 categories: restaurants, gas stations, transit, "
+        "advertising, shipping, and software."
+    )
+
+    def option(category: str) -> dict[str, Any]:
+        return earn(category, 4, menu, choice_group="top2", choose=2)
+
+    result = check_text(menu, option("dining"), option("gas"), option("other"), option("other"))
+    assert sorted(r.category.value for r in result.terms.earn) == ["dining", "gas"]
+    assert sum("isn't a spend category" in note for note in result.skipped) == 2
+
+
+@pytest.mark.parametrize(
+    "quote",
+    [
+        "You won't have to pay an annual fee for all the great features that come with your Freedom Unlimited card.",
+        "No annual credit card fee",
+        "The Citi Double Cash® Card does not charge an annual fee.",
+        "No annual, over-the-limit, foreign-transaction, or late fees.",
+        "Enjoy all the benefits with no annual fee plus a 0% intro APR on purchases and balance transfers",
+    ],
+)  # fmt: skip
+def test_real_no_annual_fee_wording_is_accepted(quote):
+    result = check_text(quote, fee={"amount": 0, "evidence": quote})
+    assert result.issues == [] and result.terms.annual_fee == 0
+
+
+def test_intro_fee_is_still_not_a_zero_fee():
+    quote = "$0 intro annual fee for the first year, then $95."
+    result = check_text(quote, fee={"amount": 0, "evidence": quote})
+    assert reasons(result) == {"annual_fee": "an intro/first-year fee is not the ongoing fee"}
+
+
+def test_one_word_list_items_must_sit_close_to_the_heading():
+    heading = "Earn Unlimited 3X points on :"
+    page = (
+        f"{heading} Restaurants Travel Gas stations Transit Popular streaming services Phone plans"
+    )
+    near = check_text(
+        page,
+        listed("travel_general", 3, heading, "Travel"),
+        listed("transit_rideshare", 3, heading, "Transit"),
+    )
+    assert near.issues == []
+    far = check_text(
+        f"{heading} Restaurants. " + "Terms and conditions apply to this card. " * 10 + "Travel",
+        listed("travel_general", 3, heading, "Travel"),
+    )
+    assert reasons(far) == {
+        "earn.travel_general": "heading isn't within 300 characters before the item"
+    }
+
+
+def test_quote_edges_may_differ_in_punctuation():
+    page = match_key(
+        "As a Gold Card Member, you are eligible for an upgrade to Hertz Five Star Status and more."
+    )
+    # A full stop the page doesn't have (the sentence goes on) doesn't matter...
+    assert quote_on_page("you are eligible for an upgrade to Hertz Five Star Status.", page)
+    # ...but every word still has to be there.
+    assert not quote_on_page("you are eligible for an upgrade to Hertz Platinum Status.", page)

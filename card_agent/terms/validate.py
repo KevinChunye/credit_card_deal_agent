@@ -7,8 +7,15 @@ A value is kept only if:
   or, for a rate stated once in a heading over a list ("3x points on:" then
   "dining ..."), in a heading quote that precedes the item quote on the page,
   within 1,500 characters, with no other rate stated in between;
+- an earn quote (or its heading or list item) names the rate's category, and a
+  rate that only applies to bookings through an issuer's travel portal isn't
+  filed as general hotels/flights/travel;
 - it is within bounds (multiplier 0.5-15, annual fee 0-1000, credits 0-2000/yr);
 - its category is one of the existing spend categories.
+Benefit amounts are only ever lowered: a coverage limit ("reimbursed up to $800"
+if a phone is stolen) or a per-use credit ("every time you book") keeps no
+dollar value, and a time-limited perk ("when activated by December 31") counts
+once rather than every year.
 The whole extraction is rejected if the card named on the page isn't the target
 card (multi-card pages such as Amex promos or Bilt's lineup).
 
@@ -44,6 +51,9 @@ CAP_MAX = 1_000_000.0
 # Heading + list evidence: the heading must come before the item, at most this
 # many characters earlier (whitespace ignored), with no other rate in between.
 MAX_LIST_GAP = 1_500
+# A one-word list item ("Travel") must sit much closer to its heading.
+MIN_ITEM_CHARS = 3
+MAX_SHORT_ITEM_GAP = 300
 PERIODS_PER_YEAR = {
     Cadence.monthly: 12,
     Cadence.quarterly: 4,
@@ -55,8 +65,15 @@ NUMBER_WORDS = {"double": 2, "twice": 2, "triple": 3, "quadruple": 4}
 # "No annual fee", "$0 annual fee", "Annual fee: $0" -- but not "$0 fraud liability"
 # or "report the annual fee as $0".
 NO_ANNUAL_FEE = re.compile(
-    r"\bno annual fee\b|\$0 annual fee\b|annual fee(?: is|:| of)?\s*(?:none\b|\$0\b)", re.I
+    r"\bno annual (?:credit card |card |membership )?fees?\b"
+    r"|\$0 annual fee\b"
+    r"|\bannual fee(?: is|:| of)?\s*(?:none\b|\$0\b)"
+    r"|\b(?:won't|will not|don't|do not|doesn't|does not|never)(?: have to)? (?:pay|charges?) "
+    r"(?:an|any) annual fees?\b"
+    r"|\bno annual,[^.]{0,60}\bfees\b",
+    re.I,
 )
+INTRO_FEE = re.compile(r"\bintro(?:ductory)? (?:annual )?fee|\bfirst year\b", re.I)
 
 # Rewards program -> our currency key. Generic names ("points", "miles",
 # "cash back") map to nothing, so they never override a known currency.
@@ -99,6 +116,76 @@ NEGATION = re.compile(
 )
 
 
+# Words that show an earn quote is about the rate's category (match_key form:
+# lowercase, no spaces). "other" (the base rate) needs none.
+CATEGORY_WORDS: dict[Category, tuple[str, ...]] = {
+    Category.dining: ("dining", "dine", "restaurant", "takeout"),
+    Category.groceries: ("grocer", "supermarket"),
+    Category.online_groceries: ("onlinegrocer", "grocerydelivery", "instacart"),
+    Category.gas: ("gas", "fuel"),
+    Category.ev_charging: ("electricvehicle", "evcharging", "charging"),
+    Category.travel_portal: ("travel", "portal"),
+    Category.travel_general: ("travel",),
+    Category.flights: ("flight", "airline", "airfare"),
+    Category.hotels: ("hotel", "lodging", "resort"),
+    Category.transit_rideshare: (
+        "transit", "rideshare", "commut", "uber", "lyft", "taxi", "train", "subway", "parking",
+    ),
+    Category.streaming: ("stream",),
+    Category.drugstores: ("drugstore", "pharmac"),
+    Category.rent: ("rent", "housing", "mortgage"),
+    Category.mobile_wallet: ("wallet", "applepay", "googlepay", "samsungpay"),
+    Category.rotating: ("rotating", "quarter", "bonuscategor", "activat"),
+}  # fmt: skip
+# Rates that apply only to bookings through an issuer's travel portal.
+PORTAL = re.compile(
+    r"\b(?:chase|capital one|citi|amex|american express|u\.? ?s\.? bank|bank of america|"
+    r"wells fargo|bilt|barclays)(?: business)? ?travel\b|\bamextravel|\bcititravel|"
+    r"\btravel portal\b|\btravel center\b",
+    re.I,
+)
+DIRECT_BOOKING = re.compile(
+    r"\bdirect(?:ly)? (?:from|with|through) (?:the )?(?:airline|hotel)", re.I
+)
+GENERAL_TRAVEL = {Category.hotels, Category.flights, Category.travel_general}
+# A brand or program in a travel rate makes it a co-brand rate ("at hotels
+# participating in Marriott Bonvoy"), which the scorer must not apply to all hotels.
+CO_BRAND = re.compile(
+    r"\bparticipating\b|\bmarriott\b|\bbonvoy\b|\bhilton\b|\bhyatt\b|\bihg\b|"
+    r"\bunited\b(?! states)|\bdelta\b|\bamerican airlines\b|\baadvantage\b|\bjetblue\b|"
+    r"\bsouthwest\b|\balaska airlines\b|\batmos\b",
+    re.I,
+)
+# Wording that says a rate is capped; if no cap was extracted, the row is rejected.
+CAP_HINT = re.compile(
+    r"\bup to the (?:quarterly |annual |monthly )?maximum\b|\bquarterly maximum\b|"
+    r"\bon (?:the first|up to) \$[\d,]+",
+    re.I,
+)
+# Benefit wording that lowers a stated amount.
+COVERAGE = re.compile(
+    r"\b(?:protection|insurance|insured|coverage|covered|stolen|damaged|theft|warranty)\b", re.I
+)
+CREDIT_WORD = re.compile(r"\bcredits?\b", re.I)
+PER_USE = re.compile(
+    r"\b(?:every|each) time\b|\bper (?:booking|stay|reservation|purchase|trip|visit)\b", re.I
+)
+TIME_LIMITED = re.compile(
+    r"\bactivated? by\b|\blimited[- ]time\b|\bfor (?:the first )?\d+ months\b|"
+    r"\bfor up to \d+ (?:months|years)\b|\b(?:a|one) year of complimentary\b",
+    re.I,
+)
+
+
+def names_category(category: Category, *quotes: str) -> bool:
+    """True if one of the quotes names the category (always for the base rate)."""
+    words = CATEGORY_WORDS.get(category)
+    if not words:
+        return True
+    keys = [match_key(quote or "") for quote in quotes]
+    return any(word in key for word in words for key in keys)
+
+
 def plain(text: str) -> str:
     """Text for wording rules: NFKC, straight quotes, single spaces."""
     text = unicodedata.normalize("NFKC", text or "").replace("’", "'").replace("‘", "'")
@@ -122,8 +209,14 @@ def match_key(text: str) -> str:
     return re.sub(r"\s+", "", text).lower()
 
 
+def quote_key(quote: str | None) -> str:
+    """match_key of a quote, without punctuation at either end (a quote that
+    stops short of a comma, or adds a full stop, is still verbatim)."""
+    return match_key(quote or "").strip(".,;:!?'\"()[]-")
+
+
 def quote_on_page(quote: str | None, page_key: str) -> bool:
-    key = match_key(quote or "")
+    key = quote_key(quote)
     return len(key) >= MIN_EVIDENCE_CHARS and key in page_key
 
 
@@ -162,12 +255,16 @@ def heading_item_problem(multiplier: float, heading: str, item: str, page_key: s
     item must not state a different one, and some occurrence of the heading must
     end before an occurrence of the item, within MAX_LIST_GAP characters, with no
     different rate (same unit) stated in between (that would be another list)."""
-    heading_key, item_key = match_key(heading), match_key(item)
-    for label, key in (("heading", heading_key), ("list item", item_key)):
-        if len(key) < MIN_EVIDENCE_CHARS:
+    heading_key, item_key = quote_key(heading), quote_key(item)
+    for label, key, shortest in (
+        ("heading", heading_key, MIN_EVIDENCE_CHARS),
+        ("list item", item_key, MIN_ITEM_CHARS),
+    ):
+        if len(key) < shortest:
             return f"{label} quote too short"
         if key not in page_key:
             return f"{label} not found on page"
+    max_gap = MAX_LIST_GAP if len(item_key) >= MIN_EVIDENCE_CHARS else MAX_SHORT_ITEM_GAP
     if not number_in(multiplier, heading):
         return f"heading doesn't state {multiplier:g}"
     if any(abs(value - multiplier) > 1e-6 for value, _unit in rates_in(item_key)):
@@ -178,7 +275,7 @@ def heading_item_problem(multiplier: float, heading: str, item: str, page_key: s
         heading_end = heading_start + len(heading_key)
         for item_start in _starts(item_key, page_key):
             gap = item_start - heading_end
-            if not 0 <= gap <= MAX_LIST_GAP:
+            if not 0 <= gap <= max_gap:
                 continue
             between = rates_in(page_key[heading_end:item_start])
             if any(
@@ -188,7 +285,7 @@ def heading_item_problem(multiplier: float, heading: str, item: str, page_key: s
                 nearest = "another rate is stated between the heading and the item"
                 continue
             return None
-    return nearest or f"heading isn't within {MAX_LIST_GAP:,} characters before the item"
+    return nearest or f"heading isn't within {max_gap:,} characters before the item"
 
 
 def earn_evidence(row: EarnRateOut) -> str:
@@ -200,18 +297,26 @@ def earn_evidence(row: EarnRateOut) -> str:
 
 def _earn_quote(row: EarnRateOut, page_key: str) -> tuple[str | None, str | None]:
     """(evidence to keep, None) when one quote, or a heading + item pair, backs the
-    multiplier; (None, reason) otherwise."""
+    multiplier and names the category; (None, reason) otherwise."""
+    category = Category(row.category.value)
     single = quote_on_page(row.evidence, page_key)
-    if single and number_in(row.multiplier, row.evidence):
+    single_rate = single and number_in(row.multiplier, row.evidence)
+    if single_rate and names_category(category, row.evidence):
         return row.evidence, None
     if row.evidence_heading and row.evidence_item:
         problem = heading_item_problem(
             row.multiplier, row.evidence_heading, row.evidence_item, page_key
         )
-        return (None, problem) if problem else (earn_evidence(row), None)
+        if problem:
+            return None, problem
+        if not names_category(category, row.evidence_heading, row.evidence_item):
+            return None, f"heading and item don't name {category.value}"
+        return earn_evidence(row), None
     if not single:
         return None, "evidence not found on page"
-    return None, f"evidence doesn't state {row.multiplier:g}"
+    if not single_rate:
+        return None, f"evidence doesn't state {row.multiplier:g}"
+    return None, f"evidence doesn't name {category.value}"
 
 
 def map_currency(text: str) -> str | None:
@@ -261,6 +366,20 @@ def _check_earn(row: EarnRateOut, page_key: str) -> tuple[EarnRow | None, str | 
     evidence, problem = _earn_quote(row, page_key)
     if problem:
         return None, problem
+    category = Category(row.category.value)
+    wording = plain(evidence or "")
+    if category in GENERAL_TRAVEL and CO_BRAND.search(wording):
+        return None, f"co-brand rate filed as {category.value} (use not_listed)"
+    if category in GENERAL_TRAVEL and PORTAL.search(wording) and not DIRECT_BOOKING.search(wording):
+        category = Category.travel_portal  # the caller notes the move
+    if category == Category.travel_general and not re.search(
+        r"\btravel\b", PORTAL.sub(" ", wording), re.I
+    ):
+        return None, "evidence doesn't name travel in general"
+    if category == Category.other and row.cap_usd is not None:
+        return None, "a capped rate isn't the base rate (use a category or not_listed)"
+    if row.cap_usd is None and CAP_HINT.search(wording):
+        return None, "evidence mentions a spending cap that wasn't extracted"
     if not _in_bounds(row.multiplier, MULTIPLIER_BOUNDS):
         return None, f"multiplier {row.multiplier:g} outside {MULTIPLIER_BOUNDS}"
     cap = cap_period = None
@@ -275,7 +394,7 @@ def _check_earn(row: EarnRateOut, page_key: str) -> tuple[EarnRow | None, str | 
         cap, cap_period = row.cap_usd, row.cap_period
     return (
         EarnRow(
-            category=Category(row.category.value),
+            category=category,
             multiplier=row.multiplier,
             cap=cap,
             cap_period=cap_period,
@@ -286,6 +405,27 @@ def _check_earn(row: EarnRateOut, page_key: str) -> tuple[EarnRow | None, str | 
         ),
         None,
     )
+
+
+def _adjust_benefit(row: BenefitOut, result: ValidationResult) -> BenefitOut:
+    """Lower what a stated amount is worth when the wording says it isn't a
+    recurring credit. Never raises a value. Each change is noted in `skipped`."""
+    if row.amount_stated is None or row.kind == BenefitKind.global_entry:
+        return row
+    wording = plain(row.evidence)
+    field = f"benefit.{row.kind.value}"
+    if COVERAGE.search(wording) and not CREDIT_WORD.search(wording):
+        result.skipped.append(
+            f"{field}: ${row.amount_stated:g} is a coverage limit, not a credit; no $ value"
+        )
+        return row.model_copy(update={"amount_stated": None})
+    if PER_USE.search(wording):
+        result.skipped.append(f"{field}: ${row.amount_stated:g} is per use; no yearly $ value")
+        return row.model_copy(update={"amount_stated": None})
+    if TIME_LIMITED.search(wording) and row.cadence != Cadence.one_time:
+        result.skipped.append(f"{field}: time-limited, so ${row.amount_stated:g} counts once")
+        return row.model_copy(update={"cadence": Cadence.one_time})
+    return row
 
 
 def _check_benefit(row: BenefitOut, page_key: str) -> tuple[BenefitRow | None, str | None]:
@@ -345,11 +485,11 @@ def validate_extraction(
             reason = "evidence not found on page"
         elif not _in_bounds(fee.amount, ANNUAL_FEE_BOUNDS):
             reason = f"${fee.amount:g} outside {ANNUAL_FEE_BOUNDS}"
-        elif not re.search(r"\bfee\b", fee.evidence, re.I):
+        elif not re.search(r"\bfees?\b", fee.evidence, re.I):
             reason = "evidence doesn't mention a fee"
-        elif fee.amount == 0 and re.search(r"\bintro|first year", fee.evidence, re.I):
+        elif fee.amount == 0 and INTRO_FEE.search(plain(fee.evidence)):
             reason = "an intro/first-year fee is not the ongoing fee"
-        elif fee.amount == 0 and not NO_ANNUAL_FEE.search(fee.evidence):
+        elif fee.amount == 0 and not NO_ANNUAL_FEE.search(plain(fee.evidence)):
             reason = "evidence doesn't say there is no annual fee"
         elif fee.amount > 0 and not number_in(fee.amount, fee.evidence):
             reason = f"evidence doesn't state ${fee.amount:g}"
@@ -412,7 +552,17 @@ def validate_extraction(
         if row.category.value == "not_listed":
             result.skipped.append(f"earn: not_listed {row.multiplier:g}x {row.description!r}")
             continue
+        if row.choice_group and row.category.value == "other":
+            result.skipped.append(
+                f"earn: menu option {row.description!r} isn't a spend category; left out"
+            )
+            continue
         checked, reason = _check_earn(row, page_key)
+        if checked is not None and checked.category.value != row.category.value:
+            result.skipped.append(
+                f"earn.{row.category.value} {row.multiplier:g}x only applies to bookings "
+                "through the issuer's travel site; counted as travel_portal"
+            )
         if checked is None:
             failed_categories.add(Category(row.category.value))
             result.issues.append(
@@ -430,6 +580,7 @@ def validate_extraction(
     valid_benefits: list[BenefitRow] = []
     failed_kinds: set[BenefitKind] = set()
     for row in extraction.benefits:
+        row = _adjust_benefit(row, result)
         checked, reason = _check_benefit(row, page_key)
         if checked is None:
             failed_kinds.add(row.kind)

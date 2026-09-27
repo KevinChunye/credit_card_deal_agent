@@ -29,16 +29,30 @@ Pick one category per row; use not_listed for merchant-specific or co-brand cate
 else that doesn't fit. Include the base rate ("all other purchases") as category other. \
 cap_usd is the spend limit in USD for the rate, with cap_period and a cap_evidence quote \
 that contains the cap amount, or all three null.
-- Earn-rate evidence: quote a sentence that states both the multiplier and the category. \
-If the page states the multiplier once in a heading over a list of categories (e.g. "3x \
-points on:" followed by "dining at restaurants", "select streaming services"), set \
-evidence_heading to that heading and evidence_item to the list item, both verbatim, and \
+- Earn-rate evidence: quote a sentence that states both the multiplier and this row's \
+category (the words for the category must be in the quote). If the page states the \
+multiplier once in a heading or lead-in over a list of categories (e.g. "3x points on:" \
+followed by "dining at restaurants", "select streaming services"), set evidence_heading to \
+that heading and evidence_item to the list item naming this category, both verbatim, and \
 repeat the list item in evidence. Otherwise set evidence_heading and evidence_item to null.
+- Rates that apply only to bookings through the issuer's travel site (Chase Travel, Capital \
+One Travel, AmexTravel.com, and similar) are category travel_portal, never hotels, flights \
+or travel_general. If the portal rate differs by booking type (e.g. hotels 10x, flights 5x), \
+give the lowest one as travel_portal.
 - "Choose your category" menus: one row per option, all with the same choice_group label, \
-and choose = how many options earn the rate at once.
+and choose = how many options earn the rate at once. A menu option that fits no category \
+(e.g. advertising, shipping, software) is not_listed, never other.
+- other is only the base rate on all other purchases; it never has a cap. A capped bonus \
+on specific merchants (e.g. office supply stores) is not_listed. If the page says a rate is \
+capped ("up to the quarterly maximum", "on the first $25,000"), give the cap.
+- Rates at a brand's own hotels or airline (e.g. "at hotels participating in Marriott \
+Bonvoy", "on Delta purchases") are not_listed, never hotels or flights.
 - benefits: recurring credits and perks. amount_stated = the dollar amount per period as \
 stated (10 for "$10 monthly"), with cadence; null if the page gives no dollar value (e.g. \
-lounge access, elite status).
+lounge access, elite status). Insurance and protections (cell phone protection, purchase \
+protection, trip delay) are not credits, and neither are credits that apply per booking \
+or per purchase: amount_stated null for those. A complimentary perk for a limited time \
+(e.g. "12 months", "when activated by December 31") has cadence one-time.
 - annual_fee: the ongoing annual fee in USD, 0 if none. If the first year is waived, still \
 give the ongoing fee.
 - foreign_tx_fee: charged=true if the card charges foreign transaction fees, false if the \
