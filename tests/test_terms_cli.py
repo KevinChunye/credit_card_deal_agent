@@ -313,6 +313,13 @@ def test_cells_are_single_line_and_escaped():
     assert render.cell("x" * 30, 10) == "xxxxxxxxx…"
 
 
+def test_page_text_in_the_pr_is_inert():
+    shown = render.quote("Follow @chase, see #12 and [offer](https://evil.example) <img src=x>")
+    assert "@chase" not in shown and "#12" not in shown
+    assert "[offer](" not in shown and "\\[offer\\]" in shown  # escaped: not a link
+    assert "<img" not in shown
+
+
 def test_pr_title_lists_three_cards_then_counts():
     report = RunReport(
         mode="full",

@@ -18,12 +18,27 @@ EVIDENCE_CHARS = 220
 PR_BRANCH = "card-terms/auto"
 
 
+# Page text shown in the PR must stay inert: no @mentions (they notify people),
+# no #123 issue links, no markdown links or HTML.
+INERT = [
+    ("|", "\\|"),
+    ("<", "&lt;"),
+    (">", "&gt;"),
+    ("[", "\\["),
+    ("]", "\\]"),
+    ("@", "@\u200b"),
+    ("#", "#\u200b"),
+]
+
+
 def cell(value: Any, limit: int | None = None) -> str:
-    """One markdown table cell: single line, pipes escaped, optionally truncated."""
+    """One markdown table cell: single line, inert, optionally truncated."""
     text = " ".join(str("" if value is None else value).split())
     if limit and len(text) > limit:
         text = text[: limit - 1].rstrip() + "…"
-    return text.replace("|", "\\|")
+    for char, safe in INERT:
+        text = text.replace(char, safe)
+    return text
 
 
 def plural(count: int, noun: str) -> str:
