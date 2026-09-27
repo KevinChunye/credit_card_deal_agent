@@ -40,24 +40,12 @@ cards:
     {issuer: chase, name: Chase Ink Business Unlimited, url: "https://creditcards.chase.com/business-credit-cards/ink/unlimited", page_names: [Ink Business Unlimited]}
   chase-ink-business-premier:
     {issuer: chase, name: Chase Ink Business Premier, url: "https://creditcards.chase.com/business-credit-cards/ink/premier", page_names: [Ink Business Premier]}
+  # Chase's own pages for these two; amazon.com (HTTP 500) and theexplorercard.com
+  # (timeouts) don't answer a plain GET from GitHub Actions (probe 2026-09-27).
   chase-amazon-prime:
-    issuer: chase
-    name: Prime Visa (Chase)
-    url: null
-    page_names: [Prime Visa, Amazon Prime Visa, Amazon Prime Rewards Visa Signature]
-    manual_reason: >-
-      The product page is on amazon.com, which answers a plain GET with HTTP 500
-      (probe 2026-09-26); no Chase-hosted product page is known.
+    {issuer: chase, name: Prime Visa (Chase), url: "https://creditcards.chase.com/cash-back-credit-cards/amazon-prime-rewards", page_names: [Prime Visa, Amazon Prime Visa, Amazon Prime Rewards Visa Signature]}
   chase-united-explorer:
-    issuer: chase
-    name: United Explorer Card (Chase)
-    url: null
-    page_names: [United Explorer]
-    manual_reason: >-
-      The product page (theexplorercard.com/rewards-cards/explorer-card) never
-      answered a plain GET from GitHub Actions: ReadTimeout after 45s in every
-      probe (2026-09-26). Getting through would take browser emulation, which
-      this project doesn't do.
+    {issuer: chase, name: United Explorer Card (Chase), url: "https://creditcards.chase.com/travel-credit-cards/united/united-explorer", page_names: [United Explorer]}
   chase-world-of-hyatt:
     {issuer: chase, name: World of Hyatt Credit Card (Chase), url: "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card", page_names: [World of Hyatt]}
   chase-marriott-bonvoy-boundless:
@@ -105,7 +93,7 @@ cards:
   capital-one-venture-x:
     {issuer: capital-one, name: Capital One Venture X, url: "https://www.capitalone.com/credit-cards/venture-x/", page_names: [Venture X], cross_check: true}
   capital-one-venture-rewards:
-    {issuer: capital-one, name: Capital One Venture Rewards, url: "https://www.capitalone.com/credit-cards/venture/", page_names: [Venture, Venture Rewards]}
+    {issuer: capital-one, name: Capital One Venture Rewards, url: "https://www.capitalone.com/credit-cards/venture/", page_names: [Venture, Venture Rewards, Venture Rewards Travel]}
   capital-one-ventureone:
     {issuer: capital-one, name: Capital One VentureOne Rewards, url: "https://www.capitalone.com/credit-cards/ventureone/", page_names: [VentureOne, Venture One]}
   capital-one-venture-x-business:
@@ -115,7 +103,7 @@ cards:
   capital-one-quicksilver:
     {issuer: capital-one, name: Capital One Quicksilver, url: "https://www.capitalone.com/credit-cards/quicksilver/", page_names: [Quicksilver, Quicksilver Cash Rewards]}
   capital-one-spark-2-cash-plus:
-    {issuer: capital-one, name: Capital One Spark Cash Plus, url: "https://www.capitalone.com/small-business/credit-cards/spark-cash-plus/", page_names: [Spark Cash Plus, Spark 2% Cash Plus]}
+    {issuer: capital-one, name: Capital One Spark Cash Plus, url: "https://www.capitalone.com/small-business/credit-cards/spark-cash-plus/", page_names: [Spark Cash Plus, Spark 2% Cash Plus, Spark Cash Plus Business]}
 
   # ------------------------------------------------------------------ Citi
   citi-strata-premier:
@@ -124,22 +112,12 @@ cards:
     {issuer: citi, name: Citi Strata Elite Card, url: "https://www.citi.com/credit-cards/citi-strata-elite-credit-card", page_names: [Strata Elite]}
   citi-double-cash:
     {issuer: citi, name: Citi Double Cash Card, url: "https://www.citi.com/credit-cards/citi-double-cash-credit-card", page_names: [Double Cash]}
-  citi-custom-cash:
-    issuer: citi
-    name: Citi Custom Cash Card
-    url: null
-    page_names: [Custom Cash]
-    manual_reason: >-
-      citi.com renders this page with JavaScript: a plain GET returns ~700
-      characters of text and no embedded data (probe 2026-09-26).
+  # Citi's own page; creditcards.aa.com answers GitHub Actions with HTTP 403.
   citi-aadvantage-platinum-select-world-elite:
-    issuer: citi
-    name: Citi AAdvantage Platinum Select World Elite Mastercard
-    url: null
-    page_names: [AAdvantage Platinum Select]
-    manual_reason: >-
-      creditcards.aa.com answers plain GETs from GitHub Actions with HTTP 403
-      (probe 2026-09-26).
+    {issuer: citi, name: Citi AAdvantage Platinum Select World Elite Mastercard, url: "https://www.citi.com/credit-cards/citi-aadvantage-platinum-select-world-elite-mastercard", page_names: [AAdvantage Platinum Select]}
+  # Not tracked: citi-custom-cash. citi.com: "Citi is no longer accepting applications
+  # for the Citi Custom Cash Card product as of May 28, 2026." It's marked discontinued
+  # in card_details.yaml (not ranked; hand terms kept to value a card you hold).
 
   # --------------------------------------------------------- Bank of America
   bofa-customized-cash-rewards:
@@ -160,14 +138,9 @@ cards:
     {issuer: wells-fargo, name: Wells Fargo Autograph Card, url: "https://creditcards.wellsfargo.com/autograph-visa-credit-card", page_names: [Autograph], cross_check: true}
   wells-fargo-autograph-journey:
     {issuer: wells-fargo, name: Wells Fargo Autograph Journey Card, url: "https://creditcards.wellsfargo.com/autograph-journey-visa-credit-card", page_names: [Autograph Journey]}
-  wells-fargo-bilt:
-    issuer: wells-fargo
-    name: Bilt Mastercard (legacy, Wells Fargo)
-    url: null
-    page_names: [Bilt Mastercard]
-    manual_reason: >-
-      Legacy card. biltrewards.com/card now lists only the 2026 Cardless lineup
-      (Bilt Blue, Obsidian, Palladium), so there is no page for this card.
+  # Not tracked: wells-fargo-bilt, the legacy Bilt Mastercard. biltrewards.com/card
+  # lists only the 2026 Cardless lineup, so it's marked discontinued in
+  # card_details.yaml (not ranked; hand terms kept to value a card you hold).
 
   # ---------------------------------------------------------------- U.S. Bank
   us-bank-altitude-go:

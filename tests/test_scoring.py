@@ -230,3 +230,13 @@ def test_rank_sorts_filters_and_excludes_held():
     assert "t-dining" not in set(rank(context(), max_annual_fee=0)[0]["card_id"])
     assert set(rank(context(), mode="cash_back")[0]["point_currency"]) == {"usd"}
     assert "t-held" not in evaluations
+
+
+def test_rank_skips_discontinued_cards():
+    snap = snapshot()
+    snap.cards = [
+        card.model_copy(update={"discontinued": True}) if card.id == "t-dining" else card
+        for card in snap.cards
+    ]
+    frame, evaluations = rank(context(snap=snap))
+    assert "t-dining" not in set(frame["card_id"]) and "t-dining" not in evaluations

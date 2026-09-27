@@ -12,7 +12,7 @@ import httpx
 
 from card_agent.collector.http import make_client
 from card_agent.terms.details import load_details
-from card_agent.terms.llm import Provider, ProviderUnavailable, get_provider
+from card_agent.terms.llm import Provider, ProviderUnavailable, get_provider, max_run_cost
 from card_agent.terms.pipeline import Pipeline, PipelineState, RunOptions, RunReport
 from card_agent.terms.sources import load_sources
 
@@ -79,5 +79,6 @@ def run_pipeline(
             today=today,
             provider=provider,
             provider_note=note,
+            max_cost=max_run_cost(),
         )
         return pipeline, pipeline.run(options)

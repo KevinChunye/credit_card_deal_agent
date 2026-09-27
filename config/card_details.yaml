@@ -343,6 +343,9 @@ cards:
       - {category: other, multiplier: 2, notes: "1% when you buy + 1% when you pay"}
 
   citi-custom-cash:
+    override:
+      discontinued: true
+    notes: "Closed to new applicants on 2026-05-28 (citi.com); existing cardmembers keep it. Not ranked; terms kept to value a card you hold."
     foreign_tx_fee: true
     earn:
       - {choice: [dining, groceries, gas, travel_general, transit_rideshare, streaming, drugstores], choose: 1, multiplier: 5, cap: 500, cap_period: month, notes: "5% on your single top eligible category each billing cycle"}
@@ -422,7 +425,8 @@ cards:
     override:
       point_currency: bilt
       transferable: true
-    notes: "Legacy Bilt Mastercard terms. biltrewards.com/card now shows the 2026 lineup (Bilt Blue $0, Palladium $495, up to 1.25x on rent/mortgage) issued by Cardless; update this entry for the card you hold."
+      discontinued: true
+    notes: "Discontinued: the legacy Wells Fargo Bilt Mastercard was replaced by the 2026 Cardless lineup (Bilt Blue, Obsidian, Palladium). Not ranked; terms kept to value a card you hold."
     foreign_tx_fee: false
     earn:
       - {category: rent, multiplier: 1, notes: "No fee on rent; up to 100k points/yr; 5 transactions per statement required"}

@@ -361,12 +361,16 @@ def _benefit_label(rows: list[BenefitRow]) -> dict[str, tuple[str, str]]:
         {
             "kind": [row.kind.value for row in rows],
             "amount": [row.amount or 0.0 for row in rows],
+            "per": ["once" if row.cadence == Cadence.one_time else "/yr" for row in rows],
             "evidence": [row.evidence or "" for row in rows],
         }
     ).sort_values(["kind", "amount"])
     out: dict[str, tuple[str, str]] = {}
     for kind, group in frame.groupby("kind", sort=False):
-        shown = " + ".join(f"${a:,.0f}/yr" if a else "no $ value" for a in group["amount"])
+        shown = " + ".join(
+            (f"${a:,.0f}/yr" if per == "/yr" else f"${a:,.0f} once") if a else "no $ value"
+            for a, per in zip(group["amount"], group["per"], strict=True)
+        )
         out[f"benefit.{kind}"] = (shown, group["evidence"].iloc[0])
     return out
 

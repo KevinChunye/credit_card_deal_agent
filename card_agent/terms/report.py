@@ -11,7 +11,7 @@ import pandas as pd
 from card_agent.terms.details import compare_all_fields, terms_from_entry
 from card_agent.terms.pipeline import ACTIONS, CardOutcome, RunReport
 from card_agent.terms.schema import TermsExtraction
-from card_agent.terms.validate import ValidationResult, map_currency
+from card_agent.terms.validate import ValidationResult, earn_evidence, map_currency
 
 MAX_PR_BODY = 60_000  # GitHub rejects bodies over 65,536 characters
 EVIDENCE_CHARS = 220
@@ -70,12 +70,20 @@ def usage_line(report: RunReport) -> str:
         else "unknown (model not in the price table; set LLM_PRICE_INPUT_PER_MTOK and "
         "LLM_PRICE_OUTPUT_PER_MTOK)"
     )
-    return (
+    cap = f" (cap ${report.max_cost:.2f} per run)" if report.max_cost is not None else ""
+    line = (
         f"**LLM:** `{report.model}` ({report.provider}) · calls: {usage.calls} · "
         f"input tokens: {usage.input_tokens:,} ({usage.cached_input_tokens:,} cached) · "
         f"output tokens: {usage.output_tokens:,} ({usage.reasoning_tokens:,} reasoning) · "
-        f"estimated cost: {cost_text}"
+        f"estimated cost: {cost_text}{cap}"
     )
+    if report.budget_note:
+        held = sum(o.action == "over_budget" for o in report.outcomes)
+        line += (
+            f"\n\n**Spend cap stopped LLM calls:** {report.budget_note}. "
+            f"{plural(held, 'card')} not sent; they're retried next run."
+        )
+    return line
 
 
 def validation_rows(outcomes: list[CardOutcome]) -> list[list[str]]:
@@ -332,8 +340,8 @@ def extraction_rows(
             [
                 name,
                 cell(_earn_value(row), 120),
-                quote(row.evidence),
-                verdict(name, row.evidence, skipped),
+                quote(earn_evidence(row)),
+                verdict(name, earn_evidence(row), skipped),
             ]
         )
     for row in extraction.benefits:
@@ -547,6 +555,11 @@ def report_json(report: RunReport) -> dict[str, Any]:
                 "sha256": o.sha256,
                 "usage": o.usage.__dict__,
                 "extraction": o.extraction.model_dump(mode="json") if o.extraction else None,
+                "validated": (
+                    o.validation.validated.model_dump(mode="json")
+                    if o.validation and o.validation.validated
+                    else None
+                ),
                 "rejected": o.validation.rejected if o.validation else None,
                 "issues": [i.as_dict() for i in o.validation.issues] if o.validation else [],
                 "kept_from_file": o.validation.kept_from_file if o.validation else [],

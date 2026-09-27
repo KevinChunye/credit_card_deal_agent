@@ -15,7 +15,7 @@ flowchart LR
         A4["rewards DB<br/>(opt-in, no license)"] -.-> C
         A5["10 issuer pages<br/>(cross-check only)"] --> C
         C --> D[("data branch<br/>latest.json<br/>snapshots/DATE.json<br/>changes/DATE.json<br/>page_hashes.json …")]
-        P["issuer product pages<br/>(52 cards, plain GET)"] --> T[card-terms pipeline]
+        P["issuer product pages<br/>(55 cards, plain GET)"] --> T[card-terms pipeline]
         R["Doctor of Credit<br/>change posts"] -.->|queue| T
         T <-->|"hashes, last_verified,<br/>validated extractions"| D
         T -->|"PR: card terms changed"| A3
@@ -60,8 +60,18 @@ hash changed / queued by RSS / --force
    ─> deterministic validation (no LLM):
         card_name_on_page must be this card (multi-card pages) and appear on the page
         every value's evidence quote must be on the page (whitespace/case/® insensitive)
-        the number must be in its quote; bounds: multiplier 0.5–15, fee 0–1000,
-        credits 0–2000/yr; categories must map to the existing enum
+        the number must be in its quote, and an earn quote must name its category; a
+          rate stated once over a list can use a heading + item quote pair (heading
+          before the item, within 1,500 chars, no other rate in between)
+        portal-only rates count as travel_portal; co-brand rates can't be hotels or
+          flights (what a rate excludes, or the card's own points, don't count); a
+          capped base rate (other) must cover all purchases; a cap the quote mentions
+          must be extracted; menu options outside the categories are left out
+        benefit amounts are only lowered: coverage limits, per-use credits, rebate caps,
+          credits unlocked by a spending threshold and airline status dollars get no $
+          value, time-limited perks count once
+        bounds: multiplier 0.5–15, fee 0–1000, credits 0–2000/yr; categories must map
+          to the existing enum
         failed fields keep their current value and are listed in the validation report
    ─> "ok" (validated fields stored in data/card_terms.json) or "validation_failed"
    ─> merge with the current YAML (rows an extraction doesn't mention are kept: a
@@ -83,8 +93,11 @@ hash changed / queued by RSS / --force
   OpenAI is implemented (`OPENAI_API_KEY`, `LLM_MODEL`, default `gpt-6-luna`);
   `LLM_PROVIDER=anthropic` is reserved. No key: extraction is skipped with a notice and
   the run still succeeds. A 401/403/404 stops further calls for the run.
+- **Spend cap**: `MAX_RUN_COST_USD` (default $1.00). Before each call the pipeline adds
+  up the run's estimated cost so far; once it reaches the cap, no new call starts and the
+  remaining cards are retried next run. A model with no known price makes no calls.
 - **Cost**: tokens and an estimated cost are in each run's job summary. A page is about
-  5–20k input tokens; a full forced run of 52 pages is roughly $0.20 at gpt-6-luna prices,
+  5–20k input tokens; a full forced run of 55 pages is roughly $0.10–0.20 at gpt-6-luna prices,
   a normal month (only changed pages) a few cents.
 
 ## Layout

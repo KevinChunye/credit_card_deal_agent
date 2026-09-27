@@ -263,6 +263,7 @@ def test_bootstrap_writes_a_field_by_field_comparison(config, offline, monkeypat
         ),
     )
     out = config["tmp"] / "BOOTSTRAP_DIFF.md"
+    record = config["tmp"] / "bootstrap-report.json"
     bootstrap = load_bootstrap()
     code = bootstrap.main(
         [
@@ -272,9 +273,14 @@ def test_bootstrap_writes_a_field_by_field_comparison(config, offline, monkeypat
             str(config["details"]),
             "--sources",
             str(config["sources"]),
+            "--report-json",
+            str(record),
         ]
     )
     assert code == 0
+    validated = {o["card_id"]: o["validated"] for o in json.loads(record.read_text())["outcomes"]}
+    assert validated["amex-gold"]["annual_fee"] == 325
+    assert validated["wells-fargo-bilt"] is None  # rejected
     text = out.read_text()
     assert "| card | field | hand value | extracted | evidence |" in text
     assert "| American Express Gold Card | annual_fee | $250 | $325 | “Annual Fee: $325.” |" in text
@@ -394,3 +400,21 @@ def test_bootstrap_fails_visibly_on_a_rejected_key(config, offline, monkeypatch)
     )
     assert code == 1
     assert "**LLM problem:** OpenAI rejected the API key (HTTP 401)." in out.read_text()
+
+
+def test_run_honors_max_run_cost_usd(config, offline, monkeypatch, capsys):
+    provider = FakeProvider({"amex-gold": gold_extraction()})
+    use_provider(monkeypatch, provider)
+    monkeypatch.setenv("MAX_RUN_COST_USD", "0")
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    summary = config["tmp"] / "summary.md"
+    code = cli(
+        config, "run", "--data-dir", str(config["data"]), "--cards", "amex-gold",
+        "--summary-md", str(summary),
+    )  # fmt: skip
+    assert code == 0 and provider.calls == []
+    text = summary.read_text()
+    assert "(cap $0.00 per run)" in text
+    assert "**Spend cap stopped LLM calls:** estimated cost $0.0000 reached" in text
+    assert "not sent: run cost cap reached (retried next run)" in text
+    assert "::warning title=card terms::Spend cap:" in capsys.readouterr().out

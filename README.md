@@ -96,7 +96,8 @@ The card-terms pipeline runs only in GitHub Actions and reads its settings from 
 | `LLM_MODEL` | variable, optional | Default `gpt-6-luna` (OpenAI's cheapest current model with Structured Outputs). Any model that supports Structured Outputs works |
 | `LLM_REASONING_EFFORT` | variable, optional | e.g. `low` to make runs faster and cheaper; unset uses the model's default |
 | `LLM_PROVIDER` | variable, optional | `openai` (default). `anthropic` is reserved in the provider interface but not implemented |
-| `LLM_PRICE_INPUT_PER_MTOK`, `LLM_PRICE_OUTPUT_PER_MTOK` | env, optional | Only for cost estimates of models missing from the built-in price table |
+| `MAX_RUN_COST_USD` | variable, optional | Spend cap per run, default `1.00`: once a run's estimated cost reaches it, no new LLM calls start (the rest are retried next run) |
+| `LLM_PRICE_INPUT_PER_MTOK`, `LLM_PRICE_OUTPUT_PER_MTOK` | variable, optional | USD per 1M tokens, only for a model missing from the built-in price table (without a price the spend cap can't be enforced, so no calls are made) |
 | `ENABLE_REWARDS_DB` | variable, optional | `true` merges fuermosi777/rewards in the collector (off: no license) |
 
 ## Setup, step by step
@@ -131,7 +132,7 @@ issuer page listed in `config/card_sources.yaml`, and you merge its PRs.
    | hand value | extracted | evidence) as the `bootstrap-diff` artifact. It changes
    nothing.
 3. Run it again with `mode: full` (or wait for the 28th). The first full run extracts
-   every page (about 52 LLM calls, roughly $0.20) and opens a PR titled
+   every page (about 55 LLM calls, roughly $0.10–0.20) and opens a PR titled
    `card terms changed: …` with a table: card | field | old | new | evidence quote |
    source URL, plus a validation report. Review the quotes, then merge or close it.
 4. From then on:
@@ -150,8 +151,9 @@ issuer page listed in `config/card_sources.yaml`, and you merge its PRs.
 The pipeline only does plain HTTP GETs (robots.txt respected, no browser, no login), and
 never calls the LLM with anything but page text. Every extracted value must quote the page;
 a quote that isn't on the page, a number not in its quote, an out-of-bounds value, or the
-wrong card on a multi-card page is rejected and the current value is kept. Five cards have
-no readable page and stay hand-maintained (`manual`); see [docs/FINDINGS.md](docs/FINDINGS.md).
+wrong card on a multi-card page is rejected and the current value is kept. Two cards are
+discontinued (Citi Custom Cash, the legacy Bilt Mastercard): they aren't ranked and their
+terms aren't re-read; see [docs/FINDINGS.md](docs/FINDINGS.md).
 
 PRs that touch the pipeline also run a live smoke test on three cards (Chase Sapphire
 Preferred, Capital One Venture X, and Amex Gold, whose page also promotes other cards).

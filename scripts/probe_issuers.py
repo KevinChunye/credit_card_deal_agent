@@ -9,6 +9,7 @@ Usage:
     python scripts/probe_issuers.py                    # markdown table to stdout
     python scripts/probe_issuers.py --json out.json    # full results
     python scripts/probe_issuers.py --write-findings   # update docs/FINDINGS.md
+    python scripts/probe_issuers.py --try citi-custom-cash=https://...   # one candidate URL
 
 Pages come from config/card_sources.yaml. Besides the regex facts it reports
 what the card-terms pipeline will see: the extracted text length, its hash, and
@@ -83,12 +84,12 @@ def probe_pages(client: httpx.Client, pages: list[dict]) -> list[dict]:
         }
         results.append(row)
         print(
-            f"[{page['issuer']}] {page['card_id']}: status={analysis.status_code} "
+            f"[{page['issuer']}] {page['card_id']} {page['url']}: status={analysis.status_code} "
             f"text_chars={len(text)} name_found={name_found} blocked={analysis.blocked} "
             f"js_only={analysis.js_only} fields={analysis.fields_available} note={analysis.note}",
             file=sys.stderr,
         )
-        print(f"    text: {text[:240]!r}", file=sys.stderr)
+        print(f"    text: {text[: page.get('excerpt', 240)]!r}", file=sys.stderr)
     return results
 
 
@@ -193,21 +194,45 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--summary", type=Path, help="append the markdown to this file (CI summary)"
     )
+    parser.add_argument(
+        "--try",
+        dest="tries",
+        action="append",
+        default=[],
+        metavar="CARD_ID=URL",
+        help="probe only these candidate URLs (repeatable); skips the feeds",
+    )
     args = parser.parse_args(argv)
 
-    pages = [
-        {
-            "issuer": source.issuer,
-            "card_id": source.card_id,
-            "url": source.url,
-            "page_names": source.page_names or [source.name],
-        }
-        for source in load_sources(args.sources).values()
-        if source.url
-    ]
+    sources = load_sources(args.sources)
+    if args.tries:
+        pages = []
+        for pair in args.tries:
+            card_id, _, url = pair.partition("=")
+            source = sources.get(card_id)
+            pages.append(
+                {
+                    "issuer": source.issuer if source else "?",
+                    "card_id": card_id,
+                    "url": url,
+                    "page_names": (source.page_names or [source.name]) if source else [card_id],
+                    "excerpt": 1200,  # small pages: show what they actually say
+                }
+            )
+    else:
+        pages = [
+            {
+                "issuer": source.issuer,
+                "card_id": source.card_id,
+                "url": source.url,
+                "page_names": source.page_names or [source.name],
+            }
+            for source in sources.values()
+            if source.url
+        ]
     with make_client(timeout=45.0) as client:
         issuers = probe_pages(client, pages)
-        feeds = probe_feeds(client, FEEDS)
+        feeds = [] if args.tries else probe_feeds(client, FEEDS)
 
     markdown = render(issuers, feeds)
     print(markdown)

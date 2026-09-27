@@ -16,7 +16,8 @@ name: Card terms
 # "card terms changed: ..." PR from branch card-terms/auto, for a human to merge.
 #
 # Settings: secret OPENAI_API_KEY (without it, extraction is skipped with a
-# notice); optional repo variables LLM_MODEL, LLM_REASONING_EFFORT, LLM_PROVIDER.
+# notice); optional repo variables LLM_MODEL, LLM_REASONING_EFFORT, LLM_PROVIDER,
+# MAX_RUN_COST_USD (default 1.00: no new LLM calls once a run's estimate reaches it).
 on:
   schedule:
     - cron: "37 14 28 * *"
@@ -29,7 +30,7 @@ on:
         options: [full, rss]
         default: full
       force:
-        description: "Re-extract pages even if unchanged (a full forced run is ~52 LLM calls, about $0.20)"
+        description: "Re-extract pages even if unchanged (a full forced run is ~55 LLM calls, about $0.10-0.20)"
         type: boolean
         default: false
       cards:
@@ -55,6 +56,10 @@ env:
   LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
   LLM_MODEL: ${{ vars.LLM_MODEL }}
   LLM_REASONING_EFFORT: ${{ vars.LLM_REASONING_EFFORT }}
+  # Spend cap per run in USD (default 1.00); prices only for models not in the table.
+  MAX_RUN_COST_USD: ${{ vars.MAX_RUN_COST_USD }}
+  LLM_PRICE_INPUT_PER_MTOK: ${{ vars.LLM_PRICE_INPUT_PER_MTOK }}
+  LLM_PRICE_OUTPUT_PER_MTOK: ${{ vars.LLM_PRICE_OUTPUT_PER_MTOK }}
 
 jobs:
   smoke:
@@ -264,9 +269,12 @@ jobs:
           CARDS: ${{ inputs.cards }}
         run: |
           python scripts/bootstrap_extract.py --out BOOTSTRAP_DIFF.md \
-            ${CARDS:+--cards "$CARDS"} --summary-md "$GITHUB_STEP_SUMMARY"
+            ${CARDS:+--cards "$CARDS"} --summary-md "$GITHUB_STEP_SUMMARY" \
+            --report-json bootstrap-report.json
       - uses: actions/upload-artifact@v4
         if: always() && hashFiles('BOOTSTRAP_DIFF.md') != ''
         with:
           name: bootstrap-diff
-          path: BOOTSTRAP_DIFF.md
+          path: |
+            BOOTSTRAP_DIFF.md
+            bootstrap-report.json

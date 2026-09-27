@@ -7,6 +7,8 @@ Only OpenAI is implemented. Selection is by environment:
     OPENAI_API_KEY required for openai; without it the pipeline skips extraction
     LLM_REASONING_EFFORT  optional (e.g. low); omitted -> the model's default
     LLM_PRICE_INPUT_PER_MTOK / LLM_PRICE_OUTPUT_PER_MTOK  override the price table
+    MAX_RUN_COST_USD  spend cap per run (default 1.00): no new LLM calls once the
+                   run's estimated cost reaches it
 
 The model gets no tools: one request, JSON out, parsed into the Pydantic schema.
 """
@@ -21,6 +23,7 @@ from typing import Any, Protocol
 from pydantic import BaseModel
 
 DEFAULT_OPENAI_MODEL = "gpt-6-luna"
+DEFAULT_MAX_RUN_COST_USD = 1.00
 
 # USD per 1M tokens (input, output), standard tier, as published 2026-09.
 # Unknown models report cost as unknown unless LLM_PRICE_* is set.
@@ -93,6 +96,20 @@ def price_for(model: str) -> tuple[float, float] | None:
         if model.startswith(f"{known}-"):
             return price
     return None
+
+
+def max_run_cost(env: dict[str, str] | None = None) -> float:
+    """MAX_RUN_COST_USD, or the default when unset."""
+    raw = (dict(os.environ if env is None else env).get("MAX_RUN_COST_USD") or "").strip()
+    if not raw:
+        return DEFAULT_MAX_RUN_COST_USD
+    try:
+        cap = float(raw)
+    except ValueError:
+        raise ValueError(f"MAX_RUN_COST_USD must be a number of dollars, not {raw!r}") from None
+    if cap < 0:
+        raise ValueError(f"MAX_RUN_COST_USD can't be negative ({raw!r})")
+    return cap
 
 
 def estimate_cost(usage: Usage, model: str) -> float | None:

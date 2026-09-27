@@ -133,6 +133,8 @@ def earn(category: str, multiplier: float, evidence: str, **extra: Any) -> dict[
         "choice_group": None,
         "choose": None,
         "evidence": evidence,
+        "evidence_heading": None,
+        "evidence_item": None,
         **extra,
     }
 

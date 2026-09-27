@@ -54,7 +54,20 @@ class EarnRateOut(BaseModel):
         description="Same short label on every option of a 'choose your category' menu."
     )
     choose: int | None = Field(description="How many options of the menu apply at once.")
-    evidence: str
+    evidence: str = Field(
+        description="Verbatim quote stating this rate (its multiplier and category)."
+    )
+    evidence_heading: str | None = Field(
+        description=(
+            "Only when the page states the multiplier once in a heading over a list of "
+            "categories ('3x points on:'): that heading, verbatim. Otherwise null."
+        )
+    )
+    evidence_item: str | None = Field(
+        description=(
+            "With evidence_heading: the list item naming this category, verbatim. Otherwise null."
+        )
+    )
 
 
 class BenefitOut(BaseModel):
