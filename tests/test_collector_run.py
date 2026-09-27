@@ -3,9 +3,8 @@ from datetime import timedelta
 
 from card_agent.collector import bonuses_api, doc_rss
 from card_agent.collector.run import run_collector, summary_markdown, write_outputs
-from card_agent.config import CONFIG_DIR
 from card_agent.models import Snapshot
-from tests.conftest import NOW, fixture_path, routed_client
+from tests.conftest import CONFIG_FIXTURE, NOW, fixture_path, routed_client
 
 
 def routes(api_raw, feed_pages):
@@ -18,7 +17,9 @@ def routes(api_raw, feed_pages):
 
 def test_end_to_end_run_writes_three_files(tmp_path, api_raw, feed_pages):
     client, seen = routed_client(routes(api_raw, feed_pages))
-    snapshot, changes = run_collector(tmp_path, client, NOW, with_issuer_pages=False)
+    snapshot, changes = run_collector(
+        tmp_path, client, NOW, with_issuer_pages=False, config_dir=CONFIG_FIXTURE
+    )
     paths = write_outputs(tmp_path, snapshot, changes)
 
     assert paths["latest"] == tmp_path / "data" / "latest.json"
@@ -49,12 +50,16 @@ def test_end_to_end_run_writes_three_files(tmp_path, api_raw, feed_pages):
 
 def test_rss_failure_keeps_previous_news(tmp_path, api_raw, feed_pages):
     client, _ = routed_client(routes(api_raw, feed_pages))
-    first, changes = run_collector(tmp_path, client, NOW, with_issuer_pages=False)
+    first, changes = run_collector(
+        tmp_path, client, NOW, with_issuer_pages=False, config_dir=CONFIG_FIXTURE
+    )
     write_outputs(tmp_path, first, changes)
 
     broken, _ = routed_client({bonuses_api.DATA_URL: json.dumps(api_raw)})  # feed 404s
     later = NOW + timedelta(days=7)
-    second, _ = run_collector(tmp_path, broken, later, with_issuer_pages=False)
+    second, _ = run_collector(
+        tmp_path, broken, later, with_issuer_pages=False, config_dir=CONFIG_FIXTURE
+    )
     assert second.sources["doc_rss"].status == "error"
     assert [n.url for n in second.news] == [n.url for n in first.news]
 
@@ -68,6 +73,7 @@ def test_rewards_db_is_opt_in_and_fills_gaps(tmp_path, api_raw, feed_pages):
         rewards_dir=fixture_path("rewards_db"),
         with_rss=False,
         with_issuer_pages=False,
+        config_dir=CONFIG_FIXTURE,
     )
     assert snapshot.sources["rewards_db"].status == "ok"
     assert snapshot.sources["rewards_db"].count == 1
@@ -84,15 +90,15 @@ def test_rewards_db_is_opt_in_and_fills_gaps(tmp_path, api_raw, feed_pages):
     assert card.foreign_tx_fee is False
 
 
-def test_issuer_pages_only_collect_true(tmp_path, api_raw):
+def test_issuer_pages_only_cross_check_true(tmp_path, api_raw):
     page_html = fixture_path("issuer_pages/chase_sapphire_preferred.html").read_text()
     config = tmp_path / "config"
     config.mkdir()
-    (config / "card_details.yaml").write_text((CONFIG_DIR / "card_details.yaml").read_text())
-    (config / "issuer_pages.yaml").write_text(
-        "pages:\n"
-        "  - {issuer: chase, card_id: chase-sapphire-preferred, url: 'https://bank.example/csp', collect: true}\n"
-        "  - {issuer: amex, card_id: amex-gold, url: 'https://bank.example/gold', collect: false}\n"
+    (config / "card_details.yaml").write_text((CONFIG_FIXTURE / "card_details.yaml").read_text())
+    (config / "card_sources.yaml").write_text(
+        "cards:\n"
+        "  chase-sapphire-preferred: {issuer: chase, name: CSP, url: 'https://bank.example/csp', cross_check: true}\n"
+        "  amex-gold: {issuer: amex, name: Gold, url: 'https://bank.example/gold', cross_check: false}\n"
     )
     client, seen = routed_client(
         {bonuses_api.DATA_URL: json.dumps(api_raw), "https://bank.example/csp": page_html}
@@ -112,6 +118,7 @@ def test_second_run_diffs_against_previous(tmp_path, api_raw):
         source_file=fixture_path("bonuses_api_data.json"),
         with_rss=False,
         with_issuer_pages=False,
+        config_dir=CONFIG_FIXTURE,
     )
     write_outputs(tmp_path, first, changes)
 
@@ -132,7 +139,13 @@ def test_second_run_diffs_against_previous(tmp_path, api_raw):
 
     later = NOW + timedelta(days=7)
     _, changes = run_collector(
-        tmp_path, None, later, source_file=export, with_rss=False, with_issuer_pages=False
+        tmp_path,
+        None,
+        later,
+        source_file=export,
+        with_rss=False,
+        with_issuer_pages=False,
+        config_dir=CONFIG_FIXTURE,
     )
     assert changes.previous_date == NOW.date()
     assert [c["card_id"] for c in changes.new_cards] == ["chase-sapphire-horizon"]

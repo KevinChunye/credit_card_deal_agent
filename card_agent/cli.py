@@ -22,6 +22,7 @@ from card_agent import digest as digest_mod
 from card_agent import inbox, mailer, onboard
 from card_agent.config import Settings
 from card_agent.eligibility import load_rules
+from card_agent.freshness import MARKER, flag, terms_warning, verified_label
 from card_agent.guardrails import GuardrailError
 from card_agent.models import WalletCard
 from card_agent.scoring import CardEvaluation, ScoringContext, evaluate, rank
@@ -173,13 +174,15 @@ def cmd_wallet(args, settings: Settings, store: Store, now: datetime) -> dict[st
     return {"display_text": f"Added {name} to your wallet.", "card": card.model_dump(mode="json")}
 
 
-def _rank_line(i: int, row) -> str:
+def _rank_line(i: int, row, terms_flag: str = "") -> str:
     offer = f" — {row.offer_summary}" if row.offer_summary else ""
     flags = []
     if row.eligibility != "eligible":
         flags.append(row.eligibility)
     if row.hits_min_spend is False:
         flags.append("min spend above your usual spend")
+    if terms_flag:
+        flags.append(terms_flag)
     flag = f" [{'; '.join(flags)}]" if flags else ""
     return (
         f"{i}. {row.name} ({money(row.annual_fee)} fee): {money(row.marginal_ev_year1, True)} year 1, "
@@ -209,8 +212,15 @@ def cmd_rank(args, settings: Settings, store: Store, now: datetime) -> dict[str,
             ],
         )
     )
+    today = now.date()
+    flags = {card_id: flag(ctx.data.cards[card_id], today) for card_id in top["card_id"]}
     lines = [f"Top {len(top)} cards for you ({scope}). Values are vs your current wallet:"]
-    lines += [_rank_line(i, row) for i, row in enumerate(top.itertuples(), 1)]
+    lines += [_rank_line(i, row, flags[row.card_id]) for i, row in enumerate(top.itertuples(), 1)]
+    if any(flags.values()):
+        lines.append(
+            f"{MARKER} = terms not verified against the issuer's page in the last 60 days; "
+            "check the fee and earn rates before relying on them."
+        )
     lines += ['Ask "explain <card>" for the itemized math.']
     results = []
     for row in top.itertuples():
@@ -218,6 +228,7 @@ def cmd_rank(args, settings: Settings, store: Store, now: datetime) -> dict[str,
         entry = {
             k: v for k, v in ev.to_dict().items() if k not in ("breakdown", "marginal_breakdown")
         }
+        entry["terms_warning"] = terms_warning(ctx.data.cards[row.card_id], today)
         if args.json:
             entry["breakdown"] = ev.to_dict()["breakdown"]
             entry["marginal_breakdown"] = ev.to_dict()["marginal_breakdown"]
@@ -255,16 +266,30 @@ def _explain_text(ev: CardEvaluation) -> str:
     return "\n".join(lines)  # fmt: skip
 
 
+def _terms_line(card, today: date) -> str:
+    warning = terms_warning(card, today)
+    if warning:
+        return f"{MARKER} {warning}."
+    return f"Terms verified {card.last_verified:%Y-%m-%d} against {card.source_url}."
+
+
 def cmd_explain(args, settings: Settings, store: Store, now: datetime) -> dict[str, Any]:
     ctx = build_context(settings, store, now)
     ev = evaluate(resolve(args.card, ctx.data), ctx)
-    return {"display_text": _explain_text(ev), "evaluation": ev.to_dict()}
+    card = ctx.data.cards[ev.card_id]
+    return {
+        "display_text": _explain_text(ev) + "\n" + _terms_line(card, now.date()),
+        "evaluation": ev.to_dict(),
+        "terms_warning": terms_warning(card, now.date()),
+    }
 
 
 def cmd_compare(args, settings: Settings, store: Store, now: datetime) -> dict[str, Any]:
     ctx = build_context(settings, store, now)
     a = evaluate(resolve(args.card_a, ctx.data), ctx)
     b = evaluate(resolve(args.card_b, ctx.data), ctx)
+    today = now.date()
+    card_a, card_b = ctx.data.cards[a.card_id], ctx.data.cards[b.card_id]
     rows = [
         ("Annual fee", money(a.annual_fee), money(b.annual_fee)),
         ("Bonus value", money(a.bonus_value), money(b.bonus_value)),
@@ -277,6 +302,7 @@ def cmd_compare(args, settings: Settings, store: Store, now: datetime) -> dict[s
         ("vs flat 2% / yr", money(a.vs_flat_2pct_steady, True), money(b.vs_flat_2pct_steady, True)),
         ("Min spend OK", str(a.hits_min_spend), str(b.hits_min_spend)),
         ("Eligibility", a.eligibility, b.eligibility),
+        ("Terms verified", verified_label(card_a, today), verified_label(card_b, today)),
     ]
     width = max(len(r[0]) for r in rows)
     col = max(12, *(len(r[1]) for r in rows))
@@ -298,9 +324,18 @@ def cmd_compare(args, settings: Settings, store: Store, now: datetime) -> dict[s
         f"{winner('marginal_ev_steady', 'Every year after')}"
     )
     notes = [f"{ev.name}: {note}" for ev in (a, b) for note in ev.notes]
+    notes += [
+        f"{MARKER} {ev.name}: {terms_warning(card, today)}."
+        for ev, card in ((a, card_a), (b, card_b))
+        if terms_warning(card, today)
+    ]
     if notes:
         text += "\n" + "\n".join(notes)
-    return {"display_text": text, "a": a.to_dict(), "b": b.to_dict()}
+    return {
+        "display_text": text,
+        "a": a.to_dict() | {"terms_warning": terms_warning(card_a, today)},
+        "b": b.to_dict() | {"terms_warning": terms_warning(card_b, today)},
+    }
 
 
 def cmd_digest(args, settings: Settings, store: Store, now: datetime) -> dict[str, Any]:

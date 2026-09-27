@@ -1,8 +1,8 @@
 # Testing checklist
 
-Everything offline is covered by `pytest` (71 tests). The boxes below are the parts
-that need your accounts, in the order to verify them. Each item lists what "working"
-looks like.
+Everything offline is covered by `pytest` (about 150 tests). The boxes below are the
+parts that need your accounts, in the order to verify them. Each item lists what
+"working" looks like.
 
 ## 0. Offline suite (anywhere)
 
@@ -10,6 +10,11 @@ looks like.
       → all green. CI runs the same on every PR.
 - [ ] Hand-check one EV number: `tests/test_scoring.py` documents a worked example
       (bonus $900 + earn $846 + credits $360 − fee $95 = $2,011 year 1).
+- [ ] Card-terms pipeline, offline (`tests/test_terms_*.py`): fixture pages (a Chase
+      single-card page, an Amex page with a Delta promo, a Bilt-style lineup) and a fake
+      LLM cover hallucinated evidence, bounds violations, the wrong card on a multi-card
+      page, an unchanged hash making no LLM call, a missing API key, a rejected key, the
+      RSS trigger, the PR body, and the bootstrap report.
 
 ## 1. Collector (GitHub Actions)
 
@@ -26,12 +31,38 @@ looks like.
       differences, if any.
 - [ ] Optional: Actions → **Issuer probe** → Run workflow; compare with `docs/FINDINGS.md`.
 
+## 1b. Card-terms pipeline (GitHub Actions)
+
+- [ ] Secret `OPENAI_API_KEY` set; optional variable `LLM_MODEL`. Settings → Actions →
+      General: "Read and write permissions" and "Allow GitHub Actions to create and
+      approve pull requests".
+- [ ] On a PR that touches `card_agent/terms/`: the **Live smoke test (3 cards)** job
+      shows, per card, the extracted values with their quotes, each field's validation
+      verdict, and the diff against `card_details.yaml`, plus tokens and cost. It commits
+      nothing. With a bad key it fails with "OpenAI rejected the API key (HTTP 401)".
+- [ ] Actions → **Card terms** → Run workflow with `bootstrap` ticked → artifact
+      `bootstrap-diff` contains `BOOTSTRAP_DIFF.md` (card | field | hand value | extracted
+      | evidence). Nothing is committed.
+- [ ] Run workflow with `mode: full` → the `data` branch gains `data/page_hashes.json`,
+      `data/card_terms.json`, `data/terms_queue.json`; if anything differs from the YAML,
+      a PR "card terms changed: …" opens from `card-terms/auto` with the change table
+      and a validation report, and CI is dispatched on it.
+- [ ] Run `mode: full` again right away → the summary says every page is "page
+      unchanged, re-verified (no LLM call)", with 0 LLM calls; the PR is left as is.
+- [ ] Close the PR, run `mode: full` again → no new PR (declined proposals return only
+      when a page changes). `mode: full` with `force` re-extracts everything.
+- [ ] Run `mode: rss` → the summary lists the Doctor of Credit posts checked and any cards
+      queued; queued cards are re-extracted in the same run.
+- [ ] After a full run, the collector is dispatched; then `rank`/`compare` on Maritime
+      show ⚠ only on cards that aren't verified, and the digest says "Data health: N
+      cards verified this month, M stale".
+
 ## 2. Agent install on Maritime
 
 - [ ] Console: clone into `/data/.openclaw/workspace/skills/credit_card_deal_agent` and
       run `sh .../deploy/maritime_setup.sh` → tests pass, `sync` prints `ok: true`,
       "locked (read-only)".
-- [ ] Env vars set in Maritime (see README step d); `CARD_AGENT_DB` points under `/data`.
+- [ ] Env vars set in Maritime (see README step e); `CARD_AGENT_DB` points under `/data`.
 - [ ] Restart the agent, ask "list your skills" → `credit_card_deal_agent` is listed.
 
 ## 3. Profile and math
@@ -70,7 +101,7 @@ looks like.
 
 ## 6. Scheduling
 
-- [ ] Create the monthly cron job (README step e); `openclaw cron list` shows it with the
+- [ ] Create the monthly cron job (README step f); `openclaw cron list` shows it with the
       next run on the 1st.
 - [ ] Trigger it once manually (or temporarily schedule it a few minutes out) → the
       WhatsApp digest arrives and the email goes out.

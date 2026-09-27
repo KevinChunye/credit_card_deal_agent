@@ -13,7 +13,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+terms = [
+    "openai>=3.19,<4",
+]
 dev = [
+    "openai>=3.19,<4",
     "pytest>=8",
     "ruff==0.15.8",
 ]

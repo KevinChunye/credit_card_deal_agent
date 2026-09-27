@@ -1,0 +1,272 @@
+name: Card terms
+
+# Keeps config/card_details.yaml in line with the issuers' product pages
+# (card_agent/terms). Plain HTTP GETs only (no browser, no login); one LLM call
+# per page that changed.
+#
+#   monthly (28th, 14:37 UTC)  full run over every tracked card (before the digest
+#                              on the 1st, so its "data health" line is current)
+#   weekly (Thu, 15:23 UTC)    RSS trigger: queue cards named in Doctor of Credit
+#                              change posts, then re-extract just those
+#   workflow_dispatch          full or rss run; force; limit to cards; bootstrap
+#   pull_request               live smoke test on 3 cards; commits nothing
+#
+# Page hashes, last_verified dates, validated extractions, and the queue live on
+# the `data` branch. Changes to card_details.yaml only ever arrive as the
+# "card terms changed: ..." PR from branch card-terms/auto, for a human to merge.
+#
+# Settings: secret OPENAI_API_KEY (without it, extraction is skipped with a
+# notice); optional repo variables LLM_MODEL, LLM_REASONING_EFFORT, LLM_PROVIDER.
+on:
+  schedule:
+    - cron: "37 14 28 * *"
+    - cron: "23 15 * * 4"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "full: every tracked card. rss: scan Doctor of Credit, re-extract queued cards"
+        type: choice
+        options: [full, rss]
+        default: full
+      force:
+        description: "Re-extract pages even if unchanged (a full forced run is ~52 LLM calls, about $0.20)"
+        type: boolean
+        default: false
+      cards:
+        description: "Only these card ids, comma-separated (empty: all)"
+        type: string
+        default: ""
+      bootstrap:
+        description: "Bootstrap: extract every card once and upload BOOTSTRAP_DIFF.md (commits nothing, opens no PR)"
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - "card_agent/terms/**"
+      - "config/card_sources.yaml"
+      - "scripts/bootstrap_extract.py"
+      - "requirements-terms.txt"
+      - ".github/workflows/card_terms.yml"
+
+permissions:
+  contents: read
+
+env:
+  LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
+  LLM_MODEL: ${{ vars.LLM_MODEL }}
+  LLM_REASONING_EFFORT: ${{ vars.LLM_REASONING_EFFORT }}
+
+jobs:
+  smoke:
+    name: Live smoke test (3 cards, no commits)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements-terms.txt
+      # One Chase page, one Capital One page, and an Amex page that also promotes
+      # other cards. Results go to the job summary; nothing is saved or pushed.
+      # Fork PRs get no secrets, so there the step reports a clean skip.
+      - name: Extract, validate, and compare with card_details.yaml
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python -m card_agent.terms smoke \
+            --cards chase-sapphire-preferred,capital-one-venture-x,amex-gold \
+            --summary-md "$GITHUB_STEP_SUMMARY" --report-json smoke-report.json
+      - uses: actions/upload-artifact@v4
+        if: always() && hashFiles('smoke-report.json') != ''
+        with:
+          name: smoke-report
+          path: smoke-report.json
+
+  refresh:
+    name: Refresh card terms
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.bootstrap)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    concurrency:
+      group: card-terms-refresh
+      cancel-in-progress: false
+    permissions:
+      contents: write # state to the data branch; card_details.yaml to card-terms/auto
+      pull-requests: write # open or update the card-terms PR
+      actions: write # dispatch CI on card-terms/auto and the collector (GITHUB_TOKEN pushes don't trigger workflows)
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GH_TOKEN: ${{ github.token }}
+      PR_BRANCH: card-terms/auto
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+
+      - name: Check out the data branch (or start it)
+        run: |
+          if git fetch --depth=1 origin +refs/heads/data:refs/remotes/origin/data; then
+            git worktree add -B data data-branch origin/data
+          else
+            echo "No data branch yet; this run creates it."
+            git worktree add --detach data-branch
+            git -C data-branch checkout --orphan data
+            git -C data-branch rm -rfq . || true
+          fi
+          mkdir -p data-branch/data
+
+      - name: Pick the mode
+        id: mode
+        env:
+          CRON: ${{ github.event.schedule }}
+          INPUT_MODE: ${{ inputs.mode }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            if [ "$CRON" = "23 15 * * 4" ]; then mode=rss; else mode=full; fi
+          else
+            mode="$INPUT_MODE"
+          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "Mode: $mode"
+
+      - name: Is a card-terms PR already open?
+        id: pr
+        run: |
+          number=$(gh pr list --head "$PR_BRANCH" --base "$GITHUB_REF_NAME" --state open \
+            --json number --jq '.[0].number // empty')
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "Open card-terms PR: ${number:-none}"
+
+      - name: RSS trigger
+        if: steps.mode.outputs.mode == 'rss'
+        run: python -m card_agent.terms rss --data-dir data-branch/data --summary-md "$GITHUB_STEP_SUMMARY"
+
+      - name: Fetch, hash, extract changed pages, validate, diff
+        env:
+          MODE: ${{ steps.mode.outputs.mode == 'rss' && 'queue' || 'full' }}
+          CARDS: ${{ inputs.cards }}
+          FORCE: ${{ inputs.force && '--force' || '' }}
+          PENDING: ${{ steps.pr.outputs.number != '' && '--include-pending' || '' }}
+        run: |
+          python -m card_agent.terms run --mode "$MODE" --data-dir data-branch/data \
+            ${CARDS:+--cards "$CARDS"} $FORCE $PENDING \
+            --write-details --pr-dir pr \
+            --summary-md "$GITHUB_STEP_SUMMARY" --report-json card-terms-report.json
+
+      - uses: actions/upload-artifact@v4
+        if: always() && hashFiles('card-terms-report.json') != ''
+        with:
+          name: card-terms-report
+          path: card-terms-report.json
+
+      - name: Commit state to the data branch
+        id: state
+        working-directory: data-branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/page_hashes.json data/card_terms.json data/terms_queue.json
+          if git diff --cached --quiet; then
+            echo "No state changes."
+            exit 0
+          fi
+          if ! git diff --cached --quiet -- data/page_hashes.json; then
+            echo "hashes_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+          git commit -q -m "data: card terms $(date -u +%F) (${{ steps.mode.outputs.mode }})"
+          # The collector writes other files on this branch; rebase and retry if it
+          # pushed first.
+          for attempt in 1 2 3; do
+            if git push -q origin HEAD:data; then
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt); rebasing on origin/data."
+            git pull -q --rebase origin data
+          done
+          exit 1
+
+      # The agent reads verification dates from the collector's snapshot
+      # (latest.json); refresh it now rather than at the next weekly run.
+      - name: Restamp the snapshot with the new verification dates
+        if: steps.state.outputs.pushed == 'true' && steps.state.outputs.hashes_changed == 'true'
+        run: |
+          gh workflow run collector.yml --ref "$GITHUB_REF_NAME" \
+            || echo "::warning::Could not start the collector; its next weekly run picks up the new dates."
+
+      - name: Test the regenerated card_details.yaml
+        if: hashFiles('pr/title.txt') != ''
+        run: pytest -q
+
+      - name: Open or update the card-terms PR
+        if: hashFiles('pr/title.txt') != ''
+        env:
+          OPEN_PR: ${{ steps.pr.outputs.number }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          title="$(cat pr/title.txt)"
+          if [ -n "$OPEN_PR" ] && git fetch -q origin "$PR_BRANCH" \
+              && git diff --quiet FETCH_HEAD -- config/card_details.yaml; then
+            echo "The open PR already proposes exactly this file; leaving it as is."
+            echo "Card-terms PR (unchanged): $(gh pr view "$OPEN_PR" --json url --jq .url)" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git checkout -q -B "$PR_BRANCH"
+          git add config/card_details.yaml
+          git commit -q -m "$title" \
+            -m "Generated by the card-terms pipeline: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          git push -q --force origin "$PR_BRANCH"
+          if [ -n "$OPEN_PR" ]; then
+            gh pr edit "$OPEN_PR" --title "$title" --body-file pr/body.md
+            url="$(gh pr view "$OPEN_PR" --json url --jq .url)"
+          else
+            url="$(gh pr create --base "$GITHUB_REF_NAME" --head "$PR_BRANCH" \
+              --title "$title" --body-file pr/body.md)"
+          fi
+          echo "Card-terms PR: $url" >> "$GITHUB_STEP_SUMMARY"
+          # A dispatch is the one GITHUB_TOKEN event that starts another workflow.
+          gh workflow run ci.yml --ref "$PR_BRANCH" \
+            || echo "::warning::Could not start CI on $PR_BRANCH; run it from the Actions tab."
+
+      - name: Close the card-terms PR when nothing is pending
+        if: steps.pr.outputs.number != '' && hashFiles('pr/title.txt') == ''
+        run: |
+          gh pr close "${{ steps.pr.outputs.number }}" --delete-branch \
+            --comment "Every proposed value now matches config/card_details.yaml on $GITHUB_REF_NAME, so there is nothing left to merge. Closed by the card-terms pipeline."
+
+  bootstrap:
+    name: Bootstrap comparison (no commits)
+    if: github.event_name == 'workflow_dispatch' && inputs.bootstrap
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements-terms.txt
+      - name: Extract every tracked card and compare with the hand-compiled YAML
+        env:
+          CARDS: ${{ inputs.cards }}
+        run: |
+          python scripts/bootstrap_extract.py --out BOOTSTRAP_DIFF.md \
+            ${CARDS:+--cards "$CARDS"} --summary-md "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always() && hashFiles('BOOTSTRAP_DIFF.md') != ''
+        with:
+          name: bootstrap-diff
+          path: BOOTSTRAP_DIFF.md

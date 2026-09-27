@@ -14,7 +14,7 @@ network the weekly collector uses, so the results reflect production.
 | 2. Doctor of Credit RSS | **Wired** | The credit-card category feed works with a plain GET; ~15 posts/page, paginated. |
 | 3. fuermosi777/rewards | **Built, OFF by default** | Best data for earn rates/benefits/protections, but the repo has **no license**, so no reuse is granted. You decide; see below. |
 | 4. Issuer pages | **10 pages wired as a cross-check** | 21 of 23 pages are readable with one plain GET; 10 state the bonus/fee unambiguously enough to compare. Nothing needed a browser, a login, or anti-bot work. |
-| Category earn rates | `config/card_details.yaml` (hand-curated) | Source 1 has no per-category earn rates; source 3 can't be used by default. A static file of ~57 popular cards is the simplest thing that works. |
+| Category earn rates | `config/card_details.yaml` (generated from issuer pages, reviewed in PRs) | Source 1 has no per-category earn rates; source 3 can't be used by default. The card-terms pipeline re-reads 52 of the 57 cards' issuer pages (the other 5 stay hand-maintained); see "Card terms from issuer pages" below. |
 
 ## Source 1: credit-card-bonuses-api (MIT)
 
@@ -90,34 +90,69 @@ requests to the same host, **honest User-Agent**
 (`Mozilla/5.0 (compatible; credit-card-deal-agent/0.1; +repo URL)`). We deliberately
 don't impersonate a desktop browser; nothing was blocked anyway.
 
-<!-- probe:start -->
-_Probe run: 2026-09-26 22:38 UTC on a GitHub Actions runner. One GET per page, robots.txt respected, self-identifying User-Agent, no JavaScript._
+The first probe (2026-09-26 22:38 UTC, 23 pages) decided the collector's weekly
+cross-check: the 10 pages marked `cross_check: true` in `config/card_sources.yaml`
+(Amex and Bilt pages bundle other cards' promos, so the regex cross-check skips them).
+The current probe covers every card with a URL in `config/card_sources.yaml`:
 
-| issuer | card | method that works | fields available | blocked/JS-only? | wired? |
-|---|---|---|---|---|---|
-| amex | amex-blue-cash-preferred | inline_state, static_text | bonus, annual_fee, earn_rates | no | no: page state bundles other cards' promos |
-| amex | amex-gold | inline_state, static_text | bonus, annual_fee, earn_rates | no | no: same (a Delta "80,000 miles" promo and the Blue Cash fee appear on the Gold page) |
-| amex | amex-platinum | inline_state, static_text | bonus, annual_fee, earn_rates | no | no: same |
-| apple | apple-card | none | none | no (readable; rates not phrased as matchable text) | no |
-| barclays | barclays-aadvantage-aviator-red-world-elite | none | none | HTTP 404 (URL moved) | no |
-| barclays | barclays-jetblue-plus | static_text | bonus, annual_fee, earn_rates | no | **yes** |
-| bilt | wells-fargo-bilt | static_text | bonus, annual_fee, earn_rates | no | no: one page lists the whole 2026 lineup |
-| bofa | bofa-customized-cash-rewards | json_ld | bonus (weak) | no | no |
-| bofa | bofa-premium-rewards | none | none | no (readable; offer text not matched) | no |
-| capital-one | capital-one-quicksilver | static_text | bonus (weak), earn_rates | no | no |
-| capital-one | capital-one-savor | static_text | bonus, annual_fee, earn_rates | no | **yes** |
-| capital-one | capital-one-venture-x | static_text | annual_fee, earn_rates (bonus hit was a referral blurb) | no | **yes** (fee) |
-| chase | chase-freedom-unlimited | static_text | bonus, annual_fee | no | **yes** |
-| chase | chase-ink-business-preferred | static_text | bonus, annual_fee, earn_rates | no | **yes** |
-| chase | chase-sapphire-preferred | static_text | bonus, annual_fee, earn_rates | no | **yes** |
-| citi | citi-double-cash | json_ld, static_text | bonus (weak), annual_fee, earn_rates | no | no |
-| citi | citi-strata-premier | json_ld, static_text | earn_rates | no | no |
-| discover | discover-discover-it | static_text | annual_fee, earn_rates (bonus hit was Cashback Match copy) | no | no |
-| robinhood | robinhood-gold-card | static_text | annual_fee, earn_rates | no | no (no bonus; "no annual fee" but requires Gold membership) |
-| us-bank | us-bank-altitude-go | static_text | bonus, annual_fee, earn_rates | no | **yes** |
-| us-bank | us-bank-cash | static_text | bonus, annual_fee, earn_rates | no | **yes** |
-| wells-fargo | wells-fargo-active-cash | static_text | bonus, annual_fee, earn_rates | no | **yes** |
-| wells-fargo | wells-fargo-autograph | static_text | bonus, annual_fee, earn_rates | no | **yes** |
+<!-- probe:start -->
+_Probe run: 2026-09-26 23:41 UTC. One GET per page, robots.txt respected, self-identifying User-Agent, no JavaScript._
+
+| issuer | card | HTTP | text chars | text source | card name on page | regex fields | verdict |
+|---|---|---|---|---|---|---|---|
+| amex | amex-blue-business-cash | 200 | 12,138 | visible + embedded JSON | yes | annual_fee, earn_rates | usable |
+| amex | amex-blue-business-plus | 200 | 13,567 | visible + embedded JSON | yes | annual_fee, earn_rates | usable |
+| amex | amex-blue-cash-everyday | 200 | 10,561 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| amex | amex-blue-cash-preferred | 200 | 11,711 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| amex | amex-business-gold | 200 | 21,164 | visible + embedded JSON | yes | annual_fee, earn_rates | usable |
+| amex | amex-business-platinum | 200 | 25,766 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| amex | amex-delta-skymiles-gold | 200 | 12,043 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| amex | amex-delta-skymiles-platinum | 200 | 16,459 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| amex | amex-delta-skymiles-reserve | 200 | 16,697 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| amex | amex-gold | 200 | 18,159 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| amex | amex-green | 200 | 80,000 | page state (fallback) | yes | bonus, annual_fee, earn_rates | usable |
+| amex | amex-hilton-honors | 200 | 10,256 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| amex | amex-hilton-honors-aspire | 200 | 16,924 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| amex | amex-hilton-honors-surpass | 200 | 12,587 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| amex | amex-marriott-bonvoy-bevy | 200 | 13,624 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| amex | amex-marriott-bonvoy-brilliant | 200 | 16,786 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| amex | amex-platinum | 200 | 40,243 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| apple | apple-card | 200 | 45,924 | visible | yes | none | usable |
+| barclays | barclays-jetblue-plus | 200 | 8,112 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| bofa | bofa-customized-cash-rewards | 200 | 21,439 | visible + embedded JSON | yes | bonus | usable |
+| bofa | bofa-premium-rewards | 200 | 21,657 | visible + embedded JSON | yes | none | usable |
+| bofa | bofa-premium-rewards-elite | 200 | 23,106 | visible + embedded JSON | yes | none | usable |
+| bofa | bofa-travel-rewards | 200 | 20,804 | visible + embedded JSON | yes | earn_rates | usable |
+| bofa | bofa-unlimited-cash-rewards | 200 | 22,613 | visible + embedded JSON | yes | earn_rates | usable |
+| capital-one | capital-one-quicksilver | 200 | 6,508 | visible + embedded JSON | yes | bonus, earn_rates | usable |
+| capital-one | capital-one-savor | 200 | 8,643 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| capital-one | capital-one-spark-2-cash-plus | 200 | 13,985 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| capital-one | capital-one-venture-rewards | 200 | 20,445 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| capital-one | capital-one-venture-x | 200 | 15,912 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| capital-one | capital-one-venture-x-business | 200 | 21,372 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| capital-one | capital-one-ventureone | 200 | 6,528 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| chase | chase-freedom-flex | 200 | 32,795 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| chase | chase-freedom-unlimited | 200 | 29,495 | visible | yes | bonus, annual_fee | usable |
+| chase | chase-ihg-premier | 200 | 50,611 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| chase | chase-ink-business-cash | 200 | 30,208 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| chase | chase-ink-business-preferred | 200 | 30,113 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| chase | chase-ink-business-premier | 200 | 22,444 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| chase | chase-ink-business-unlimited | 200 | 29,477 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| chase | chase-marriott-bonvoy-boundless | 200 | 43,775 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| chase | chase-sapphire-preferred | 200 | 36,527 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| chase | chase-sapphire-reserve | 200 | 80,000 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| chase | chase-united-explorer | – | 0 | visible | no | none | blocked (request failed: ReadTimeout) |
+| chase | chase-world-of-hyatt | 200 | 39,853 | visible | yes | bonus, annual_fee | usable |
+| citi | citi-double-cash | 200 | 17,379 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| citi | citi-strata-elite | 200 | 17,370 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| citi | citi-strata-premier | 200 | 14,919 | visible + embedded JSON | yes | bonus, earn_rates | usable |
+| discover | discover-discover-it | 200 | 11,027 | visible + embedded JSON | yes | bonus, annual_fee, earn_rates | usable |
+| robinhood | robinhood-gold-card | 200 | 3,680 | visible | yes | annual_fee, earn_rates | usable |
+| us-bank | us-bank-altitude-go | 200 | 12,932 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| us-bank | us-bank-cash | 200 | 16,949 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| wells-fargo | wells-fargo-active-cash | 200 | 25,666 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| wells-fargo | wells-fargo-autograph | 200 | 28,496 | visible | yes | bonus, annual_fee, earn_rates | usable |
+| wells-fargo | wells-fargo-autograph-journey | 200 | 34,566 | visible | yes | bonus, annual_fee, earn_rates | usable |
 
 **Aggregator feeds**
 
@@ -127,11 +162,11 @@ _Probe run: 2026-09-26 22:38 UTC on a GitHub Actions runner. One GET per page, r
 | https://www.doctorofcredit.com/feed/ | yes | 15 | Sat, 26 Sep 2026 16:30:04 +0000 | Fri, 25 Sep 2026 13:53:02 +0000 |
 <!-- probe:end -->
 
-"Weak" means only a bare amount matched (e.g. "minimum transfer is 1,000 points"),
-not an offer sentence ("Earn 75,000 points after you spend $5,000…"); the cross-check
-ignores weak hits. Re-run the probe any time from the Actions tab (Issuer probe → Run
-workflow) or locally with `python scripts/probe_issuers.py --write-findings`
-(that rewrites the table between the probe markers, without the "wired?" column).
+"Text chars" is the page text the card-terms pipeline hashes and extracts from (the
+probe capped it at 80,000; the pipeline now keeps up to 150,000). "Regex fields" is only
+the collector's cross-check heuristic. Re-run the probe from the Actions tab (Issuer
+probe → Run workflow) or locally with `python scripts/probe_issuers.py --write-findings`
+(that rewrites the table between the probe markers).
 
 ### What the issuer pages told us on day one
 
@@ -153,14 +188,55 @@ workflow) or locally with `python scripts/probe_issuers.py --write-findings`
 
 ### Possible next easy paths (not built)
 
-- **Issuer earn-rate text as a seed check.** The probe already extracts lines like
-  "10X Miles on hotels & rental cars booked through Capital One Travel". A weekly diff of
-  that text against `config/card_details.yaml` would flag stale seed entries. Cheap, but
-  it's more regex surface to maintain, so I left it as a follow-up.
-- **Amex attribution.** The Amex state blob keys content by section ("rewardsContent",
-  "primaryBenefitTiles"). Reading the card's own section instead of regexing the whole
-  blob would likely make Amex cross-checkable. Worth it only if Amex numbers in the API
-  turn out to drift.
+- **Amex attribution for the cross-check.** The Amex state blob keys content by section
+  ("rewardsContent", "primaryBenefitTiles"). Reading the card's own section instead of
+  regexing the whole blob would make Amex bonus/fee cross-checkable. (The card-terms
+  pipeline doesn't need this: it rejects extractions for the wrong card by name.)
+
+## Card terms from issuer pages (LLM extraction, deterministic checks)
+
+`config/card_details.yaml` is regenerated from the same issuer pages by the card-terms
+pipeline (docs/ARCHITECTURE.md). Of the 57 cards in it, **52 are tracked** and **5 stay
+manual** (`url: null` in `config/card_sources.yaml`, hand values kept, flagged ⚠ in the
+agent):
+
+| card | why it's manual |
+|---|---|
+| wells-fargo-bilt (legacy Bilt Mastercard) | biltrewards.com/card now lists only the 2026 lineup (Bilt Blue, Obsidian, Palladium); there's no page for the legacy card |
+| chase-amazon-prime (Prime Visa) | the product page is on amazon.com, which answers a plain GET with HTTP 500; no Chase-hosted page is known |
+| chase-united-explorer | theexplorercard.com never answered from GitHub Actions: ReadTimeout after 45 s in every probe. Getting through would take browser emulation |
+| citi-custom-cash | citi.com renders this page with JavaScript: a plain GET returns ~700 characters of text and no embedded data |
+| citi-aadvantage-platinum-select-world-elite | creditcards.aa.com answers plain GETs from GitHub Actions with HTTP 403 |
+
+Page text is the visible text plus prose from JSON-LD and `__NEXT_DATA__`. Amex Green
+shows almost no visible text (its copy lives in the page's inline state), so when visible
+text is under 1,500 characters the pipeline falls back to quoted strings from that state;
+normal pages never use the fallback, which keeps their hashes stable. Text length was
+identical across two probes and the first smoke run, so unchanged pages hash the same.
+
+### LLM choice
+
+Default model: **`gpt-6-luna`** (repo variable `LLM_MODEL` to change it). As of
+2026-09-26 it is OpenAI's cheapest current model with Structured Outputs: released
+2026-09-22, $0.10 per 1M input tokens ($0.01 cached) and $0.50 per 1M output tokens,
+available on the Responses API with a configurable reasoning effort. Alternatives if it
+misbehaves: `gpt-5.6-luna` ($0.20/$1.20), `gpt-5-mini` ($0.25/$2.00), `gpt-5-nano`
+($0.05/$0.40). The build sandbox couldn't reach platform.openai.com, so these facts come
+from OpenAI's model and changelog pages as indexed by search plus pricing write-ups
+([OpenAI: gpt-6-luna](https://developers.openai.com/api/docs/models/gpt-6-luna),
+[OpenAI changelog](https://developers.openai.com/api/docs/changelog),
+[OpenRouter listing](https://openrouter.ai/openai/gpt-6-luna),
+[VentureBeat](https://venturebeat.com/technology/openai-releases-gpt-6-sol-and-luna-models-slashing-api-costs-50-or-more),
+[Help Net Security](https://www.helpnetsecurity.com/2026/09/23/gpt-6-sol-luna-lower-api-prices/),
+[MarkTechPost](https://www.marktechpost.com/2026/09/22/openai-releases-gpt-6-sol-and-luna-50-cheaper-api-pricing-and-benchmarks/),
+[pricing summary](https://www.morphllm.com/openai-api-pricing)). The first live run
+confirms the model name: a wrong one fails fast with "OpenAI has no model … (HTTP 404)".
+
+Estimated usage: a page is 2k–37k input tokens (most 3k–10k) and one response of a few
+thousand output tokens including reasoning, so a full forced run of 52 pages costs
+roughly $0.15–0.25. Monthly runs only call the LLM for pages whose text changed (plus
+RSS-queued cards), typically 5–20 calls, a few cents. Each run's job summary shows the
+actual tokens and estimated cost.
 
 ## What I skipped, and why
 
@@ -177,4 +253,6 @@ workflow) or locally with `python scripts/probe_issuers.py --write-findings`
 - **Co-brand bonus categories** ("6x at Marriott", "2x on United") are intentionally not
   in the seed: they don't map to general spend categories, so the scorer undercounts
   co-brand cards rather than overcounts them.
-- **An LLM** anywhere in collection, extraction or scoring: everything is deterministic.
+- **An LLM in collection or scoring**: the collector and all EV math are deterministic.
+  The only LLM call is the card-terms extraction, whose output is checked against the
+  page and only ever lands as a PR for review.

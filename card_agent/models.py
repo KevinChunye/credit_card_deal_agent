@@ -103,6 +103,13 @@ class Card(BaseModel):
     source: str = "bonuses_api"
     source_card_id: str | None = None
     notes: str | None = None
+    # Provenance of the earn/benefit/fee terms (card-terms pipeline, data branch).
+    # ok | fetch_failed | validation_failed | manual ("manual" = never checked
+    # against an issuer page: hand-maintained, or not tracked at all).
+    source_status: str = "manual"
+    source_url: str | None = None
+    last_verified: date | None = None
+    terms_tracked: bool = False  # has an entry in config/card_sources.yaml
 
     @property
     def kind(self) -> str:

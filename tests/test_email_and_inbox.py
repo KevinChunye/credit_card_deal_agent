@@ -6,14 +6,14 @@ import pytest
 
 from card_agent.collector import bonuses_api
 from card_agent.collector.seed import apply_seed, load_seed
-from card_agent.config import CONFIG_DIR, Settings
+from card_agent.config import Settings
 from card_agent.email_parse import DomainConfig, parse_message
 from card_agent.inbox import poll
 from card_agent.mailer import send_digest
 from card_agent.models import Snapshot
 from card_agent.snapshot import DataView
 from card_agent.store import Store
-from tests.conftest import NOW, fixture_path
+from tests.conftest import CONFIG_FIXTURE, NOW, fixture_path
 
 OWNER = "owner@example.com"
 INBOX = "kev_work@agentmail.to"
@@ -26,9 +26,8 @@ def email(name: str) -> dict:
 @pytest.fixture
 def data(api_raw) -> DataView:
     cards, offers, benefits, base = bonuses_api.normalize(api_raw, NOW)
-    cards, rates, protections, paths, _ = apply_seed(
-        load_seed(CONFIG_DIR / "card_details.yaml"), cards, base
-    )
+    seeded = apply_seed(load_seed(CONFIG_FIXTURE / "card_details.yaml"), cards, base)
+    cards, rates = seeded.cards, seeded.earn_rates
     return DataView(Snapshot(generated_at=NOW, cards=cards, offers=offers, earn_rates=rates))
 
 

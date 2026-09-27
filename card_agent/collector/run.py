@@ -9,7 +9,7 @@ Output layout (committed to the `data` branch by the workflow):
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -18,11 +18,13 @@ import httpx
 from card_agent.collector import bonuses_api, doc_rss, rewards_db
 from card_agent.collector.diff import diff_snapshots, primary_offers
 from card_agent.collector.http import HostThrottle, RobotsCache
-from card_agent.collector.issuer_pages import cross_check, fetch_and_analyze, load_page_config
-from card_agent.collector.seed import apply_seed, load_seed
+from card_agent.collector.issuer_pages import cross_check, fetch_and_analyze
+from card_agent.collector.seed import apply_seed, load_seed, merge_benefits
 from card_agent.config import CONFIG_DIR
 from card_agent.matching import CardMatcher
-from card_agent.models import ChangeSet, Snapshot, SourceStatus
+from card_agent.models import Card, ChangeSet, Snapshot, SourceStatus
+from card_agent.terms.sources import load_sources
+from card_agent.terms.state import StateFiles, is_stale
 
 
 def load_previous(out_dir: Path) -> Snapshot | None:
@@ -58,15 +60,19 @@ def run_collector(
         status="ok", url=api_url, fetched_at=now, count=len(raw_cards)
     )
 
-    # 2. Curated seed (earn rates, FX fees, protections, downgrade paths).
+    # 2. Card terms (config/card_details.yaml): earn rates, fees, credits, FX fees,
+    #    protections, downgrade paths. Issuer-page values win over the API.
     seed = load_seed(config_dir / "card_details.yaml")
-    cards, earn_rates, protections, downgrade_paths, warnings = apply_seed(seed, cards, base_rates)
+    seeded = apply_seed(seed, cards, base_rates)
+    cards, earn_rates = seeded.cards, seeded.earn_rates
+    protections, downgrade_paths = seeded.protections, seeded.downgrade_paths
+    benefits = merge_benefits(benefits, seeded.benefits)
     sources["card_details_seed"] = SourceStatus(
         status="ok",
         url="config/card_details.yaml",
         fetched_at=now,
         count=len(seed.get("cards") or {}),
-        detail="; ".join(warnings) or f"as_of {seed.get('as_of')}",
+        detail="; ".join(seeded.warnings) or f"as_of {seed.get('as_of')}",
     )
 
     # 3. Rewards DB: opt-in only (no license); see docs/FINDINGS.md.
@@ -107,28 +113,33 @@ def run_collector(
     cross_checks: list[dict[str, Any]] = []
     if with_issuer_pages:
         pages = [
-            p
-            for p in load_page_config(config_dir / "issuer_pages.yaml").get("pages", [])
-            if p.get("collect")
+            source
+            for source in load_sources(config_dir / "card_sources.yaml").values()
+            if source.cross_check and source.url
         ]
         best = primary_offers(Snapshot(generated_at=now, offers=offers))
         fees = {card.id: card.annual_fee for card in cards}
         robots, throttle = RobotsCache(client), HostThrottle()
         for page in pages:
-            analysis = fetch_and_analyze(client, robots, throttle, page["url"])
-            card_id = page["card_id"]
+            analysis = fetch_and_analyze(client, robots, throttle, page.url)
+            card_id = page.card_id
             has_offer = card_id in best.index
             api_bonus = float(best.loc[card_id, "bonus_amount"]) if has_offer else None
             api_unit = best.loc[card_id, "bonus_unit"] if has_offer else None
             checks = cross_check(card_id, analysis, fees.get(card_id), api_bonus, api_unit)
             if not checks:
                 checks = [{"card_id": card_id, "field": None, "match": None, "note": analysis.note}]
-            cross_checks.extend({**check, "url": page["url"]} for check in checks)
+            cross_checks.extend({**check, "url": page.url} for check in checks)
         sources["issuer_pages"] = SourceStatus(
             status="ok", fetched_at=now, count=len(pages), detail="cross-check only"
         )
     else:
         sources["issuer_pages"] = SourceStatus(status="skipped")
+
+    # 6. Terms provenance from the card-terms pipeline (data branch), so the agent
+    #    can flag cards whose terms are unverified or stale.
+    cards, terms_status = stamp_provenance(cards, config_dir, out_dir / "data", now.date())
+    sources["card_terms"] = terms_status
 
     snapshot = Snapshot(
         generated_at=now,
@@ -144,6 +155,38 @@ def run_collector(
     )
     changes = diff_snapshots(previous, snapshot, now.date())
     return snapshot, changes
+
+
+def stamp_provenance(
+    cards: list[Card], config_dir: Path, data_dir: Path, today: date
+) -> tuple[list[Card], SourceStatus]:
+    tracked = load_sources(config_dir / "card_sources.yaml")
+    hashes = StateFiles(data_dir).load_hashes()
+    stamped = []
+    for card in cards:
+        source = tracked.get(card.id)
+        if source is None:
+            stamped.append(card)
+            continue
+        state = hashes.cards.get(card.id)
+        status = "manual" if source.is_manual or state is None else state.source_status
+        stamped.append(
+            card.model_copy(
+                update={
+                    "terms_tracked": True,
+                    "source_url": source.url,
+                    "source_status": status,
+                    "last_verified": state.last_verified if state else None,
+                }
+            )
+        )
+    ok = sum(1 for c in stamped if c.terms_tracked and not is_stale(hashes.cards.get(c.id), today))
+    return stamped, SourceStatus(
+        status="ok" if hashes.cards else "skipped",
+        url="data/page_hashes.json",
+        count=len(tracked),
+        detail=f"{ok} of {len(tracked)} tracked cards verified in the last 60 days",
+    )
 
 
 def write_outputs(out_dir: Path, snapshot: Snapshot, changes: ChangeSet) -> dict[str, Path]:

@@ -82,6 +82,17 @@ Relay `display_text` verbatim, then add one line saying whether the
 email went out (`email.sent`, or `email.error` if not). When a scheduled
 task runs the digest, do exactly the same.
 
+## Card terms freshness
+
+A ⚠ next to a card in `rank`, `compare`, `explain`, or the digest means its
+earn rates, credits, or fees haven't been verified against the issuer's own
+page in the last 60 days; the text says why (never verified, page
+unreachable, failed validation, or hand-maintained). Relay it as is, and if
+the user is about to act on that card, suggest they confirm the terms on the
+issuer's site. The digest's "Data health" line counts verified and stale
+cards. Card terms are updated only through reviewed pull requests from the
+card-terms pipeline; you never edit them.
+
 ## Personal offers inbox
 
 `inbox poll` reads new mail forwarded to the user's AgentMail inbox and

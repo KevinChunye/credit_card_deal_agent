@@ -13,7 +13,7 @@ from card_agent.collector.run import run_collector, write_outputs
 from card_agent.config import CONFIG_DIR
 from card_agent.models import PersonalOffer
 from card_agent.store import Store
-from tests.conftest import NOW, routed_client
+from tests.conftest import CONFIG_FIXTURE, NOW, routed_client
 
 
 @pytest.fixture
@@ -28,7 +28,9 @@ def env(tmp_path, monkeypatch, api_raw, feed_pages):
         }
     )
     week1 = NOW - timedelta(days=7)
-    snapshot, changes = run_collector(out, client, week1, with_issuer_pages=False)
+    snapshot, changes = run_collector(
+        out, client, week1, with_issuer_pages=False, config_dir=CONFIG_FIXTURE
+    )
     write_outputs(out, snapshot, changes)
 
     elevated = [dict(card) for card in api_raw]
@@ -38,7 +40,9 @@ def env(tmp_path, monkeypatch, api_raw, feed_pages):
     client2, _ = routed_client(
         {bonuses_api.DATA_URL: json.dumps(elevated), doc_rss.FEED_URL: feed_pages[0]}
     )
-    snapshot, changes = run_collector(out, client2, NOW, with_issuer_pages=False)
+    snapshot, changes = run_collector(
+        out, client2, NOW, with_issuer_pages=False, config_dir=CONFIG_FIXTURE
+    )
     write_outputs(out, snapshot, changes)
 
     for var in (

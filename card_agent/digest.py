@@ -16,6 +16,7 @@ from datetime import date, datetime, timedelta
 
 import pandas as pd
 
+from card_agent.freshness import MARKER, data_health, terms_warning
 from card_agent.guardrails import sanitize_untrusted
 from card_agent.models import BenefitKind, ChangeSet, PersonalOffer
 from card_agent.scoring import (
@@ -109,9 +110,11 @@ def top_opportunities(ctx: ScoringContext, limit: int = 5) -> Section:
     for row in eligible.head(limit).itertuples():
         ev = evaluations[row.card_id]
         offer = f" ({ev.offer_summary})" if ev.offer_summary else ""
+        warning = terms_warning(ctx.data.cards[row.card_id], ctx.today)
         short = (
             f"{ev.name}: {money(ev.marginal_ev_year1, True)} yr 1, "
             f"{money(ev.marginal_ev_steady, True)}/yr after{offer}"
+            + (f" {MARKER}" if warning else "")
         )
         math = "\n".join(
             f"    - {line.label}: {money(line.amount, True)}"
@@ -122,9 +125,12 @@ def top_opportunities(ctx: ScoringContext, limit: int = 5) -> Section:
         full = (
             f"**{ev.name}** — marginal EV {money(ev.marginal_ev_year1, True)} in year 1, "
             f"{money(ev.marginal_ev_steady, True)}/yr after; annual fee {money(ev.annual_fee)}{offer}. "
-            f"vs a flat 2% card: {money(ev.vs_flat_2pct_steady, True)}/yr.\n{math}"
+            f"vs a flat 2% card: {money(ev.vs_flat_2pct_steady, True)}/yr."
+            + (f" {MARKER} {warning}." if warning else "")
+            + f"\n{math}"
         )
-        section.items.append(Item(short, full, ev.to_dict() | {"breakdown": None}))
+        data = ev.to_dict() | {"breakdown": None, "terms_warning": warning}
+        section.items.append(Item(short, full, data))
     if not section.items and not section.note:
         section.note = (
             f"Nothing clears your {money(ctx.profile.min_marginal_ev_alert)} threshold this month."
@@ -302,7 +308,9 @@ def news_section(
 # ---------------------------------------------------------------------------
 
 
-def render_short(title: str, sections: list[Section], per_section: int, footer: str) -> str:
+def render_short(
+    title: str, sections: list[Section], per_section: int, footer: str, health: str = ""
+) -> str:
     lines = [f"*{title}*"]
     for section in sections:
         if not section.items and not section.note:
@@ -311,17 +319,22 @@ def render_short(title: str, sections: list[Section], per_section: int, footer: 
         lines += [f"{i}. {item.short}" for i, item in enumerate(section.items[:per_section], 1)]
         if section.note and (section.key != "news" or not section.items):
             lines.append(f"_{section.note}_")
-    lines += ["", footer]
+    if any(MARKER in item.short for section in sections for item in section.items):
+        lines += ["", f"{MARKER} = card terms not verified in the last 60 days"]
+    lines += ["", health, footer] if health else ["", footer]
     return "\n".join(lines)
 
 
-def render_full(title: str, sections: list[Section], header: list[str]) -> str:
+def render_full(
+    title: str, sections: list[Section], header: list[str], appendix: list[str] | None = None
+) -> str:
     lines = [f"# {title}", "", *header]
     for section in sections:
         lines += ["", f"## {section.title}", ""]
         lines += [f"- {item.full}" for item in section.items]
         if section.note:
             lines.append(f"_{section.note}_")
+    lines += appendix or []
     lines += [
         "",
         "---",
@@ -351,11 +364,12 @@ def build_digest(
     ]
     title = f"Card digest · {now:%B %Y}"
     footer = 'Full breakdown in your email. Ask me to "compare X Y" or "explain X" for the math.'
+    health = data_health(list(ctx.data.cards.values()), now.date())
     per_section = 3
-    short = render_short(title, sections, per_section, footer)
+    short = render_short(title, sections, per_section, footer, health.line)
     while len(short) > WHATSAPP_LIMIT and per_section > 1:
         per_section -= 1
-        short = render_short(title, sections, per_section, footer)
+        short = render_short(title, sections, per_section, footer, health.line)
     if len(short) > WHATSAPP_LIMIT:
         short = short[: WHATSAPP_LIMIT - 1].rstrip() + "…"
 
@@ -363,7 +377,13 @@ def build_digest(
     header = [
         f"Data as of {snapshot.generated_at:%Y-%m-%d} "
         f"({', '.join(f'{k}: {v.status}' for k, v in snapshot.sources.items())}).",
+        f"{health.line} (Card terms are re-read from issuer pages monthly; "
+        f"{MARKER} marks cards not verified in the last 60 days.)",
         *[f"⚠ {warning}" for warning in warnings or []],
     ]
-    full = render_full(title, sections, header)
+    appendix = []
+    if health.stale:
+        appendix = ["", "## Data health", "", health.line, ""]
+        appendix += [f"- {name}: {reason}" for name, reason in health.stale]
+    full = render_full(title, sections, header, appendix)
     return Digest(period=f"{now:%Y-%m}", title=title, short=short, full=full, sections=sections)

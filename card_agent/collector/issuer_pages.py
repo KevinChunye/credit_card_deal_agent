@@ -3,8 +3,8 @@ static HTML, JSON-LD, __NEXT_DATA__, or inline state. No JavaScript execution.
 
 Used two ways:
 - scripts/probe_issuers.py reports which pages are readable this way.
-- The collector fetches only pages marked `collect: true` in
-  config/issuer_pages.yaml and cross-checks the bonuses API against them.
+- The collector fetches only pages marked `cross_check: true` in
+  config/card_sources.yaml and cross-checks the bonuses API against them.
 """
 
 from __future__ import annotations
@@ -13,11 +13,9 @@ import html as html_lib
 import json
 import re
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 import httpx
-import yaml
 
 from card_agent.collector.http import HostThrottle, RobotsCache
 
@@ -133,11 +131,18 @@ def inline_state_chunks(page: str) -> list[str]:
     """Raw text of `window.__SOMETHING__ = {...}` style state blobs."""
     pattern = r"window\.(__[A-Z0-9_]+__)\s*=\s*(.{20,}?)</script>"
     chunks = [chunk for _name, chunk in re.findall(pattern, page, flags=re.S)]
-    # State blobs are JSON-in-JS; undo the common escapes so the text reads normally.
-    return [
-        chunk.encode("utf-8", "ignore").decode("unicode_escape", "ignore").replace('\\"', '"')
-        for chunk in chunks
-    ]
+    return [_decode_state(chunk) for chunk in chunks]
+
+
+def _decode_state(chunk: str) -> str:
+    """State blobs are JSON-in-JS, often a JSON string holding escaped JSON."""
+    raw = chunk.strip().rstrip(";").strip()
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError:
+        # Not plain JSON (e.g. a JS object literal): undo the common escapes.
+        return raw.encode("utf-8", "ignore").decode("unicode_escape", "ignore").replace('\\"', '"')
+    return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
 
 
 def flatten_strings(obj: Any) -> list[str]:
@@ -284,25 +289,28 @@ def analyze_page(status_code: int | None, page: str) -> PageAnalysis:
 # --------------------------------------------------------------------------
 
 
-def load_page_config(path: Path) -> dict[str, Any]:
-    with path.open() as handle:
-        return yaml.safe_load(handle) or {}
+def fetch_html(
+    client: httpx.Client, robots: RobotsCache, throttle: HostThrottle, url: str
+) -> tuple[int | None, str, str | None]:
+    """One polite GET: (status code, body, error). Robots.txt first, then throttle."""
+    allowed, reason = robots.allowed(url)
+    if not allowed:
+        return None, "", reason
+    throttle.wait(url)
+    try:
+        response = client.get(url)
+    except httpx.HTTPError as exc:
+        return None, "", f"request failed: {type(exc).__name__}"
+    return response.status_code, response.text, None
 
 
 def fetch_and_analyze(
     client: httpx.Client, robots: RobotsCache, throttle: HostThrottle, url: str
 ) -> PageAnalysis:
-    allowed, reason = robots.allowed(url)
-    if not allowed:
-        return PageAnalysis(status_code=None, blocked=True, note=reason)
-    throttle.wait(url)
-    try:
-        response = client.get(url)
-    except httpx.HTTPError as exc:
-        return PageAnalysis(
-            status_code=None, blocked=True, note=f"request failed: {type(exc).__name__}"
-        )
-    return analyze_page(response.status_code, response.text)
+    status, body, error = fetch_html(client, robots, throttle, url)
+    if error:
+        return PageAnalysis(status_code=None, blocked=True, note=error)
+    return analyze_page(status, body)
 
 
 def cross_check(

@@ -4,6 +4,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  # The card-terms workflow dispatches CI on its auto PR's branch, because pushes
+  # and PRs made with GITHUB_TOKEN don't trigger workflows.
+  workflow_dispatch:
 
 permissions:
   contents: read
