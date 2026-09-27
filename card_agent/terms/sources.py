@@ -70,10 +70,15 @@ _GENERIC_PHRASES = (
 )
 
 
+# Screen-reader text some pages put next to ®/℠/™ ("Autograph Journey service mark ℠ Card").
+_MARK_WORDS = re.compile(r"\b(?:registered trademark|trademark|service mark)\b", re.I)
+
+
 def normalize_card_name(name: str) -> str:
     """Canonical form for comparing card names read off a page."""
     # Strip marks before NFKC, which would turn ™/℠ into the letters "TM"/"SM".
-    text = unicodedata.normalize("NFKC", re.sub(r"[®™℠*†‡]", "", name)).lower()
+    text = _MARK_WORDS.sub(" ", re.sub(r"[®™℠*†‡]", "", name))
+    text = unicodedata.normalize("NFKC", text).lower()
     text = text.replace("+", " plus ").replace("&", " and ")
     text = re.sub(r"\([^)]*\)", " ", text)  # "(Visa Signature)" and similar asides
     text = re.sub(r"[^a-z0-9%]+", " ", text)

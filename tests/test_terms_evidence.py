@@ -12,7 +12,7 @@ from card_agent.terms.page import page_text
 from card_agent.terms.pipeline import RunOptions
 from card_agent.terms.report import pr_body
 from card_agent.terms.schema import TermsExtraction
-from card_agent.terms.sources import CardSource
+from card_agent.terms.sources import CardSource, name_matches
 from card_agent.terms.validate import (
     heading_item_problem,
     match_key,
@@ -398,7 +398,12 @@ TEST_CARD = CardSource(
 )  # fmt: skip
 
 
-def check_text(page: str, *rates: dict[str, Any], fee: dict[str, Any] | None = None):
+def check_text(
+    page: str,
+    *rates: dict[str, Any],
+    fee: dict[str, Any] | None = None,
+    benefits: tuple[dict[str, Any], ...] = (),
+):
     found = TermsExtraction.model_validate(
         {
             "card_name_on_page": "Test Card",
@@ -406,7 +411,7 @@ def check_text(page: str, *rates: dict[str, Any], fee: dict[str, Any] | None = N
             "foreign_tx_fee": None,
             "point_currency": None,
             "earn_rates": list(rates),
-            "benefits": [],
+            "benefits": list(benefits),
         }
     )
     return validate_extraction(found, f"Test Card. {page}", TEST_CARD, previous=None)
@@ -593,3 +598,72 @@ def test_travel_rate_limited_to_the_portal_for_airfare_and_hotels():
     )
     result = check_text(green, earn("travel_general", 3, green))
     assert [(r.category.value, r.multiplier) for r in result.terms.earn] == [("travel_portal", 3)]
+
+
+# ---------------------------------------------------------------------------
+# Rules from the third full bootstrap (real quotes)
+# ---------------------------------------------------------------------------
+
+
+def test_what_a_rate_excludes_doesnt_make_it_a_portal_or_co_brand_rate():
+    # Sapphire Preferred: 2x travel excludes Chase Travel. Moving it to travel_portal
+    # used to replace the 5x portal rate with 2x.
+    portal = "You’ll earn 5 points for each $1 spent on purchases made using your card through Chase Travel."
+    travel = (
+        "You’ll earn 2 points for each $1 spent on purchases made in the travel category "
+        "(excluding purchases made through Chase Travel that qualify for 5 points as described)."
+    )
+    result = check_text(
+        f"{portal} {travel}", earn("travel_portal", 5, portal), earn("travel_general", 2, travel)
+    )
+    assert result.issues == [] and result.skipped == []
+    assert {(r.category.value, r.multiplier) for r in result.terms.earn} == {
+        ("travel_portal", 5),
+        ("travel_general", 2),
+    }
+    # IHG Premier: travel excludes IHG hotels (10x); that isn't a co-brand travel rate.
+    ihg = (
+        "You'll earn 5 points for each $1 spent on purchases in the following rewards categories: "
+        "travel (excluding purchases made at hotels participating in IHG One Rewards that qualify "
+        "for 10 points as described above); gas stations; and dining at restaurants including "
+        "takeout and eligible delivery services."
+    )
+    assert check_text(ihg, earn("travel_general", 5, ihg)).issues == []
+
+
+def test_the_cards_own_points_dont_make_a_rate_co_brand():
+    hyatt = (
+        "You’ll earn 2 World of Hyatt Bonus Points for each $1 USD spent on purchases made in any "
+        "of the following rewards categories: restaurants (excluding dining purchases that qualify "
+        "for 4 Bonus Points as described above); airline tickets when purchased directly with "
+        "the airline"
+    )
+    assert check_text(hyatt, earn("flights", 2, hyatt)).issues == []
+    # Where the points are earned still counts.
+    marriott = "Earn 6X Marriott Bonvoy points at hotels participating in Marriott Bonvoy."
+    assert reasons(check_text(marriott, earn("hotels", 6, marriott))) == {
+        "earn.hotels": "co-brand rate filed as hotels (use not_listed)"
+    }
+
+
+def test_airline_status_dollars_are_not_money():
+    quote = (
+        "Receive $2,500 Medallion Qualification Dollars each Medallion Qualification Year and get "
+        "closer to Status with MQD Headstart."
+    )
+    result = check_text(quote, benefits=(benefit("elite_status", 2500, "annual", quote),))
+    assert result.issues == []
+    assert [row.amount for row in result.terms.benefits] == [None]
+    assert any("status currency" in note for note in result.skipped)
+
+
+def test_page_name_variants_still_have_to_be_this_card():
+    journey = CardSource(
+        card_id="wells-fargo-autograph-journey", issuer="wells-fargo",
+        name="Wells Fargo Autograph Journey Card", url="https://bank.example/journey",
+        page_names=["Autograph Journey"],
+    )  # fmt: skip
+    # Screen-reader text for the mark is ignored...
+    assert name_matches(journey, "Wells Fargo Autograph Journey service mark ℠ Card")
+    # ...but a different card is still a different card.
+    assert not name_matches(journey, "Wells Fargo Autograph service mark ℠ Card")

@@ -9,7 +9,8 @@ A value is kept only if:
   within 1,500 characters, with no other rate stated in between;
 - an earn quote (or its heading or list item) names the rate's category, and a
   rate that only applies to bookings through an issuer's travel portal isn't
-  filed as general hotels/flights/travel;
+  filed as general hotels/flights/travel (what a rate excludes, "travel
+  (excluding purchases made through Chase Travel)", doesn't count);
 - a capped rate is the base rate only if it covers all purchases ("2% on all
   eligible purchases on up to $50,000 per year"), and a cap its quote mentions
   must be extracted;
@@ -17,7 +18,8 @@ A value is kept only if:
 - its category is one of the existing spend categories.
 Benefit amounts are only ever lowered: a coverage limit ("reimbursed up to $800"
 if a phone is stolen), a per-use credit ("every time you book") or the cap on a
-percentage rebate ("10% back ... up to $250") keeps no dollar value, and a
+percentage rebate ("10% back ... up to $250") keeps no dollar value, nor does
+airline status currency ("$2,500 Medallion Qualification Dollars"), and a
 time-limited perk ("when activated by December 31") counts once rather than
 every year.
 The whole extraction is rejected if the card named on the page isn't the target
@@ -153,6 +155,19 @@ DIRECT_BOOKING = re.compile(
     r"\bdirect(?:ly)? (?:from|with|through) (?:the )?(?:airline|hotel)", re.I
 )
 GENERAL_TRAVEL = {Category.hotels, Category.flights, Category.travel_general}
+# What a rate excludes ("travel (excluding purchases made through Chase Travel ...)")
+# says nothing about where it applies.
+EXCLUSION = re.compile(
+    r"\((?:excluding|except|not including|other than)\b[^)]*\)?"
+    r"|\b(?:excluding|except|not including|other than)\b[^;.]*",
+    re.I,
+)
+# Nor does the card's own currency ("2 World of Hyatt Bonus Points for each $1").
+PROGRAM_POINTS = re.compile(
+    r"\b(?:world of hyatt|marriott bonvoy|hilton honors|ihg one rewards|skymiles|mileageplus|"
+    r"aadvantage|atmos rewards|rapid rewards|trueblue)(?: bonus)? (?:points?|miles?)\b",
+    re.I,
+)
 # A brand or program in a travel rate makes it a co-brand rate ("at hotels
 # participating in Marriott Bonvoy"), which the scorer must not apply to all hotels.
 CO_BRAND = re.compile(
@@ -177,6 +192,8 @@ COVERAGE = re.compile(
     r"\b(?:protection|insurance|insured|coverage|covered|stolen|damaged|theft|warranty)\b", re.I
 )
 CREDIT_WORD = re.compile(r"\bcredits?\b", re.I)
+# Airline status currency, not money.
+STATUS_DOLLARS = re.compile(r"\bqualification dollars?\b|\bMQDs?\b", re.I)
 # "10% back ... up to $250": the amount caps a percentage rebate; it isn't a credit.
 REBATE = re.compile(r"\b\d+(?:\.\d+)?% (?:back|cash back|off|discount|savings)\b", re.I)
 PER_USE = re.compile(
@@ -389,12 +406,13 @@ def _check_earn(row: EarnRateOut, page_key: str) -> tuple[EarnRow | None, str | 
         return None, problem
     category = Category(row.category.value)
     wording = plain(evidence or "")
-    if category in GENERAL_TRAVEL and CO_BRAND.search(wording):
+    applies = PROGRAM_POINTS.sub(" ", EXCLUSION.sub(" ", wording))  # where the rate applies
+    if category in GENERAL_TRAVEL and CO_BRAND.search(applies):
         return None, f"co-brand rate filed as {category.value} (use not_listed)"
-    if category in GENERAL_TRAVEL and PORTAL.search(wording) and not DIRECT_BOOKING.search(wording):
+    if category in GENERAL_TRAVEL and PORTAL.search(applies) and not DIRECT_BOOKING.search(applies):
         category = Category.travel_portal  # the caller notes the move
     if category == Category.travel_general and not re.search(
-        r"\btravel\b", PORTAL.sub(" ", wording), re.I
+        r"\btravel\b", PORTAL.sub(" ", applies), re.I
     ):
         return None, "evidence doesn't name travel in general"
     if category == Category.other and row.cap_usd is not None and not capped_base(wording):
@@ -435,6 +453,11 @@ def _adjust_benefit(row: BenefitOut, result: ValidationResult) -> BenefitOut:
         return row
     wording = plain(row.evidence)
     field = f"benefit.{row.kind.value}"
+    if STATUS_DOLLARS.search(wording):
+        result.skipped.append(
+            f"{field}: ${row.amount_stated:g} is airline status currency, not money; no $ value"
+        )
+        return row.model_copy(update={"amount_stated": None})
     if COVERAGE.search(wording) and not CREDIT_WORD.search(wording):
         result.skipped.append(
             f"{field}: ${row.amount_stated:g} is a coverage limit, not a credit; no $ value"

@@ -93,7 +93,7 @@ cards:
   capital-one-venture-x:
     {issuer: capital-one, name: Capital One Venture X, url: "https://www.capitalone.com/credit-cards/venture-x/", page_names: [Venture X], cross_check: true}
   capital-one-venture-rewards:
-    {issuer: capital-one, name: Capital One Venture Rewards, url: "https://www.capitalone.com/credit-cards/venture/", page_names: [Venture, Venture Rewards]}
+    {issuer: capital-one, name: Capital One Venture Rewards, url: "https://www.capitalone.com/credit-cards/venture/", page_names: [Venture, Venture Rewards, Venture Rewards Travel]}
   capital-one-ventureone:
     {issuer: capital-one, name: Capital One VentureOne Rewards, url: "https://www.capitalone.com/credit-cards/ventureone/", page_names: [VentureOne, Venture One]}
   capital-one-venture-x-business:

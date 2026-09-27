@@ -64,10 +64,11 @@ hash changed / queued by RSS / --force
           rate stated once over a list can use a heading + item quote pair (heading
           before the item, within 1,500 chars, no other rate in between)
         portal-only rates count as travel_portal; co-brand rates can't be hotels or
-          flights; a capped base rate (other) must cover all purchases; a cap the quote
-          mentions must be extracted; menu options outside the categories are left out
-        benefit amounts are only lowered: coverage limits and per-use credits get no
-          $ value, time-limited perks count once
+          flights (what a rate excludes, or the card's own points, don't count); a
+          capped base rate (other) must cover all purchases; a cap the quote mentions
+          must be extracted; menu options outside the categories are left out
+        benefit amounts are only lowered: coverage limits, per-use credits, rebate caps
+          and airline status dollars get no $ value, time-limited perks count once
         bounds: multiplier 0.5–15, fee 0–1000, credits 0–2000/yr; categories must map
           to the existing enum
         failed fields keep their current value and are listed in the validation report
