@@ -49,7 +49,15 @@ cards:
       The product page is on amazon.com, which answers a plain GET with HTTP 500
       (probe 2026-09-26); no Chase-hosted product page is known.
   chase-united-explorer:
-    {issuer: chase, name: United Explorer Card (Chase), url: "https://www.theexplorercard.com/rewards-cards/explorer-card", page_names: [United Explorer]}
+    issuer: chase
+    name: United Explorer Card (Chase)
+    url: null
+    page_names: [United Explorer]
+    manual_reason: >-
+      The product page (theexplorercard.com/rewards-cards/explorer-card) never
+      answered a plain GET from GitHub Actions: ReadTimeout after 45s in every
+      probe (2026-09-26). Getting through would take browser emulation, which
+      this project doesn't do.
   chase-world-of-hyatt:
     {issuer: chase, name: World of Hyatt Credit Card (Chase), url: "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card", page_names: [World of Hyatt]}
   chase-marriott-bonvoy-boundless:

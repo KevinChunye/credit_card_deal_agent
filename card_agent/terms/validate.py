@@ -9,7 +9,9 @@ A value is kept only if:
 The whole extraction is rejected if the card named on the page isn't the target
 card (multi-card pages such as Amex promos or Bilt's lineup).
 
-Fields that fail keep their previous value and are listed as issues.
+Fields that fail keep their previous value and are listed as issues. Rows on
+file that an extraction doesn't mention are kept too (and listed), since a
+removal can't be backed by a quote.
 """
 
 from __future__ import annotations
@@ -44,6 +46,11 @@ PERIODS_PER_YEAR = {
     Cadence.one_time: 1,
 }
 NUMBER_WORDS = {"double": 2, "twice": 2, "triple": 3, "quadruple": 4}
+# "No annual fee", "$0 annual fee", "Annual fee: $0" -- but not "$0 fraud liability"
+# or "report the annual fee as $0".
+NO_ANNUAL_FEE = re.compile(
+    r"\bno annual fee\b|\$0 annual fee\b|annual fee(?: is|:| of)?\s*(?:none\b|\$0\b)", re.I
+)
 
 # Rewards program -> our currency key. Generic names ("points", "miles",
 # "cash back") map to nothing, so they never override a known currency.
@@ -143,6 +150,9 @@ class ValidationResult:
     issues: list[Issue] = field(default_factory=list)
     accepted_fields: list[str] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)  # not_listed categories etc. (informational)
+    # On file but not in this extraction, so kept as they are. A removal can't be
+    # backed by a quote, so the pipeline never proposes one; a human decides.
+    kept_from_file: list[str] = field(default_factory=list)
 
 
 def _in_bounds(value: float, bounds: tuple[float, float]) -> bool:
@@ -239,11 +249,11 @@ def validate_extraction(
             reason = "evidence not found on page"
         elif not _in_bounds(fee.amount, ANNUAL_FEE_BOUNDS):
             reason = f"${fee.amount:g} outside {ANNUAL_FEE_BOUNDS}"
+        elif not re.search(r"\bfee\b", fee.evidence, re.I):
+            reason = "evidence doesn't mention a fee"
         elif fee.amount == 0 and re.search(r"\bintro|first year", fee.evidence, re.I):
             reason = "an intro/first-year fee is not the ongoing fee"
-        elif fee.amount == 0 and not re.search(
-            r"\bno annual fee|\$0\b|annual fee:?\s*(?:none|\$0)", fee.evidence, re.I
-        ):
+        elif fee.amount == 0 and not NO_ANNUAL_FEE.search(fee.evidence):
             reason = "evidence doesn't say there is no annual fee"
         elif fee.amount > 0 and not number_in(fee.amount, fee.evidence):
             reason = f"evidence doesn't state ${fee.amount:g}"
@@ -406,6 +416,29 @@ def _normalize_menus(menus: list[EarnRow]) -> list[EarnRow]:
     ]
 
 
+def uncovered_earn(previous: list[EarnRow], covered: set[Category]) -> list[EarnRow]:
+    """Previous rows a new extraction doesn't speak to: fixed rows in categories it
+    doesn't cover, and whole choice menus none of whose options it covers."""
+    fixed = [row for row in previous if not row.choice_group and row.category not in covered]
+    menu_rows = [row for row in previous if row.choice_group]
+    if not menu_rows:
+        return fixed
+    frame = pd.DataFrame(
+        {
+            "group": [row.choice_group for row in menu_rows],
+            "covered": [row.category in covered for row in menu_rows],
+        }
+    )
+    touched = frame.groupby("group")["covered"].any()
+    untouched = set(touched[~touched].index)
+    # Renamed so a kept menu can't merge with a new menu that has the same label.
+    return fixed + [
+        row.model_copy(update={"choice_group": f"file:{row.choice_group}"})
+        for row in menu_rows
+        if row.choice_group in untouched
+    ]
+
+
 def merge_with_previous(
     terms: CardTerms,
     evidence: dict[str, str],
@@ -416,6 +449,8 @@ def merge_with_previous(
     result: ValidationResult,
     previous: CardTerms,
 ) -> CardTerms:
+    """Validated values win; everything else keeps its previous value (fields that
+    failed validation and fields this extraction didn't mention alike)."""
     for name in ("annual_fee", "foreign_tx_fee", "point_currency"):
         if name not in result.accepted_fields and getattr(previous, name) is not None:
             setattr(terms, name, getattr(previous, name))
@@ -424,24 +459,22 @@ def merge_with_previous(
     terms.evidence = evidence
 
     if valid_earn:
-        covered = {row.category for row in valid_earn}
-        kept = [
-            row
-            for row in previous.earn or []
-            if row.category in failed_categories and row.category not in covered
+        kept = uncovered_earn(previous.earn or [], {row.category for row in valid_earn})
+        result.kept_from_file += [
+            f"earn.{row.category.value}" for row in kept if row.category not in failed_categories
         ]
         terms.earn = valid_earn + kept
     else:
         terms.earn = previous.earn
 
-    if "benefits" in result.accepted_fields:
+    if valid_benefits:
         covered_kinds = {row.kind for row in valid_benefits}
-        kept_benefits = [
-            row
-            for row in previous.benefits or []
-            if row.kind in failed_kinds and row.kind not in covered_kinds
+        kept_benefits = [row for row in previous.benefits or [] if row.kind not in covered_kinds]
+        result.kept_from_file += [
+            f"benefit.{row.kind.value}" for row in kept_benefits if row.kind not in failed_kinds
         ]
         terms.benefits = valid_benefits + kept_benefits
     else:
         terms.benefits = previous.benefits
+    result.kept_from_file = sorted(set(result.kept_from_file))
     return terms
