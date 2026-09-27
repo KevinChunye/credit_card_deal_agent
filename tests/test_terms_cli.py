@@ -263,6 +263,7 @@ def test_bootstrap_writes_a_field_by_field_comparison(config, offline, monkeypat
         ),
     )
     out = config["tmp"] / "BOOTSTRAP_DIFF.md"
+    record = config["tmp"] / "bootstrap-report.json"
     bootstrap = load_bootstrap()
     code = bootstrap.main(
         [
@@ -272,9 +273,14 @@ def test_bootstrap_writes_a_field_by_field_comparison(config, offline, monkeypat
             str(config["details"]),
             "--sources",
             str(config["sources"]),
+            "--report-json",
+            str(record),
         ]
     )
     assert code == 0
+    validated = {o["card_id"]: o["validated"] for o in json.loads(record.read_text())["outcomes"]}
+    assert validated["amex-gold"]["annual_fee"] == 325
+    assert validated["wells-fargo-bilt"] is None  # rejected
     text = out.read_text()
     assert "| card | field | hand value | extracted | evidence |" in text
     assert "| American Express Gold Card | annual_fee | $250 | $325 | “Annual Fee: $325.” |" in text

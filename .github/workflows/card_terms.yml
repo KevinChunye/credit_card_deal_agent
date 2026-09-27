@@ -269,9 +269,12 @@ jobs:
           CARDS: ${{ inputs.cards }}
         run: |
           python scripts/bootstrap_extract.py --out BOOTSTRAP_DIFF.md \
-            ${CARDS:+--cards "$CARDS"} --summary-md "$GITHUB_STEP_SUMMARY"
+            ${CARDS:+--cards "$CARDS"} --summary-md "$GITHUB_STEP_SUMMARY" \
+            --report-json bootstrap-report.json
       - uses: actions/upload-artifact@v4
         if: always() && hashFiles('BOOTSTRAP_DIFF.md') != ''
         with:
           name: bootstrap-diff
-          path: BOOTSTRAP_DIFF.md
+          path: |
+            BOOTSTRAP_DIFF.md
+            bootstrap-report.json

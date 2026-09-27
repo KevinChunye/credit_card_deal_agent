@@ -14,6 +14,7 @@ The report is uploaded as the `bootstrap-diff` artifact.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -33,6 +34,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, default=ROOT / "docs" / "BOOTSTRAP_DIFF.md")
     parser.add_argument("--cards", help="comma-separated card ids (default: all tracked)")
     parser.add_argument("--summary-md", type=Path, help="append the run summary here")
+    parser.add_argument("--report-json", type=Path, help="also write the full run record here")
     parser.add_argument("--details", type=Path, default=DETAILS_PATH, help=argparse.SUPPRESS)
     parser.add_argument("--sources", type=Path, default=SOURCES_PATH, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
@@ -50,6 +52,8 @@ def main(argv: list[str] | None = None) -> int:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(render.bootstrap_markdown(report, load_details(args.details)))
     print(f"wrote {args.out}", file=sys.stderr)
+    if args.report_json:
+        args.report_json.write_text(json.dumps(render.report_json(report), indent=1))
     write_summary(
         render.job_summary(report)
         + f"\nFull comparison: `{args.out.name}` (artifact `bootstrap-diff`).\n",

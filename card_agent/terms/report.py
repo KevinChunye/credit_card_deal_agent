@@ -555,6 +555,11 @@ def report_json(report: RunReport) -> dict[str, Any]:
                 "sha256": o.sha256,
                 "usage": o.usage.__dict__,
                 "extraction": o.extraction.model_dump(mode="json") if o.extraction else None,
+                "validated": (
+                    o.validation.validated.model_dump(mode="json")
+                    if o.validation and o.validation.validated
+                    else None
+                ),
                 "rejected": o.validation.rejected if o.validation else None,
                 "issues": [i.as_dict() for i in o.validation.issues] if o.validation else [],
                 "kept_from_file": o.validation.kept_from_file if o.validation else [],
