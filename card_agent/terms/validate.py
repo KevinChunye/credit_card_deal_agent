@@ -13,9 +13,10 @@ A value is kept only if:
 - it is within bounds (multiplier 0.5-15, annual fee 0-1000, credits 0-2000/yr);
 - its category is one of the existing spend categories.
 Benefit amounts are only ever lowered: a coverage limit ("reimbursed up to $800"
-if a phone is stolen) or a per-use credit ("every time you book") keeps no
-dollar value, and a time-limited perk ("when activated by December 31") counts
-once rather than every year.
+if a phone is stolen), a per-use credit ("every time you book") or the cap on a
+percentage rebate ("10% back ... up to $250") keeps no dollar value, and a
+time-limited perk ("when activated by December 31") counts once rather than
+every year.
 The whole extraction is rejected if the card named on the page isn't the target
 card (multi-card pages such as Amex promos or Bilt's lineup).
 
@@ -167,6 +168,8 @@ COVERAGE = re.compile(
     r"\b(?:protection|insurance|insured|coverage|covered|stolen|damaged|theft|warranty)\b", re.I
 )
 CREDIT_WORD = re.compile(r"\bcredits?\b", re.I)
+# "10% back ... up to $250": the amount caps a percentage rebate; it isn't a credit.
+REBATE = re.compile(r"\b\d+(?:\.\d+)?% (?:back|cash back|off|discount|savings)\b", re.I)
 PER_USE = re.compile(
     r"\b(?:every|each) time\b|\bper (?:booking|stay|reservation|purchase|trip|visit)\b", re.I
 )
@@ -421,6 +424,11 @@ def _adjust_benefit(row: BenefitOut, result: ValidationResult) -> BenefitOut:
         return row.model_copy(update={"amount_stated": None})
     if PER_USE.search(wording):
         result.skipped.append(f"{field}: ${row.amount_stated:g} is per use; no yearly $ value")
+        return row.model_copy(update={"amount_stated": None})
+    if REBATE.search(wording):
+        result.skipped.append(
+            f"{field}: ${row.amount_stated:g} caps a percentage rebate; no $ value"
+        )
         return row.model_copy(update={"amount_stated": None})
     if TIME_LIMITED.search(wording) and row.cadence != Cadence.one_time:
         result.skipped.append(f"{field}: time-limited, so ${row.amount_stated:g} counts once")

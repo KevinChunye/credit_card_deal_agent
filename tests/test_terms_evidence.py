@@ -373,13 +373,19 @@ def test_benefit_amounts_are_only_ever_lowered():
                     "monthly",
                     "get $10 in Uber Cash each month for U.S. Uber Eats orders",
                 ),
+                benefit(
+                    "other",
+                    250,
+                    "annual",
+                    "get 10% back on qualifying concessions purchases up to $250 per calendar year.",
+                ),
             ),
         ),
         AMEX_GOLD,
     )
     amounts = {row.kind.value: row.amount for row in gold.terms.benefits}
-    # Per use, so no yearly value; a real monthly credit is unchanged.
-    assert amounts == {"hotel_credit": None, "rideshare_credit": 120}
+    # Per use, or the cap on a 10% rebate: no yearly value. A real monthly credit stays.
+    assert amounts == {"hotel_credit": None, "rideshare_credit": 120, "other": None}
 
 
 # ---------------------------------------------------------------------------
