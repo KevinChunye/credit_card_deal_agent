@@ -689,3 +689,16 @@ def test_a_minimum_purchase_is_not_a_spending_threshold():
     quote = "Get $100 off a single hotel stay of $500 or more when you spend $500 through cititravel.com"
     result = check_text(quote, benefits=(benefit("hotel_credit", 100, "annual", quote),))
     assert [row.amount for row in result.terms.benefits] == [100]
+
+
+def test_a_spending_threshold_in_the_benefit_name_also_removes_the_dollar_value():
+    # Sapphire Reserve: the quote omits the $75,000 threshold the page states elsewhere.
+    quote = (
+        "statement credits automatically applied to your account for purchases at The Shops "
+        "at Chase, up to a maximum accumulation of $250"
+    )
+    row = benefit("other", 250, "annual", quote) | {
+        "name": "The Shops at Chase credit after $75,000 spend"
+    }
+    result = check_text(quote, benefits=(row,))
+    assert [row.amount for row in result.terms.benefits] == [None]

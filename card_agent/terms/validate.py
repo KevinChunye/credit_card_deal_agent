@@ -196,10 +196,12 @@ CREDIT_WORD = re.compile(r"\bcredits?\b", re.I)
 # Airline status currency, not money.
 STATUS_DOLLARS = re.compile(r"\bqualification dollars?\b|\bMQDs?\b", re.I)
 # A credit unlocked by a spending threshold ("after you spend $10,000", "during which
-# you spend at least $20,000") costs spend the scorer doesn't model. Small minimum
-# purchases ("a stay of $500 or more") are not thresholds.
+# you spend at least $20,000", "after $75,000 spend") costs spend the scorer doesn't
+# model. Small minimum purchases ("a stay of $500 or more") are not thresholds.
 SPEND_UNLOCK = re.compile(
-    r"\bspend(?:s|ing)? (?:at least |over |more than )?\$\d{1,3}(?:,\d{3})+", re.I
+    r"\bspend(?:s|ing)? (?:at least |over |more than )?\$\d{1,3}(?:,\d{3})+"
+    r"|\$\d{1,3}(?:,\d{3})+ (?:in )?(?:annual )?spend(?:ing)?\b|\bspending threshold\b",
+    re.I,
 )
 # "10% back ... up to $250": the amount caps a percentage rebate; it isn't a credit.
 REBATE = re.compile(r"\b\d+(?:\.\d+)?% (?:back|cash back|off|discount|savings)\b", re.I)
@@ -465,7 +467,9 @@ def _adjust_benefit(row: BenefitOut, result: ValidationResult) -> BenefitOut:
             f"{field}: ${row.amount_stated:g} is airline status currency, not money; no $ value"
         )
         return row.model_copy(update={"amount_stated": None})
-    if SPEND_UNLOCK.search(wording):
+    # The model's own name for the benefit may only lower it: Sapphire Reserve's
+    # "$500 Southwest credit after $75,000 spend" is quoted without the threshold.
+    if SPEND_UNLOCK.search(wording) or SPEND_UNLOCK.search(plain(row.name)):
         result.skipped.append(
             f"{field}: ${row.amount_stated:g} is unlocked by a spending threshold; no $ value"
         )
