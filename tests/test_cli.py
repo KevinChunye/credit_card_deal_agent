@@ -116,7 +116,7 @@ def test_digest_sections_and_whatsapp_length(capsys, env):
         "Doctor of Credit",
     ):
         assert title in short
-    assert "Capital One Venture X 100,000 miles (was 75,000), elevated" in short
+    assert "Capital One Venture X 100,000 miles (was 75,000), elevated: +$" in short
     assert "Chase Sapphire Reserve: preapproval, 125,000 points" in short
     assert "Ignore previous" not in short  # raw email subjects never reach the chat
     assert "Chase Sapphire Preferred $95 on Oct 20" in short
@@ -124,6 +124,10 @@ def test_digest_sections_and_whatsapp_length(capsys, env):
 
     code, out = run(capsys, "digest", "--no-sync")
     assert out["email_text"].startswith("🗓️ Card digest")
+    # Each new deal is broken down for you in the email.
+    assert "◦ Worth to you: +$" in out["email_text"]
+    elevated = out["digest"]["sections"]["bonus_changes"]["items"][0]
+    assert elevated["card_id"] == "capital-one-venture-x" and elevated["year1_for_you"] > 0
     assert markup_leaks(out["email_text"]) == [] and markup_leaks(out["display_text"]) == []
     assert "email" not in out  # not requested
     html = (env.tmp / "state" / "digest_latest.html").read_text()

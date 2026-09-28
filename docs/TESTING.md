@@ -1,6 +1,6 @@
 # Testing checklist
 
-Everything offline is covered by `pytest` (about 250 tests). The boxes below are the
+Everything offline is covered by `pytest` (about 290 tests). The boxes below are the
 parts that need your accounts, in the order to verify them. Each item lists what
 "working" looks like.
 
@@ -22,6 +22,13 @@ parts that need your accounts, in the order to verify them. Each item lists what
       onboard JSON out; downloads retry, switch endpoints and fall back to the saved copy;
       typos are read on reads and questioned on writes; every command's text passes the
       markup lint.
+- [ ] State integrity (`tests/test_state_robustness.py`): a one-field wallet update keeps
+      the other dates; a bad `onboard` value saves nothing; NaN, Infinity, unknown keys
+      and negative numbers are refused; two updates at once don't overwrite each other;
+      offer dates compare as times across time zones (and old databases are migrated);
+      a damaged card-data cache asks for a refresh; a torn trace line or a locked or
+      broken database still answers in JSON; a relative `CARD_AGENT_DB` stays out of the
+      repo.
 - [ ] Baseline vs improved: `python scripts/eval_agent.py --snapshot <latest.json>` (needs
       the git history for the baseline) → the tables in `docs/EVALUATION.md`.
 

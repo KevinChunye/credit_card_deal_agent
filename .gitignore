@@ -12,12 +12,21 @@ venv/
 .env.*
 !.env.example
 
-# Private state: the SQLite DB and any local snapshot cache.
+# Private state: the SQLite DB and any local snapshot cache, wherever
+# CARD_AGENT_DB points (the files that live next to it, too).
 *.sqlite3
 *.sqlite
 *.db
+*.db-journal
+*.db-wal
+*.db-shm
 state.db
 .credit_card_deal_agent/
+trace.jsonl
+last_response.json
+digest_latest.html
+**/cache/latest.json
+**/cache/changes.json
 
 # Collector output when run locally (the real snapshots live on the `data` branch).
 /data/

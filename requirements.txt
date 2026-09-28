@@ -1,6 +1,8 @@
-httpx>=0.27
-pydantic>=2.5
-pandas>=2.1
-feedparser>=6.0
-pyyaml>=6.0
-agentmail>=2.0
+# Capped at the next major version so a fresh install (maritime_setup.sh) can't
+# pull a breaking release; raise the caps deliberately, with the tests.
+httpx>=0.27,<1
+pydantic>=2.5,<3
+pandas>=2.1,<4
+feedparser>=6.0,<7
+pyyaml>=6.0,<7
+agentmail>=2.0,<3

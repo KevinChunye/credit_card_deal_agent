@@ -14,6 +14,7 @@ KEEP_LINES records once it passes MAX_BYTES.
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -72,13 +73,26 @@ def record(
     path = trace_path(state_dir)
     try:
         state_dir.mkdir(parents=True, exist_ok=True)
+        line = json.dumps(entry, ensure_ascii=False, default=str) + "\n"
+        if _ends_mid_line(path):  # a torn last line (crash mid-write): don't glue onto it
+            line = "\n" + line
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
+            handle.write(line)
         if path.stat().st_size > MAX_BYTES:
-            lines = path.read_text(encoding="utf-8").splitlines()[-KEEP_LINES:]
-            path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    except OSError:
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()[-KEEP_LINES:]
+            rotated = path.with_name(path.name + ".rotate")
+            rotated.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            os.replace(rotated, path)
+    except Exception:  # tracing must never break the command it records
         pass
+
+
+def _ends_mid_line(path: Path) -> bool:
+    if not path.exists() or path.stat().st_size == 0:
+        return False
+    with path.open("rb") as handle:
+        handle.seek(-1, os.SEEK_END)
+        return handle.read(1) != b"\n"
 
 
 def without_data(step: dict) -> dict:
@@ -91,7 +105,7 @@ def read(state_dir: Path, last: int = 5, skip_commands: tuple[str, ...] = ("trac
     if not path.exists():
         return []
     records = []
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
         try:
             entry = json.loads(line)
         except json.JSONDecodeError:
