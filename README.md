@@ -252,6 +252,12 @@ openclaw cron add \
 openclaw cron list
 ```
 
+Want new deals sooner? Schedule it weekly instead, shortly after the Monday collector run
+(13:17 UTC): `--cron "30 14 * * 1" --tz "UTC"`. Each email breaks down every new or
+elevated bonus for you: what it's worth on top of your cards, whether the minimum spend
+fits your usual spending, and the math. A rerun with unchanged content in the same month
+isn't sent twice.
+
 Fallback any time: message the agent **"send my card digest"**.
 
 ### (g) Test script: messages to send the agent

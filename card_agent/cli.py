@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
+import sqlite3
 import sys
 import time
 from datetime import UTC, date, datetime, timedelta
@@ -167,6 +169,20 @@ def _date(value: str | None) -> date | None:
     return date.fromisoformat(value) if value else None
 
 
+def positive_int(text: str) -> int:
+    value = int(text)
+    if value < 1:
+        raise argparse.ArgumentTypeError("must be 1 or more")
+    return value
+
+
+def fee_limit(text: str) -> float:
+    value = float(text)
+    if not math.isfinite(value) or value < 0:
+        raise argparse.ArgumentTypeError("must be a dollar amount of 0 or more")
+    return value
+
+
 def _staleness(settings: Settings, now: datetime) -> list[str]:
     try:
         age = snapshot_age_days(load_snapshot(settings), now)
@@ -312,10 +328,10 @@ def cmd_wallet(args, settings: Settings, store: Store, now: datetime) -> dict[st
         else None,
         closed_on=_date(args.closed),
     )
-    store.upsert_wallet_card(card)
+    saved = store.upsert_wallet_card(card)
     return {
         "display_text": f"✅ Saved {name} in your wallet.",
-        "card": card.model_dump(mode="json"),
+        "card": saved.model_dump(mode="json"),
     }
 
 
@@ -717,15 +733,15 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("advise", help="pick one card for you, checked by the Verifier")
     p.add_argument("--mode", choices=["travel", "cash_back", "business"])
     p.add_argument("--kind", choices=["personal", "business", "all"])
-    p.add_argument("--max-af", type=float, help="max annual fee (default: your profile)")
+    p.add_argument("--max-af", type=fee_limit, help="max annual fee (default: your profile)")
     p.add_argument("--no-sync", action="store_true", help="don't refresh stale card data")
     p.set_defaults(handler=cmd_advise)
 
     p = sub.add_parser("rank", help="rank cards by marginal value to you")
     p.add_argument("--mode", choices=["travel", "cash_back", "business"])
     p.add_argument("--kind", choices=["personal", "business", "all"])
-    p.add_argument("--max-af", type=float, help="max annual fee (default: your profile)")
-    p.add_argument("--top", type=int, default=5)
+    p.add_argument("--max-af", type=fee_limit, help="max annual fee (default: your profile)")
+    p.add_argument("--top", type=positive_int, default=5)
     p.add_argument("--include-ineligible", action="store_true")
     p.add_argument("--include-hidden", action="store_true", help="show cards you hid too")
     p.add_argument("--json", action="store_true", help="include each card's itemized breakdown")
@@ -733,7 +749,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("verify", help="the Verifier's checks on one card")
     p.add_argument("card", nargs="+")
-    p.add_argument("--max-af", type=float, help="fee limit to check against (default: profile)")
+    p.add_argument("--max-af", type=fee_limit, help="fee limit to check against (default: profile)")
     p.set_defaults(handler=cmd_verify)
 
     p = sub.add_parser("compare", help="compare two cards side by side")
@@ -772,7 +788,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(handler=cmd_memory)
 
     p = sub.add_parser("trace", help="the agent's recent steps, including advise's loop")
-    p.add_argument("--last", type=int, default=3, help="how many requests to show")
+    p.add_argument("--last", type=positive_int, default=3, help="how many requests to show")
     p.set_defaults(handler=cmd_trace)
 
     p = sub.add_parser("digest", help="build the monthly digest")
@@ -811,8 +827,14 @@ def error_payload(command: str | None, exc: Exception) -> dict[str, Any]:
     elif isinstance(exc, FetchFailed | httpx.HTTPError):
         message = f"⚠️ I couldn't reach the card data server ({type(exc).__name__}). Try again soon."
         next_step = ask("network")
-    else:
+    elif isinstance(exc, sqlite3.OperationalError) and "locked" in str(exc):
+        message = "⏳ Your saved data is busy (another task is saving). Try again in a minute."
+        next_step = stop()
+    elif isinstance(exc, ValueError | OSError | CommandError | inbox.InboxNotConfigured):
         message, next_step = str(exc), stop()
+    else:
+        message = f"⚠️ That didn't work ({type(exc).__name__}: {exc})."
+        next_step = stop()
     return {
         "ok": False,
         "command": command,
@@ -837,10 +859,17 @@ def main(argv: list[str] | None = None, now: datetime | None = None) -> int:
         return 2
     try:
         store = Store(settings.db_path)
-    except Exception as exc:  # e.g. unwritable CARD_AGENT_DB
-        emit(
-            {"ok": False, "command": args.command, "error": f"Can't open state DB: {exc}"}, settings
-        )
+    except Exception as exc:  # e.g. unwritable CARD_AGENT_DB, or not a database
+        message = f"⚠️ I can't open your saved data ({settings.db_path}): {exc}"
+        payload = {
+            "ok": False,
+            "command": args.command,
+            "error": message,
+            "display_text": message,
+            "next": stop(),
+        }
+        emit(payload, settings)
+        trace.record(settings.state_dir, now, argv, payload, (time.perf_counter() - started) * 1000)
         return 1
     try:
         payload = args.handler(args, settings, store, now)
@@ -858,6 +887,9 @@ def main(argv: list[str] | None = None, now: datetime | None = None) -> int:
         OSError,
         httpx.HTTPError,
     ) as exc:
+        payload = error_payload(args.command, exc)
+        code = 1
+    except Exception as exc:  # never a bare traceback: the agent needs JSON to act on
         payload = error_payload(args.command, exc)
         code = 1
     finally:

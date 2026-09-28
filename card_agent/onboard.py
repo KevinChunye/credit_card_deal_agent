@@ -3,12 +3,13 @@ JSON patch (what the agent uses after asking you in chat), or interactively."""
 
 from __future__ import annotations
 
+import math
 from datetime import date
 from typing import Any
 
 from card_agent.guardrails import reject_card_numbers
 from card_agent.matching import CardMatcher
-from card_agent.models import BenefitKind, Category, UserProfile, WalletCard
+from card_agent.models import BenefitKind, Category, GoalWeights, UserProfile, WalletCard
 from card_agent.store import Store
 
 
@@ -27,51 +28,117 @@ def resolve_card_id(query: str, matcher: CardMatcher | None) -> str:
     )
 
 
+def _section(patch: dict[str, Any], name: str) -> dict[str, Any]:
+    value = patch.get(name) or {}
+    if not isinstance(value, dict):
+        raise ValueError(f"{name} must be an object of name: value pairs.")
+    return value
+
+
+def _number(key: str, value: Any, label: str) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"{key!r}: {value!r} isn't a number ({label}).") from None
+    if not math.isfinite(number):
+        raise ValueError(f"{key!r}: {value!r} isn't a usable number ({label}).")
+    return number
+
+
+def _categories(values: dict[str, Any], enum, label: str) -> dict:
+    parsed = {}
+    for key, value in values.items():
+        try:
+            member = enum(key)
+        except ValueError:
+            options = ", ".join(member.value for member in enum)
+            raise ValueError(f"{key!r} isn't a valid {label}. Use: {options}.") from None
+        parsed[member] = _number(key, value, label)
+    return parsed
+
+
+def _known_keys(given: dict[str, Any], model, what: str) -> None:
+    unknown = sorted(set(given) - set(model.model_fields))
+    if unknown:
+        valid = ", ".join(model.model_fields)
+        raise ValueError(f"Unknown {what} field(s): {', '.join(unknown)}. Valid: {valid}.")
+
+
 def apply_patch(store: Store, patch: dict[str, Any], matcher: CardMatcher | None) -> dict[str, Any]:
-    """Merge a partial setup into the store. Returns what changed."""
+    """Merge a partial setup into the store. Returns what changed.
+
+    Everything is validated before anything is written, and the read, checks
+    and writes happen under one write lock: a bad value anywhere saves
+    nothing, and two updates at once can't overwrite each other.
+    """
+    if not isinstance(patch, dict):
+        raise ValueError('The setup must be a JSON object, like {"monthly_spend": {...}}.')
     reject_card_numbers(str(patch))
     unknown = set(patch) - {"profile", "monthly_spend", "valuations", "haircuts", "wallet"}
     if unknown:
         raise ValueError(f"Unknown section(s): {', '.join(sorted(unknown))}")
+    entries = patch.get("wallet") or []
+    if not isinstance(entries, list) or not all(isinstance(e, dict) for e in entries):
+        raise ValueError('wallet must be a list of cards, like [{"card_id": "amex gold"}].')
+
     changed: dict[str, Any] = {}
-    if "profile" in patch:
-        current = store.get_profile().model_dump()
-        updates = dict(patch["profile"] or {})
-        if "goal_weights" in updates:
-            updates["goal_weights"] = {**current["goal_weights"], **updates["goal_weights"]}
-        profile = UserProfile.model_validate({**current, **updates})
-        store.save_profile(profile)
-        changed["profile"] = sorted(updates)
-    elif not store.has_profile():
-        store.save_profile(UserProfile())
-    if "monthly_spend" in patch:
-        spend = {Category(k): float(v) for k, v in (patch["monthly_spend"] or {}).items()}
-        store.set_spend(spend)
-        changed["monthly_spend"] = sorted(c.value for c in spend)
-    if "valuations" in patch:
-        valuations = {k: float(v) for k, v in (patch["valuations"] or {}).items()}
+    with store.transaction(immediate=True):
+        # 1. Validate everything.
+        profile = updates = None
+        if "profile" in patch:
+            updates = _section(patch, "profile")
+            _known_keys(updates, UserProfile, "profile")
+            current = store.get_profile().model_dump()
+            if "goal_weights" in updates:
+                weights = updates["goal_weights"]
+                if not isinstance(weights, dict):
+                    raise ValueError('goal_weights must be an object, like {"travel": 0.6}.')
+                _known_keys(weights, GoalWeights, "goal_weights")
+                updates = {**updates, "goal_weights": {**current["goal_weights"], **weights}}
+            profile = UserProfile.model_validate({**current, **updates})
+        spend = _categories(_section(patch, "monthly_spend"), Category, "spend category")
+        if any(v < 0 for v in spend.values()):
+            raise ValueError("Monthly spend can't be negative.")
+        valuations = {
+            k: _number(k, v, "cents per point") for k, v in _section(patch, "valuations").items()
+        }
         if any(v <= 0 for v in valuations.values()):
             raise ValueError("Valuations must be positive cents per point.")
-        store.set_valuations(valuations)
-        changed["valuations"] = sorted(valuations)
-    if "haircuts" in patch:
-        haircuts = {BenefitKind(k): float(v) for k, v in (patch["haircuts"] or {}).items()}
+        haircuts = _categories(_section(patch, "haircuts"), BenefitKind, "benefit kind")
         if any(not 0 <= v <= 1 for v in haircuts.values()):
             raise ValueError("Haircuts are the share of a benefit you use: 0.0 to 1.0.")
-        store.set_haircuts(haircuts)
-        changed["haircuts"] = sorted(k.value for k in haircuts)
-    if "wallet" in patch:
-        added = []
-        for entry in patch["wallet"] or []:
+        wallet = []
+        for entry in entries:
             entry = dict(entry)
+            _known_keys(entry, WalletCard, "wallet")
+            if not entry.get("card_id"):
+                raise ValueError("Each wallet entry needs a card_id (the card's name works too).")
             entry["card_id"] = resolve_card_id(str(entry["card_id"]), matcher)
             if entry.get("product_changed_from"):
                 entry["product_changed_from"] = resolve_card_id(
                     str(entry["product_changed_from"]), matcher
                 )
-            store.upsert_wallet_card(WalletCard.model_validate(entry))
-            added.append(entry["card_id"])
-        changed["wallet"] = added
+            wallet.append(WalletCard.model_validate(entry))
+
+        # 2. Write it all (or, on any error, nothing).
+        if profile is not None:
+            store.save_profile(profile)
+            changed["profile"] = sorted(updates)
+        elif not store.has_profile():
+            store.save_profile(UserProfile())
+        if "monthly_spend" in patch:
+            store.set_spend(spend)
+            changed["monthly_spend"] = sorted(c.value for c in spend)
+        if "valuations" in patch:
+            store.set_valuations(valuations)
+            changed["valuations"] = sorted(valuations)
+        if "haircuts" in patch:
+            store.set_haircuts(haircuts)
+            changed["haircuts"] = sorted(k.value for k in haircuts)
+        if "wallet" in patch:
+            for card in wallet:
+                store.upsert_wallet_card(card)
+            changed["wallet"] = [card.card_id for card in wallet]
     return changed
 
 

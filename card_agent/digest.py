@@ -174,7 +174,7 @@ def bonus_changes(ctx: ScoringContext, changes: ChangeSet | None, limit: int = 5
         {**c, "change": "new card", "amount": None, "was": None, "bonus_unit": None}
         for c in changes.new_cards
     ]
-    for change in rows[: limit * 2]:
+    for change in rows:
         card_id = change["card_id"]
         if (
             card_id in held
@@ -196,7 +196,29 @@ def bonus_changes(ctx: ScoringContext, changes: ChangeSet | None, limit: int = 5
         was = f" (was {change['was']:,.0f})" if change["was"] else ""
         text = f"{card.display_name}{amount}{was}, {change['change']}"
         tag = "" if status == "eligible" else f" [{status}]"
-        section.items.append(Item(text + tag, text + tag, {**change, "eligibility": status}))
+        # What the deal is worth to you, given your wallet and spending.
+        ev = evaluate(card_id, ctx)
+        worth = f": {money(ev.marginal_ev_year1, True)} yr 1 for you"
+        details = [
+            f"Worth to you: {money(ev.marginal_ev_year1, True)} in year 1, then "
+            f"{money(ev.marginal_ev_steady, True)}/yr (on top of your cards; annual fee "
+            f"{money(ev.annual_fee)})"
+        ]
+        if ev.offer_summary:
+            details.append(f"Offer: {ev.offer_summary}")
+        if ev.hits_min_spend is False:
+            details.append("Minimum spend is above your usual spending: don't chase it.")
+        details += [
+            f"{line.label}: {money(line.amount, True)}"
+            + (f" ({line.detail})" if line.detail else "")
+            for line in ev.marginal_breakdown
+            if line.amount
+        ]
+        warning = terms_warning(card, ctx.today)
+        if warning:
+            details.append(f"{MARKER} {warning}")
+        data = {**change, "eligibility": status, "year1_for_you": round(ev.marginal_ev_year1, 2)}
+        section.items.append(Item(text + worth + tag, text + worth + tag, data, details=details))
         if len(section.items) >= limit:
             break
     if changes.is_empty:

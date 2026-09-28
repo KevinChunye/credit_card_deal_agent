@@ -14,6 +14,7 @@ the caller can say so and the trace can show it.
 from __future__ import annotations
 
 import os
+import tempfile
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -120,9 +121,18 @@ def fetch_file(
 
 
 def _write_atomic(path: Path, data: bytes) -> None:
-    tmp = path.with_name(path.name + ".tmp")
-    tmp.write_bytes(data)
-    os.replace(tmp, path)
+    """Write to a private temp file, flush it to disk, then swap it in: readers
+    see the old file or the new one, never half of one, even with two writers."""
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
 
 
 def sync(
@@ -178,7 +188,12 @@ def load_snapshot(settings: Settings) -> Snapshot:
         raise SnapshotMissing(
             "I haven't downloaded any card data yet; it needs a refresh (sync) first."
         )
-    return Snapshot.model_validate_json(path.read_text())
+    try:
+        return Snapshot.model_validate_json(path.read_bytes())
+    except ValueError as exc:  # truncated or corrupted file
+        raise SnapshotMissing(
+            "Your saved card data is damaged; it needs a fresh download."
+        ) from exc
 
 
 def load_changes(settings: Settings) -> ChangeSet | None:

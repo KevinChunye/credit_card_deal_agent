@@ -74,4 +74,13 @@ jobs:
             exit 0
           fi
           git commit -q -m "data: snapshot $(date -u +%F)"
-          git push origin HEAD:data
+          # The card-terms workflow also pushes to this branch (different files);
+          # if it pushed first, rebase onto it and retry instead of losing the week.
+          for attempt in 1 2 3; do
+            if git push -q origin HEAD:data; then
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt); rebasing on origin/data."
+            git pull -q --rebase origin data
+          done
+          exit 1

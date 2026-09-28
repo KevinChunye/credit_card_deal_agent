@@ -14,7 +14,7 @@ from datetime import date, datetime
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class Category(StrEnum):
@@ -263,6 +263,8 @@ CreditBand = Literal["building", "fair", "good", "very_good", "excellent"]
 
 
 class GoalWeights(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
     travel: float = Field(0.3, ge=0)
     cash_back: float = Field(0.2, ge=0)
     business: float = Field(0.0, ge=0)
@@ -278,14 +280,16 @@ class GoalWeights(BaseModel):
 
 
 class UserProfile(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
     goal_weights: GoalWeights = Field(default_factory=GoalWeights)
-    max_annual_fee: float = 700.0
-    max_new_cards_per_year: int = 4
+    max_annual_fee: float = Field(700.0, ge=0)
+    max_new_cards_per_year: int = Field(4, ge=0)
     home_airport: str | None = None
     preferred_airlines: list[str] = Field(default_factory=list)
     preferred_hotels: list[str] = Field(default_factory=list)
     elite_statuses: list[str] = Field(default_factory=list)
-    trips_per_year: int = 2
+    trips_per_year: int = Field(2, ge=0)
     has_business: bool = False
     notify_channels: list[Literal["email", "whatsapp"]] = Field(
         default_factory=lambda: ["email", "whatsapp"]

@@ -4,6 +4,12 @@
 # runs the command, and falls back to the persisted last_response.json for
 # exec environments that swallow a child's stdout.
 ROOT="${CARD_AGENT_HOME:-$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)}"
+# A relative CARD_AGENT_DB means "relative to where I ran this", not to the repo
+# (private state must never land inside the checkout).
+case "${CARD_AGENT_DB:-}" in
+    "" | /* | "~"*) ;;
+    *) CARD_AGENT_DB="$(pwd)/$CARD_AGENT_DB"; export CARD_AGENT_DB ;;
+esac
 cd "$ROOT" || { echo "{\"ok\": false, \"error\": \"repo not found at $ROOT\"}"; exit 1; }
 
 # A human at a terminal (e.g. interactive `onboard`): run directly.

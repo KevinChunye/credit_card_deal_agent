@@ -124,6 +124,11 @@ person ──> chat model (SKILL.md: goal → decide → act → observe → eva
   wallet dates) and nothing else; returns pass/warn/fail with evidence per check.
 - **Memory**: SQLite tables `hidden` (cards and issuers to skip, with reason) and
   `recommendation` (past picks) join the profile, spend, wallet and inbox tables.
+  Integrity: `onboard` validates everything, then writes under one write lock
+  (`BEGIN IMMEDIATE`), so a bad value saves nothing and concurrent updates don't
+  overwrite each other; a wallet update changes only the dates given; timestamps are
+  stored in UTC (`PRAGMA user_version` migrations fix older rows); writers wait up to
+  30 s for a lock; any unexpected error still comes back as JSON with `next`.
 - **Recovery**: `snapshot.refresh` retries transient errors, switches between
   raw.githubusercontent.com and the contents API, validates before an atomic cache write,
   and falls back to the saved copy; `matching.suggest` handles typos.
