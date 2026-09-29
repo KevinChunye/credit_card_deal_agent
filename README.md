@@ -318,3 +318,23 @@ card-terms smoke test runs on PRs that touch the pipeline. Tests never assert th
 merged terms PR can't break them.
 Tests are offline: HTTP goes through `httpx.MockTransport`, AgentMail through a fake
 client, and fixtures live in `tests/fixtures/`.
+
+### Branches
+
+- `main`: the code. Changes arrive only by pull request, with CI green.
+- `data`: written only by the Collector and Card terms workflows (snapshots, change
+  files, page hashes, extracted terms), and the agent downloads its card data from it.
+  Never merge it into `main` and never delete it. GitHub shows it as behind and ahead of
+  `main`; that's expected, because it holds data, not code.
+- `card-terms/auto`: the branch behind the open `card terms changed: …` PR. The Card
+  terms workflow rebuilds it on top of the current `main` whenever its proposal changes.
+  Merge the PR to accept the proposal; closing it declines it.
+- Anything else (for example `claude/…`) is a short-lived PR branch, deleted once its PR
+  merges.
+
+Suggested repository settings:
+- Settings → General → **Automatically delete head branches**.
+- A ruleset for `main`: require a pull request (0 approvals) and the `test` check, and
+  block force pushes and deletion.
+- A ruleset for `data`: block deletion and force pushes. The workflows' ordinary pushes
+  still work.

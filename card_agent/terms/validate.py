@@ -761,7 +761,9 @@ def uncovered_earn(previous: list[EarnRow], covered: set[Category]) -> list[Earn
 
 def merge_terms(validated: CardTerms, previous: CardTerms) -> tuple[CardTerms, list[str]]:
     """Validated values over previous ones: scalars the extraction lacks, and earn
-    categories or benefit kinds it doesn't cover, keep their previous values.
+    categories or benefit kinds it doesn't cover, keep their previous values. A
+    previous benefit the extraction names or quotes under another kind is covered
+    too; keeping it would count the same credit twice.
     Returns the merged terms and the earn/benefit keys kept from `previous`.
 
     The pipeline stores only `validated` and merges it with the current
@@ -785,7 +787,15 @@ def merge_terms(validated: CardTerms, previous: CardTerms) -> tuple[CardTerms, l
         merged.earn = previous.earn
     if validated.benefits:
         covered = {row.kind for row in validated.benefits}
-        others = [row for row in previous.benefits or [] if row.kind not in covered]
+        named = {match_key(row.name) for row in validated.benefits}
+        quoted = {quote_key(row.evidence) for row in validated.benefits} - {""}
+        others = [
+            row
+            for row in previous.benefits or []
+            if row.kind not in covered
+            and match_key(row.name) not in named
+            and quote_key(row.evidence) not in quoted
+        ]
         kept += [f"benefit.{row.kind.value}" for row in others]
         merged.benefits = validated.benefits + others
     else:

@@ -20,6 +20,7 @@ from card_agent.terms.details import (
 from card_agent.terms.schema import BenefitRow, CardTerms
 from card_agent.terms.sources import load_sources
 from card_agent.terms.state import CardState, PageHashes, StateFiles
+from card_agent.terms.validate import merge_terms
 
 CASH_PLUS = {
     "annual_fee": 0,
@@ -105,6 +106,40 @@ def test_diff_ignores_rewording_and_reports_real_changes():
 def test_missing_fields_are_not_diffed():
     old = terms_from_entry(CASH_PLUS)
     assert diff_terms("us-bank-cash", old, CardTerms()) == []
+
+
+def test_a_benefit_filed_under_a_new_kind_is_not_kept_twice():
+    """The Platinum's Hotel Credit was hotel_credit on file and travel_credit in a
+    new extraction: keeping the file's copy would count $600 twice. The same goes
+    for a renamed credit that quotes the same sentence."""
+    airline = "Each year, you will receive a one-time $50 statement credit."
+    previous = CardTerms(
+        benefits=[
+            BenefitRow(kind=BenefitKind.hotel_credit, name="Hotel Credit", amount=600),
+            BenefitRow(kind=BenefitKind.dining_membership, name="Uber One Credit", amount=120),
+            BenefitRow(kind=BenefitKind.dining_membership, name="Global Dining Access by Resy"),
+            BenefitRow(
+                kind=BenefitKind.airline_fee, name="Airline credit", amount=50, evidence=airline
+            ),
+        ]
+    )
+    validated = CardTerms(
+        benefits=[
+            BenefitRow(kind=BenefitKind.travel_credit, name="Hotel credit", amount=600),
+            BenefitRow(kind=BenefitKind.rideshare_credit, name="Uber One Credit", amount=120),
+            BenefitRow(
+                kind=BenefitKind.other, name="Airline purchase credit", amount=50, evidence=airline
+            ),
+        ]
+    )
+    merged, kept = merge_terms(validated, previous)
+    assert [(row.kind.value, row.name) for row in merged.benefits] == [
+        ("travel_credit", "Hotel credit"),
+        ("rideshare_credit", "Uber One Credit"),
+        ("other", "Airline purchase credit"),
+        ("dining_membership", "Global Dining Access by Resy"),
+    ]
+    assert kept == ["benefit.dining_membership"]
 
 
 def benefit(kind: str, value: float, source: str) -> Benefit:
