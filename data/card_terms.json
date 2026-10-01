@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-09-28T20:45:44.347528Z",
+ "updated_at": "2026-10-01T20:22:38.216650Z",
  "cards": {
   "chase-sapphire-preferred": {
    "annual_fee": 95.0,
@@ -13,58 +13,8 @@
      "cap_period": null,
      "choice_group": null,
      "choose": null,
-     "notes": "Chase Travel purchases",
-     "evidence": "5x points on Chase Travel"
-    },
-    {
-     "category": "dining",
-     "multiplier": 3.0,
-     "cap": null,
-     "cap_period": null,
-     "choice_group": null,
-     "choose": null,
-     "notes": "dining",
-     "evidence": "3x points on dining"
-    },
-    {
-     "category": "gas",
-     "multiplier": 3.0,
-     "cap": null,
-     "cap_period": null,
-     "choice_group": null,
-     "choose": null,
-     "notes": "gas stations",
-     "evidence": "3x points on gas stations, EV charging, and vacation homes at top brands"
-    },
-    {
-     "category": "ev_charging",
-     "multiplier": 3.0,
-     "cap": null,
-     "cap_period": null,
-     "choice_group": null,
-     "choose": null,
-     "notes": "EV charging",
-     "evidence": "3x points on gas stations, EV charging, and vacation homes at top brands"
-    },
-    {
-     "category": "streaming",
-     "multiplier": 3.0,
-     "cap": null,
-     "cap_period": null,
-     "choice_group": null,
-     "choose": null,
-     "notes": "top streaming services",
-     "evidence": "3x points on top streaming services and online grocery, exclusions apply"
-    },
-    {
-     "category": "online_groceries",
-     "multiplier": 3.0,
-     "cap": null,
-     "cap_period": null,
-     "choice_group": null,
-     "choose": null,
-     "notes": "online grocery",
-     "evidence": "3x points on top streaming services and online grocery, exclusions apply"
+     "notes": "purchases made using your card through Chase Travel",
+     "evidence": "5 points (“5X points”) on Chase Travel purchases"
     },
     {
      "category": "travel_general",
@@ -73,8 +23,8 @@
      "cap_period": null,
      "choice_group": null,
      "choose": null,
-     "notes": "travel purchases",
-     "evidence": "2 points (“2X points”) on travel purchases"
+     "notes": "purchases made in the travel category",
+     "evidence": "2 points (“2X points”) on travel purchases: You’ll earn 2 points for each $1 spent on purchases made in the travel category"
     },
     {
      "category": "other",
@@ -84,12 +34,12 @@
      "choice_group": null,
      "choose": null,
      "notes": "all other purchases",
-     "evidence": "You’ll earn 1 point for each $1 spent on all other purchases."
+     "evidence": "1 point (“1X points”): You’ll earn 1 point for each $1 spent on all other purchases."
     }
    ],
    "benefits": [
     {
-     "kind": "travel_credit",
+     "kind": "hotel_credit",
      "name": "Chase Travel Hotel Credit",
      "amount": 100.0,
      "cadence": "annual",
@@ -97,13 +47,13 @@
     },
     {
      "kind": "global_entry",
-     "name": "Global Entry, TSA PreCheck or NEXUS application fee credit",
+     "name": "Global Entry, TSA PreCheck or NEXUS application fee statement credit",
      "amount": 30.0,
      "cadence": "annual",
-     "evidence": "Receive one statement credit of up to $120 every four years as reimbursement for the application fee charged to your card."
+     "evidence": "You will receive one statement credit every four years (up to $120) after the first program"
     },
     {
-     "kind": "other",
+     "kind": "streaming_credit",
      "name": "Complimentary Apple TV",
      "amount": null,
      "cadence": "one-time",
@@ -118,14 +68,14 @@
     },
     {
      "kind": "other",
-     "name": "DoorDash discount on qualifying non-restaurant orders",
+     "name": "Monthly DoorDash non-restaurant order discount",
      "amount": 120.0,
      "cadence": "monthly",
      "evidence": "you will receive a $10 off discount each calendar month at checkout on one qualifying non-restaurant order on DoorDash"
     }
    ],
    "evidence": {
-    "annual_fee": "$95 annual fee 19.24 Min. of (6.75+12.49) and 29.99 %– 27.49",
+    "annual_fee": "Opens in a new window $95 annual fee 19.49 Min. of",
     "foreign_tx_fee": "You will pay no foreign transaction fees when you use your card for purchases made outside the United States."
    }
   },
@@ -204,26 +154,19 @@
      "kind": "hotel_credit",
      "name": "Select Chase Travel Hotels credit",
      "amount": null,
-     "cadence": "annual",
+     "cadence": "one-time",
      "evidence": "Get up to $250 in statement credits through 12/31/26 on prepaid Chase Travel hotel bookings"
     },
     {
      "kind": "elite_status",
      "name": "IHG One Rewards Platinum Elite Status",
      "amount": null,
-     "cadence": "annual",
+     "cadence": "one-time",
      "evidence": "Get complimentary IHG One Rewards Platinum Elite Status with your Sapphire Reserve card through December 31, 2027."
     },
     {
-     "kind": "other",
-     "name": "Reserve Travel Designers",
-     "amount": null,
-     "cadence": "annual",
-     "evidence": "This personalized service is valued at up to $300 per trip."
-    },
-    {
      "kind": "lounge",
-     "name": "Chase Sapphire Lounges and Priority Pass airport lounges",
+     "name": "Chase Sapphire Lounge and Priority Pass access",
      "amount": null,
      "cadence": "annual",
      "evidence": "Enjoy complimentary access to Chase Sapphire Lounges by The Club and 1,300+ Priority Pass airport lounges worldwide"
@@ -233,11 +176,11 @@
      "name": "Global Entry, TSA PreCheck, or NEXUS fee credit",
      "amount": 30.0,
      "cadence": "annual",
-     "evidence": "Receive one statement credit of up to $120 every four years as reimbursement for the application fee"
+     "evidence": "Receive one statement credit of up to $120 every four years as reimbursement for the application fee charged to your card."
     },
     {
      "kind": "dining_credit",
-     "name": "Sapphire Exclusive Tables dining credit",
+     "name": "Annual dining credit",
      "amount": 300.0,
      "cadence": "semiannual",
      "evidence": "Get up to $150 in statement credits from January through June and again from July through December"
@@ -250,7 +193,7 @@
      "evidence": "Subscriptions run through 6/22/2027 - a value of $288 annually."
     },
     {
-     "kind": "dining_membership",
+     "kind": "other",
      "name": "DashPass membership",
      "amount": 120.0,
      "cadence": "one-time",
@@ -272,7 +215,7 @@
     },
     {
      "kind": "rideshare_credit",
-     "name": "Lyft in-app ride credit",
+     "name": "Lyft in-app credit",
      "amount": 120.0,
      "cadence": "monthly",
      "evidence": "Get up to $10 in monthly in-app credits to use on rides through 9/30/2027."
@@ -283,33 +226,12 @@
      "amount": 120.0,
      "cadence": "monthly",
      "evidence": "Get $10 in statement credits per month on eligible Peloton memberships through 12/31/2027"
-    },
-    {
-     "kind": "elite_status",
-     "name": "World of Hyatt Explorist Status after $75,000 annual spend",
-     "amount": null,
-     "cadence": "annual",
-     "evidence": "Benefits include: World of Hyatt Explorist Status"
-    },
-    {
-     "kind": "other",
-     "name": "The Shops at Chase credit after $75,000 annual spend",
-     "amount": null,
-     "cadence": "annual",
-     "evidence": "$250 Credit for The Shops at Chase"
-    },
-    {
-     "kind": "travel_credit",
-     "name": "Southwest Airlines Chase Travel credit after $75,000 annual spend",
-     "amount": null,
-     "cadence": "annual",
-     "evidence": "$500 Southwest Airlines Chase Travel credit"
     }
    ],
    "evidence": {
     "annual_fee": "$795 annual fee ; $195 for each authorized user",
-    "foreign_tx_fee": "Spend anywhere in the world with no foreign transaction fees",
-    "point_currency": "Ultimate Rewards points do not expire as long as the account is open"
+    "foreign_tx_fee": "Spend anywhere in the world with no foreign transaction fees on one of the most widely accepted global networks.",
+    "point_currency": "Ultimate Rewards points do not expire as long as the account is open."
    }
   },
   "chase-freedom-unlimited": {
@@ -390,8 +312,8 @@
      "cap_period": "quarter",
      "choice_group": null,
      "choose": null,
-     "notes": "rotating categories",
-     "evidence": "Earn 5% cash back on up to $1,500 in rotating categories each quarter you activate."
+     "notes": "quarterly bonus categories",
+     "evidence": "You’ll earn 5% Cash Back rewards total for each $1 spent until $1,500 is spent on combined purchases in the quarterly bonus categories each quarter that you activate the bonus."
     },
     {
      "category": "travel_portal",
@@ -401,7 +323,7 @@
      "choice_group": null,
      "choose": null,
      "notes": "purchases made using your card through Chase Travel",
-     "evidence": "You’ll earn 5% Cash Back rewards total for each $1 spent on purchases made using your card through Chase Travel"
+     "evidence": "You’ll earn 5% Cash Back rewards total for each $1 spent on purchases made using your card through Chase Travel."
     },
     {
      "category": "dining",
@@ -410,7 +332,7 @@
      "cap_period": null,
      "choice_group": null,
      "choose": null,
-     "notes": "dining at restaurants, including takeout and eligible delivery services",
+     "notes": "dining at restaurants including takeout and eligible delivery services",
      "evidence": "Earn 3% on dining at restaurants, including takeout and eligible delivery services."
     },
     {
@@ -437,14 +359,14 @@
    "benefits": [
     {
      "kind": "dining_membership",
-     "name": "Complimentary DashPass membership",
+     "name": "Complimentary DashPass access",
      "amount": null,
      "cadence": "one-time",
-     "evidence": "Get 6 months of complimentary access to DashPass– a membership for both DoorDash and Caviar – which unlocks $0 delivery fees and lower service fees on eligible orders."
+     "evidence": "Get 6 months of complimentary access to DashPass– a membership for both DoorDash and Caviar"
     },
     {
-     "kind": "dining_credit",
-     "name": "DoorDash non-restaurant order discount",
+     "kind": "other",
+     "name": "DoorDash discount on qualifying non-restaurant orders",
      "amount": 40.0,
      "cadence": "quarterly",
      "evidence": "you will receive a $10 off discount each calendar quarter at checkout on one qualifying non-restaurant order on DoorDash"
@@ -3406,11 +3328,61 @@
      "cap_period": null,
      "choice_group": null,
      "choose": null,
-     "notes": "purchases",
-     "evidence": "Plus, enjoy unlimited 2% cash rewards on purchases."
+     "notes": "Earn on purchases",
+     "evidence": "2% cash rewards are earned for every $1 spent in net purchases (purchases minus returns/credits) on the credit card account."
     }
    ],
-   "benefits": null,
+   "benefits": [
+    {
+     "kind": "other",
+     "name": "Cellular Telephone Protection",
+     "amount": null,
+     "cadence": "one-time",
+     "evidence": "Up to $600 of cell phone protection against damage or theft."
+    },
+    {
+     "kind": "other",
+     "name": "Auto Rental Collision Damage Waiver",
+     "amount": null,
+     "cadence": "one-time",
+     "evidence": "Pay for rental cars using an eligible card and get reimbursed for covered damage or theft"
+    },
+    {
+     "kind": "other",
+     "name": "Travel and Emergency Assistance Services",
+     "amount": null,
+     "cadence": "one-time",
+     "evidence": "Available for covered Wells Fargo cardholders."
+    },
+    {
+     "kind": "other",
+     "name": "Roadside Dispatch",
+     "amount": null,
+     "cadence": "one-time",
+     "evidence": "Available whenever you’re in need of a tow – for eligible Wells Fargo cardholders 24/7"
+    },
+    {
+     "kind": "other",
+     "name": "Zero Liability Protection",
+     "amount": null,
+     "cadence": "one-time",
+     "evidence": "Built-in protection features ensure that you won’t be held responsible for unauthorized transactions"
+    },
+    {
+     "kind": "other",
+     "name": "Visa Signature Concierge Services",
+     "amount": null,
+     "cadence": "one-time",
+     "evidence": "Find tickets to top sports and entertainment events, book travel, make dinner reservations and more with your complimentary 24/7 Visa Signature Concierge."
+    },
+    {
+     "kind": "other",
+     "name": "Visa Signature Luxury Hotel Collection",
+     "amount": null,
+     "cadence": "one-time",
+     "evidence": "Enjoy a premium collection of benefits at a selection of the world’s most intriguing and prestigious properties."
+    }
+   ],
    "evidence": {
     "annual_fee": "$0 annual fee",
     "foreign_tx_fee": "There is a 3% fee for each foreign transaction amount converted to U.S. dollars."

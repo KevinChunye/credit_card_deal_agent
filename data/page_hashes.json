@@ -1,40 +1,58 @@
 {
- "updated_at": "2026-09-28T20:45:44.347528Z",
+ "updated_at": "2026-10-01T20:22:38.216650Z",
  "cards": {
   "chase-sapphire-preferred": {
    "url": "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
-   "sha256": "f325aa0c195e7a11f0d236120be0b652380a50bffc1ef37dce6b2b7393d8e7e5",
-   "last_fetched": "2026-09-28",
-   "last_verified": "2026-09-28",
+   "sha256": "706556348e6ae079a11cfb8ef37d67105ff6c41fe03df55fd8bc0bd79cc98fff",
+   "last_fetched": "2026-10-01",
+   "last_verified": "2026-10-01",
    "source_status": "ok",
    "extraction_status": "ok",
-   "last_extracted": "2026-09-27",
-   "model": "gpt-6-luna",
-   "issues": []
-  },
-  "chase-sapphire-reserve": {
-   "url": "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve",
-   "sha256": "b7136a6c37324e111f1d4d1eb76c3fcfaec2d39320b72ce26f351c86c72c0b6f",
-   "last_fetched": "2026-09-28",
-   "last_verified": "2026-09-28",
-   "source_status": "ok",
-   "extraction_status": "ok",
-   "last_extracted": "2026-09-27",
+   "last_extracted": "2026-10-01",
    "model": "gpt-6-luna",
    "issues": [
     {
-     "field": "benefit.elite_status",
+     "field": "earn.gas",
      "reason": "evidence not found on page",
-     "value": "",
-     "evidence": "Benefits include: IHG One Rewards Diamond Elite Status"
+     "value": "3x",
+     "evidence": "You’ll earn 3 points for each $1 spent on purchases in the following rewards categories: gas stations"
     },
     {
-     "field": "benefit.elite_status",
+     "field": "earn.ev_charging",
      "reason": "evidence not found on page",
-     "value": "",
-     "evidence": "Benefits include: Southwest Airlines A-list status"
+     "value": "3x",
+     "evidence": "You’ll earn 3 points for each $1 spent on purchases in the following rewards categories: electric vehicle charging"
+    },
+    {
+     "field": "earn.dining",
+     "reason": "evidence not found on page",
+     "value": "3x",
+     "evidence": "You’ll earn 3 points for each $1 spent on purchases in the following rewards categories: dining at restaurants including takeout and eligible delivery services"
+    },
+    {
+     "field": "earn.streaming",
+     "reason": "evidence not found on page",
+     "value": "3x",
+     "evidence": "You’ll earn 3 points for each $1 spent on purchases in the following rewards categories: top streaming services"
+    },
+    {
+     "field": "earn.online_groceries",
+     "reason": "evidence not found on page",
+     "value": "3x",
+     "evidence": "You’ll earn 3 points for each $1 spent on purchases in the following rewards categories: online grocery"
     }
    ]
+  },
+  "chase-sapphire-reserve": {
+   "url": "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve",
+   "sha256": "e3234d0a236b5b1910798ff159911b9486fa82ce953c3d800b640b72377d733f",
+   "last_fetched": "2026-10-01",
+   "last_verified": "2026-10-01",
+   "source_status": "ok",
+   "extraction_status": "ok",
+   "last_extracted": "2026-10-01",
+   "model": "gpt-6-luna",
+   "issues": []
   },
   "chase-freedom-unlimited": {
    "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited",
@@ -49,12 +67,12 @@
   },
   "chase-freedom-flex": {
    "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/flex",
-   "sha256": "b7974fadb456336d9262429a1ac3d3a12c4b66f114c6ea73ec8e299f293841d8",
-   "last_fetched": "2026-09-28",
-   "last_verified": "2026-09-28",
+   "sha256": "629e12899e4d005c92edeb50e6bc2f64d1559bc430955312c71b11ff95ee19d8",
+   "last_fetched": "2026-10-01",
+   "last_verified": "2026-10-01",
    "source_status": "ok",
    "extraction_status": "ok",
-   "last_extracted": "2026-09-27",
+   "last_extracted": "2026-10-01",
    "model": "gpt-6-luna",
    "issues": []
   },
@@ -523,11 +541,11 @@
   "bofa-customized-cash-rewards": {
    "url": "https://www.bankofamerica.com/credit-cards/products/cash-back-credit-card/",
    "sha256": "ff7f99f7a8a4e49e47a9b8b243ae233fc402c2f4caa7b373bb8a2184170de58b",
-   "last_fetched": "2026-09-28",
+   "last_fetched": "2026-10-01",
    "last_verified": null,
    "source_status": "validation_failed",
    "extraction_status": "validation_failed",
-   "last_extracted": "2026-09-28",
+   "last_extracted": "2026-10-01",
    "model": "gpt-6-luna",
    "issues": [
     {
@@ -597,12 +615,12 @@
   },
   "wells-fargo-active-cash": {
    "url": "https://creditcards.wellsfargo.com/active-cash-credit-card/",
-   "sha256": "2ceae948788fd4eea4fc36936a7251024fa238e4d8339754b705f1e4eeb1df5f",
-   "last_fetched": "2026-09-28",
-   "last_verified": "2026-09-28",
+   "sha256": "680cb5bef237735b20e68eaff4a7e9dc25942402669b16e358a18b8d225d8160",
+   "last_fetched": "2026-10-01",
+   "last_verified": "2026-10-01",
    "source_status": "ok",
    "extraction_status": "ok",
-   "last_extracted": "2026-09-28",
+   "last_extracted": "2026-10-01",
    "model": "gpt-6-luna",
    "issues": []
   },
