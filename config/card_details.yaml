@@ -26,35 +26,35 @@
 # - cap / cap_period: spend cap for that rate; spend above it earns the `other` rate.
 # - benefits: amount is USD per year (null when the page states no dollar value).
 
-as_of: "2026-09"
+as_of: "2026-10"
 
 cards:
   chase-sapphire-preferred:
     annual_fee: 95
     foreign_tx_fee: false
     earn:
-      - {category: travel_portal, multiplier: 5, notes: "Chase Travel purchases", evidence: "5x points on Chase Travel"}
+      - {category: travel_portal, multiplier: 5, notes: "purchases made using your card through Chase Travel", evidence: "5 points (“5X points”) on Chase Travel purchases"}
+      - {category: travel_general, multiplier: 2, notes: "purchases made in the travel category", evidence: "2 points (“2X points”) on travel purchases: You’ll earn 2 points for each $1 spent on purchases made in the travel category"}
+      - {category: other, multiplier: 1, notes: "all other purchases", evidence: "1 point (“1X points”): You’ll earn 1 point for each $1 spent on all other purchases."}
       - {category: dining, multiplier: 3, notes: dining, evidence: "3x points on dining"}
       - {category: gas, multiplier: 3, notes: "gas stations", evidence: "3x points on gas stations, EV charging, and vacation homes at top brands"}
       - {category: ev_charging, multiplier: 3, notes: "EV charging", evidence: "3x points on gas stations, EV charging, and vacation homes at top brands"}
       - {category: streaming, multiplier: 3, notes: "top streaming services", evidence: "3x points on top streaming services and online grocery, exclusions apply"}
       - {category: online_groceries, multiplier: 3, notes: "online grocery", evidence: "3x points on top streaming services and online grocery, exclusions apply"}
-      - {category: travel_general, multiplier: 2, notes: "travel purchases", evidence: "2 points (“2X points”) on travel purchases"}
-      - {category: other, multiplier: 1, notes: "all other purchases", evidence: "You’ll earn 1 point for each $1 spent on all other purchases."}
     benefits:
       - {kind: hotel_credit, name: "Chase Travel Hotel Credit", amount: 100, cadence: annual, evidence: "Earn up to $100 in statement credits each account anniversary year for hotel stays purchased through Chase Travel"}
-      - {kind: global_entry, name: "Global Entry, TSA PreCheck or NEXUS application fee credit", amount: 30, cadence: annual, evidence: "Receive one statement credit of up to $120 every four years as reimbursement for the application fee charged to your card."}
-      - {kind: other, name: "Complimentary Apple TV", amount: null, cadence: one-time, evidence: "You, as the primary cardmember, will receive at least 12 months of complimentary Apple TV from the activation date."}
+      - {kind: global_entry, name: "Global Entry, TSA PreCheck or NEXUS application fee statement credit", amount: 30, cadence: annual, evidence: "You will receive one statement credit every four years (up to $120) after the first program"}
+      - {kind: streaming_credit, name: "Complimentary Apple TV", amount: null, cadence: one-time, evidence: "You, as the primary cardmember, will receive at least 12 months of complimentary Apple TV from the activation date."}
       - {kind: other, name: "Complimentary DashPass membership", amount: null, cadence: one-time, evidence: "You and your authorized user(s) will receive at least 12 months of complimentary DashPass for use on both the DoorDash and Caviar applications"}
-      - {kind: other, name: "DoorDash discount on qualifying non-restaurant orders", amount: 120, cadence: monthly, evidence: "you will receive a $10 off discount each calendar month at checkout on one qualifying non-restaurant order on DoorDash"}
+      - {kind: other, name: "Monthly DoorDash non-restaurant order discount", amount: 120, cadence: monthly, evidence: "you will receive a $10 off discount each calendar month at checkout on one qualifying non-restaurant order on DoorDash"}
     protections: [primary_rental, trip_delay, trip_cancel, purchase, extended_warranty]
     downgrade_to: [chase-freedom-unlimited, chase-freedom-flex]
     evidence:
-      annual_fee: "$95 annual fee 19.24 Min. of (6.75+12.49) and 29.99 %– 27.49"
+      annual_fee: "Opens in a new window $95 annual fee 19.49 Min. of"
       foreign_tx_fee: "You will pay no foreign transaction fees when you use your card for purchases made outside the United States."
     terms_source:
       url: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred"
-      extracted: "2026-09-27"
+      extracted: "2026-10-01"
       method: "llm:gpt-6-luna"
 
   chase-sapphire-reserve:
@@ -70,30 +70,26 @@ cards:
     benefits:
       - {kind: travel_credit, name: "Annual travel credit", amount: 300, cadence: annual, evidence: "up to $300 in statement credits for travel purchases each account anniversary year."}
       - {kind: hotel_credit, name: "The Edit hotel credit", amount: null, cadence: annual, evidence: "Receive a statement credit of up to $250 for each prepaid booking with The Edit, up to $500 annually."}
-      - {kind: hotel_credit, name: "Select Chase Travel Hotels credit", amount: null, cadence: annual, evidence: "Get up to $250 in statement credits through 12/31/26 on prepaid Chase Travel hotel bookings"}
-      - {kind: elite_status, name: "IHG One Rewards Platinum Elite Status", amount: null, cadence: annual, evidence: "Get complimentary IHG One Rewards Platinum Elite Status with your Sapphire Reserve card through December 31, 2027."}
-      - {kind: other, name: "Reserve Travel Designers", amount: null, cadence: annual, evidence: "This personalized service is valued at up to $300 per trip."}
-      - {kind: lounge, name: "Chase Sapphire Lounges and Priority Pass airport lounges", amount: null, cadence: annual, evidence: "Enjoy complimentary access to Chase Sapphire Lounges by The Club and 1,300+ Priority Pass airport lounges worldwide"}
-      - {kind: global_entry, name: "Global Entry, TSA PreCheck, or NEXUS fee credit", amount: 30, cadence: annual, evidence: "Receive one statement credit of up to $120 every four years as reimbursement for the application fee"}
-      - {kind: dining_credit, name: "Sapphire Exclusive Tables dining credit", amount: 300, cadence: semiannual, evidence: "Get up to $150 in statement credits from January through June and again from July through December"}
+      - {kind: hotel_credit, name: "Select Chase Travel Hotels credit", amount: null, cadence: one-time, evidence: "Get up to $250 in statement credits through 12/31/26 on prepaid Chase Travel hotel bookings"}
+      - {kind: elite_status, name: "IHG One Rewards Platinum Elite Status", amount: null, cadence: one-time, evidence: "Get complimentary IHG One Rewards Platinum Elite Status with your Sapphire Reserve card through December 31, 2027."}
+      - {kind: lounge, name: "Chase Sapphire Lounge and Priority Pass access", amount: null, cadence: annual, evidence: "Enjoy complimentary access to Chase Sapphire Lounges by The Club and 1,300+ Priority Pass airport lounges worldwide"}
+      - {kind: global_entry, name: "Global Entry, TSA PreCheck, or NEXUS fee credit", amount: 30, cadence: annual, evidence: "Receive one statement credit of up to $120 every four years as reimbursement for the application fee charged to your card."}
+      - {kind: dining_credit, name: "Annual dining credit", amount: 300, cadence: semiannual, evidence: "Get up to $150 in statement credits from January through June and again from July through December"}
       - {kind: streaming_credit, name: "Apple TV and Apple Music subscriptions", amount: 288, cadence: one-time, evidence: "Subscriptions run through 6/22/2027 - a value of $288 annually."}
-      - {kind: dining_membership, name: "DashPass membership", amount: 120, cadence: one-time, evidence: "Complimentary DashPass membership, a $120 value for 12 months."}
+      - {kind: other, name: "DashPass membership", amount: 120, cadence: one-time, evidence: "Complimentary DashPass membership, a $120 value for 12 months."}
       - {kind: other, name: "DoorDash monthly promos", amount: 300, cadence: monthly, evidence: "DashPass members get up to $25 each month to spend on DoorDash"}
       - {kind: other, name: "StubHub and viagogo credit", amount: 300, cadence: semiannual, evidence: "Get up to $150 in statement credits from January through June and again from July through December"}
-      - {kind: rideshare_credit, name: "Lyft in-app ride credit", amount: 120, cadence: monthly, evidence: "Get up to $10 in monthly in-app credits to use on rides through 9/30/2027."}
+      - {kind: rideshare_credit, name: "Lyft in-app credit", amount: 120, cadence: monthly, evidence: "Get up to $10 in monthly in-app credits to use on rides through 9/30/2027."}
       - {kind: other, name: "Peloton membership credit", amount: 120, cadence: monthly, evidence: "Get $10 in statement credits per month on eligible Peloton memberships through 12/31/2027"}
-      - {kind: elite_status, name: "World of Hyatt Explorist Status after $75,000 annual spend", amount: null, cadence: annual, evidence: "Benefits include: World of Hyatt Explorist Status"}
-      - {kind: other, name: "The Shops at Chase credit after $75,000 annual spend", amount: null, cadence: annual, evidence: "$250 Credit for The Shops at Chase"}
-      - {kind: travel_credit, name: "Southwest Airlines Chase Travel credit after $75,000 annual spend", amount: null, cadence: annual, evidence: "$500 Southwest Airlines Chase Travel credit"}
     protections: [primary_rental, trip_delay, trip_cancel, purchase, extended_warranty]
     downgrade_to: [chase-sapphire-preferred, chase-freedom-unlimited, chase-freedom-flex]
     evidence:
       annual_fee: "$795 annual fee ; $195 for each authorized user"
-      foreign_tx_fee: "Spend anywhere in the world with no foreign transaction fees"
-      point_currency: "Ultimate Rewards points do not expire as long as the account is open"
+      foreign_tx_fee: "Spend anywhere in the world with no foreign transaction fees on one of the most widely accepted global networks."
+      point_currency: "Ultimate Rewards points do not expire as long as the account is open."
     terms_source:
       url: "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve"
-      extracted: "2026-09-27"
+      extracted: "2026-10-01"
       method: "llm:gpt-6-luna"
 
   chase-freedom-unlimited:
@@ -121,21 +117,21 @@ cards:
     annual_fee: 0
     foreign_tx_fee: false
     earn:
-      - {category: rotating, multiplier: 5, cap: 1500, cap_period: quarter, notes: "rotating categories", evidence: "Earn 5% cash back on up to $1,500 in rotating categories each quarter you activate."}
-      - {category: travel_portal, multiplier: 5, notes: "purchases made using your card through Chase Travel", evidence: "You’ll earn 5% Cash Back rewards total for each $1 spent on purchases made using your card through Chase Travel"}
-      - {category: dining, multiplier: 3, notes: "dining at restaurants, including takeout and eligible delivery services", evidence: "Earn 3% on dining at restaurants, including takeout and eligible delivery services."}
+      - {category: rotating, multiplier: 5, cap: 1500, cap_period: quarter, notes: "quarterly bonus categories", evidence: "You’ll earn 5% Cash Back rewards total for each $1 spent until $1,500 is spent on combined purchases in the quarterly bonus categories each quarter that you activate the bonus."}
+      - {category: travel_portal, multiplier: 5, notes: "purchases made using your card through Chase Travel", evidence: "You’ll earn 5% Cash Back rewards total for each $1 spent on purchases made using your card through Chase Travel."}
+      - {category: dining, multiplier: 3, notes: "dining at restaurants including takeout and eligible delivery services", evidence: "Earn 3% on dining at restaurants, including takeout and eligible delivery services."}
       - {category: drugstores, multiplier: 3, notes: "drugstore purchases", evidence: "Earn 3% on drugstore purchases."}
       - {category: other, multiplier: 1, notes: "all other purchases", evidence: "Earn 1% on all other purchases."}
     benefits:
-      - {kind: dining_membership, name: "Complimentary DashPass membership", amount: null, cadence: one-time, evidence: "Get 6 months of complimentary access to DashPass– a membership for both DoorDash and Caviar – which unlocks $0 delivery fees and lower service fees on eligible orders."}
-      - {kind: dining_credit, name: "DoorDash non-restaurant order discount", amount: 40, cadence: quarterly, evidence: "you will receive a $10 off discount each calendar quarter at checkout on one qualifying non-restaurant order on DoorDash"}
+      - {kind: dining_membership, name: "Complimentary DashPass access", amount: null, cadence: one-time, evidence: "Get 6 months of complimentary access to DashPass– a membership for both DoorDash and Caviar"}
+      - {kind: other, name: "DoorDash discount on qualifying non-restaurant orders", amount: 40, cadence: quarterly, evidence: "you will receive a $10 off discount each calendar quarter at checkout on one qualifying non-restaurant order on DoorDash"}
     protections: [cell_phone, secondary_rental, trip_cancel, purchase, extended_warranty]
     evidence:
       annual_fee: "You won't have to pay an annual fee for all the great features that come with your Chase Freedom Flex card."
       foreign_tx_fee: "Earn rewards worldwide with no foreign transaction fees."
     terms_source:
       url: "https://creditcards.chase.com/cash-back-credit-cards/freedom/flex"
-      extracted: "2026-09-27"
+      extracted: "2026-10-01"
       method: "llm:gpt-6-luna"
 
   chase-ink-business-preferred:
@@ -211,7 +207,7 @@ cards:
     annual_fee: 0
     foreign_tx_fee: false
     earn:
-      - {category: travel_portal, multiplier: 5, notes: "Chase Travel, with an eligible Prime membership (3% without)", evidence: "You'll earn 5% back with an eligible Prime membership or 3% back without an eligible Prime membership for each $1 spent on purchases made using your card account through Chase Travel."}
+      - {category: travel_portal, multiplier: 3, notes: "Purchases made through Chase Travel without an eligible Prime membership", evidence: "You'll earn 5% back with an eligible Prime membership or 3% back without an eligible Prime membership for each $1 spent on purchases made using your card account through Chase Travel."}
       - {category: gas, multiplier: 2, notes: "Gas stations", evidence: "You'll earn 2% back for each $1 spent in the following rewards categories: gas stations; local transit and commuting; restaurants."}
       - {category: dining, multiplier: 2, notes: "Restaurants", evidence: "You'll earn 2% back for each $1 spent in the following rewards categories: gas stations; local transit and commuting; restaurants."}
       - {category: transit_rideshare, multiplier: 2, notes: "Local transit and commuting", evidence: "You'll earn 2% back for each $1 spent in the following rewards categories: gas stations; local transit and commuting; restaurants."}
@@ -341,40 +337,37 @@ cards:
     foreign_tx_fee: false
     point_currency: amex_mr
     earn:
-      - {category: travel_portal, multiplier: 5, notes: "prepaid hotels booked on AmexTravel.com", evidence: "5X Membership Rewards points on prepaid hotels booked on AmexTravel.com."}
-      - {category: other, multiplier: 1, notes: "all other purchases", evidence: "1X Membership Rewards points on all other Purchases."}
-      - {category: flights, multiplier: 5, cap: 500000, cap_period: year, notes: "Booked directly with airlines or via Amex Travel"}
+      - {category: flights, multiplier: 5, cap: 500000, cap_period: year, notes: "Flights booked directly with airlines or through American Express Travel", evidence: "5X Points on Flights Booked directly with airlines or through American Express Travel , on up to $500,000 on these purchases per calendar year."}
+      - {category: travel_portal, multiplier: 5, notes: "Prepaid hotels booked on American Express Travel", evidence: "5X Points on Prepaid Hotels Booked on American Express Travel ."}
+      - {category: other, multiplier: 1, notes: "Other purchases", evidence: "1X POINTS On Other Purchases"}
     benefits:
-      - {kind: lounge, name: "The Global Lounge Collection", amount: null, cadence: annual, evidence: "access to Centurion Lounges, 10 Delta Sky Club visits when flying on an eligible Delta flight, Priority Pass membership"}
-      - {kind: hotel_credit, name: "Hotel Credit", amount: 600, cadence: semiannual, evidence: "Get up to $300 back in statement credits semi-annually"}
-      - {kind: rideshare_credit, name: "Uber Cash monthly credit", amount: 180, cadence: monthly, evidence: "start receiving $15 in Uber Cash each month"}
-      - {kind: rideshare_credit, name: "Uber Cash December bonus", amount: 20, cadence: annual, evidence: "plus a bonus $20 in December"}
-      - {kind: dining_membership, name: "Uber One Credit", amount: 120, cadence: annual, evidence: "you can get up to $120 in statement credits each calendar year"}
-      - {kind: airline_fee, name: "Airline Fee Credit", amount: 200, cadence: annual, evidence: "receive up to $200 in statement credits per calendar year"}
-      - {kind: other, name: "CLEAR+ Credit", amount: 219, cadence: annual, evidence: "You can receive up to $219 in statement credits per calendar year"}
-      - {kind: dining_credit, name: "Resy Credit", amount: 400, cadence: quarterly, evidence: "get up to $100 in statement credits each quarter"}
-      - {kind: streaming_credit, name: "Digital Entertainment Credit", amount: 300, cadence: monthly, evidence: "Get up to $25 in statement credits each month"}
-      - {kind: other, name: "lululemon Credit", amount: 300, cadence: quarterly, evidence: "receive up to $75 in statement credits each quarter"}
-      - {kind: other, name: "Walmart+ Credit", amount: 155.4, cadence: monthly, evidence: "Get up to a $12.95* statement credit back each month"}
-      - {kind: other, name: "Oura Ring Credit", amount: 200, cadence: annual, evidence: "receive up to $200 in statement credits when you use the Platinum Card to purchase an Oura Ring at ouraring.com each calendar year."}
-      - {kind: other, name: "Equinox Credit", amount: 300, cadence: annual, evidence: "Get up to $300 in statement credits each calendar year"}
-      - {kind: elite_status, name: "Marriott Bonvoy Gold Elite Status", amount: null, cadence: annual, evidence: "With Marriott Bonvoy Gold Elite status, you can receive upgrades to enhanced rooms upon check-in when available."}
+      - {kind: lounge, name: "The Global Lounge Collection", amount: null, cadence: annual, evidence: "enjoy the benefits of the Global Lounge Collection, over $850 of annual value, with access to Centurion Lounges"}
+      - {kind: travel_credit, name: "Hotel Credit", amount: 600, cadence: semiannual, evidence: "Get up to $300 back in statement credits semi-annually for up to a total of $600 per year"}
+      - {kind: rideshare_credit, name: "Uber Cash monthly credit", amount: 180, cadence: monthly, evidence: "start receiving $15 in Uber Cash each month, plus a bonus $20 in December"}
+      - {kind: rideshare_credit, name: "Uber Cash December bonus", amount: 20, cadence: annual, evidence: "start receiving $15 in Uber Cash each month, plus a bonus $20 in December"}
+      - {kind: rideshare_credit, name: "Uber One Credit", amount: 120, cadence: annual, evidence: "you can get up to $120 in statement credits each calendar year after you purchase an auto-renewing Uber One membership"}
+      - {kind: airline_fee, name: "Airline Fee Credit", amount: 200, cadence: annual, evidence: "Earn up to $200 per calendar year in statement credits after incidental fees"}
+      - {kind: other, name: "CLEAR+ Credit", amount: 219, cadence: annual, evidence: "You can receive up to $219 in statement credits per calendar year after you sign up and pay for a CLEAR+ Membership"}
+      - {kind: dining_credit, name: "Resy Credit", amount: 400, cadence: quarterly, evidence: "you can get up to $100 in statement credits each quarter after you use the Platinum Card"}
+      - {kind: streaming_credit, name: "Digital Entertainment Credit", amount: 300, cadence: monthly, evidence: "Get up to $25 in statement credits each month when you use your Platinum Card"}
+      - {kind: other, name: "lululemon Credit", amount: 300, cadence: quarterly, evidence: "You can receive up to $75 in statement credits each quarter when you use the Card"}
+      - {kind: other, name: "Walmart+ Credit", amount: 155.4, cadence: monthly, evidence: "Get up to a $12.95 statement credit back each month after you pay for a monthly Walmart+ membership"}
+      - {kind: other, name: "Oura Ring Credit", amount: 200, cadence: annual, evidence: "You can receive up to $200 in statement credits when you use the Platinum Card to purchase an Oura Ring at ouraring.com each calendar year."}
+      - {kind: other, name: "Equinox Credit", amount: 300, cadence: annual, evidence: "Get up to $300 in statement credits each calendar year after you pay with your Platinum Card for an Equinox club membership"}
+      - {kind: other, name: "American Express Venue Collection concessions benefit", amount: null, cadence: annual, evidence: "get 10% back on qualifying concessions purchases up to $250 per calendar year."}
+      - {kind: elite_status, name: "Marriott Bonvoy Gold Elite Status", amount: null, cadence: annual, evidence: "Marriott Bonvoy Gold Elite status, you can receive upgrades to enhanced rooms upon check-in when available."}
       - {kind: elite_status, name: "Hilton Honors Gold Status", amount: null, cadence: annual, evidence: "you are eligible to enroll in complimentary Hilton Honors Gold status."}
       - {kind: elite_status, name: "Leaders Club Sterling Status", amount: null, cadence: annual, evidence: "you can receive complimentary Leaders Club Sterling Status from The Leading Hotels of the World."}
-      - {kind: elite_status, name: "Premium car rental status", amount: null, cadence: annual, evidence: "Platinum Card Members enjoy complimentary premium status for select car rental programs."}
-      - {kind: other, name: "Fine Hotels + Resorts benefits", amount: null, cadence: one-time, evidence: "Benefits include: Daily breakfast for two Room upgrade upon arrival when available"}
-      - {kind: other, name: "The Hotel Collection booking benefit", amount: null, cadence: one-time, evidence: "receive a $100 credit towards eligible charges* with every booking of two nights or more through AmexTravel.com."}
       - {kind: dining_membership, name: "Global Dining Access by Resy", amount: null, cadence: annual, evidence: "Get special access to sought-after U.S. Resy restaurants when you add your Platinum Card to your Resy profile."}
-      - {kind: other, name: "American Express Venue Collection concessions", amount: null, cadence: annual, evidence: "get 10% back on qualifying concessions purchases up to $250 per calendar year."}
     protections: [trip_delay, trip_cancel, secondary_rental, cell_phone, purchase, extended_warranty]
     downgrade_to: [amex-gold, amex-green]
     evidence:
       annual_fee: "The annual fee for the Platinum Card is $895 for a Basic Card."
       foreign_tx_fee: "No matter where you're traveling, when you use your Platinum Card there are no foreign transaction fees."
-      point_currency: "As a Member, you seamlessly earn Membership Rewards points on eligible purchases."
+      point_currency: "Earn Membership Rewards points on the purchases you make most"
     terms_source:
       url: "https://www.americanexpress.com/us/credit-cards/card/platinum/"
-      extracted: "2026-09-27"
+      extracted: "2026-09-28"
       method: "llm:gpt-6-luna"
 
   amex-gold:
@@ -382,18 +375,19 @@ cards:
     foreign_tx_fee: false
     point_currency: amex_mr
     earn:
-      - {category: dining, multiplier: 4, cap: 50000, cap_period: year, notes: "purchases at restaurants worldwide", evidence: "4X Membership Rewards points per dollar spent on purchases at restaurants worldwide, on up to $50,000 in purchases per calendar year"}
-      - {category: groceries, multiplier: 4, cap: 25000, cap_period: year, notes: "at US supermarkets", evidence: "4X Membership Rewards points per dollar spent at US supermarkets, on up to $25,000 in purchases per calendar year"}
-      - {category: flights, multiplier: 3, notes: "flights purchased directly from airlines", evidence: "3X Membership Rewards points per dollar spent on flights booked through AmexTravel.com or the Amex Travel App™ or purchased directly from airlines."}
-      - {category: travel_portal, multiplier: 2, notes: "prepaid car rentals and cruises booked through AmexTravel.com", evidence: "2X Membership Rewards points per dollar spent on prepaid car rentals booked through AmexTravel.com or the Amex Travel App™ and cruises booked and paid through AmexTravel.com."}
-      - {category: other, multiplier: 1, notes: "all other eligible purchases", evidence: "1X Membership Rewards point per dollar spent on all other eligible purchases."}
+      - {category: dining, multiplier: 4, cap: 50000, cap_period: year, notes: "Restaurants Worldwide", evidence: "4X Points at Restaurants Worldwide Per dollar spent on up to $50,000 in purchases per calendar year"}
+      - {category: groceries, multiplier: 4, cap: 25000, cap_period: year, notes: "U.S. Supermarkets", evidence: "4X Points at U.S. Supermarkets Per dollar spent on up to $25,000 in purchases per calendar year"}
+      - {category: travel_portal, multiplier: 2, notes: "Prepaid car rentals booked through AmexTravel.com or the Amex Travel App and cruises booked and paid through AmexTravel.com", evidence: "2X Membership Rewards points per dollar spent on prepaid car rentals booked through AmexTravel.com or the Amex Travel App™ and cruises booked and paid through AmexTravel.com ."}
+      - {category: flights, multiplier: 3, notes: "Flights booked through AmexTravel.com or the Amex Travel App or directly from airlines", evidence: "3X Membership Rewards points per dollar spent on flights booked through AmexTravel.com or the Amex Travel App™ or purchased directly from airlines."}
+      - {category: other, multiplier: 1, notes: "All other eligible purchases", evidence: "1X Membership Rewards point per dollar spent on all other eligible purchases."}
     benefits:
-      - {kind: dining_credit, name: "Dining Credit", amount: 120, cadence: monthly, evidence: "Earn up to a total of $10 in statement credits monthly when you pay with the Gold Card"}
+      - {kind: dining_credit, name: "Dining Credit", amount: 120, cadence: monthly, evidence: "Earn up to a total of $10 in statement credits monthly when you pay with the Gold Card at Grubhub"}
       - {kind: rideshare_credit, name: "Uber Cash", amount: 120, cadence: monthly, evidence: "Get $10 in Uber Cash each month when you add your Gold Card to your Uber account."}
       - {kind: dining_credit, name: "Resy Credit", amount: 100, cadence: annual, evidence: "Get up to $100 in statement credits each calendar year at over 10,000 qualifying U.S. Resy restaurants"}
       - {kind: dining_credit, name: "Dunkin' Credit", amount: 84, cadence: monthly, evidence: "Earn up to $7 in monthly statement credits after you pay with the American Express Gold Card at U.S. Dunkin' locations."}
-      - {kind: elite_status, name: "Hertz Five Star Status", amount: null, cadence: annual, evidence: "you are eligible for a complimentary upgrade to Hertz Five Star Status"}
-      - {kind: hotel_credit, name: "The Hotel Collection credit", amount: null, cadence: one-time, evidence: "receive a $100* credit towards eligible charges at over 1,300 upscale hotels worldwide."}
+      - {kind: hotel_credit, name: "The Hotel Collection", amount: null, cadence: one-time, evidence: "Book two nights or more with The Hotel Collection through AmexTravel.com and receive a $100* credit towards eligible charges"}
+      - {kind: elite_status, name: "Hertz Five Star Status", amount: null, cadence: annual, evidence: "As an American Express Gold Card Member, you are eligible for a complimentary upgrade to Hertz Five Star Status"}
+      - {kind: other, name: "American Express Venue Collection concessions benefit", amount: null, cadence: annual, evidence: "Plus enroll your Card and get 10% back on qualifying concessions purchases up to $250 per calendar year."}
     protections: [trip_delay, secondary_rental, purchase, extended_warranty]
     downgrade_to: [amex-green]
     evidence:
@@ -402,7 +396,7 @@ cards:
       point_currency: "As a Member, you seamlessly earn Membership Rewards points on eligible purchases."
     terms_source:
       url: "https://www.americanexpress.com/us/credit-cards/card/gold-card/"
-      extracted: "2026-09-27"
+      extracted: "2026-09-28"
       method: "llm:gpt-6-luna"
 
   amex-green:
@@ -443,22 +437,26 @@ cards:
     annual_fee: 0
     foreign_tx_fee: true
     earn:
-      - {category: groceries, multiplier: 3, cap: 6000, cap_period: year, notes: "eligible purchases at U.S. supermarkets", evidence: "Card Members can earn 3% cash back on eligible purchases at U.S. supermarkets, on up to $6,000 per year in purchases (then 1%)."}
-      - {category: gas, multiplier: 3, cap: 6000, cap_period: year, notes: "eligible purchases at U.S. gas stations", evidence: "Card Members can earn 3% cash back on eligible purchases at U.S. gas stations on up to $6,000 per year in purchases (then 1%)."}
+      - {category: groceries, multiplier: 3, cap: 6000, cap_period: year, notes: "U.S. supermarkets", evidence: "Card Members can earn 3% cash back on eligible purchases at U.S. supermarkets, on up to $6,000 per year in purchases (then 1%)."}
+      - {category: gas, multiplier: 3, cap: 6000, cap_period: year, notes: "U.S. gas stations", evidence: "Card Members can earn 3% cash back at U.S. gas stations on up to $6,000 per year in purchases (then 1%)."}
       - {category: other, multiplier: 1, notes: "other eligible purchases", evidence: "Card Members can earn 1% cash back on other eligible purchases."}
     benefits:
-      - {kind: streaming_credit, name: "Disney Streaming Credit", amount: 84, cadence: monthly, evidence: "get up to a $7 monthly statement credit after using your enrolled Blue Cash Everyday Card for a subscription purchase"}
-      - {kind: other, name: "Cash Back at Amazon.com Checkout", amount: null, cadence: one-time, evidence: "Shop now and conveniently use cash back at checkout at Amazon.com."}
+      - {kind: streaming_credit, name: "Disney Streaming Credit", amount: 84, cadence: monthly, evidence: "With the $84 Disney Streaming Credit, get up to a $7 monthly statement credit after using your enrolled Blue Cash Everyday Card"}
+      - {kind: other, name: "Cash Back at Amazon.com checkout", amount: null, cadence: one-time, evidence: "Shop now and conveniently use cash back at checkout at Amazon.com."}
       - {kind: other, name: "Send & Split", amount: null, cadence: one-time, evidence: "Send money, split purchases, and focus on the moments that matter – with Send & Split."}
       - {kind: other, name: "Amex Special Ticket Access", amount: null, cadence: one-time, evidence: "Card Members can access Amex Presale Tickets and Amex Reserved Tickets to select can’t-miss events and moments across sports, music, and more."}
-      - {kind: other, name: "Amex Offers", amount: null, cadence: one-time, evidence: "Card Members can explore the Amex Offers available to add to their eligible Card and earn extra rewards on qualifying purchases made at select brands."}
+      - {kind: other, name: "Car Rental Loss and Damage Insurance", amount: null, cadence: one-time, evidence: "When you use your Eligible Card to reserve and pay for the Entire Rental and decline the collision damage waiver (CDW) at the Rental Company counter, you can be covered for Damage to or Theft of a Rental Vehicle in a Covered Territory."}
+      - {kind: other, name: "Global Assist Hotline", amount: null, cadence: one-time, evidence: "Whenever you travel more than 100 miles from home, Global Assist Hotline is available for 24/7 emergency assistance and coordination services, including medical and legal referrals, emergency cash wires, and missing luggage assistance."}
+      - {kind: other, name: "Purchase Protection", amount: null, cadence: one-time, evidence: "Purchase Protection can help protect their Covered Purchases for up to 90 days from the Covered Purchase date if it is stolen or accidentally damaged."}
+      - {kind: other, name: "Dispute Resolution", amount: null, cadence: one-time, evidence: "If there is a fraudulent or incorrect charge on your statement, American Express will work with you to help resolve the issue."}
+      - {kind: other, name: "Additional Cards", amount: null, cadence: one-time, evidence: "You can add an Additional Card for anyone who makes purchases for you."}
     protections: [secondary_rental, purchase, extended_warranty]
     evidence:
       annual_fee: "The American Express Blue Cash Everyday Card has no annual fee."
-      foreign_tx_fee: "the American Express Blue Cash Everyday Card charges a foreign transaction fee of 2.7% on each transaction after conversion to U.S. dollars."
+      foreign_tx_fee: "The American Express Blue Cash Everyday Card charges a foreign transaction fee of 2.7% on each transaction after conversion to U.S. dollars."
     terms_source:
       url: "https://www.americanexpress.com/us/credit-cards/card/blue-cash-everyday/"
-      extracted: "2026-09-27"
+      extracted: "2026-09-28"
       method: "llm:gpt-6-luna"
 
   amex-blue-business-plus:
@@ -513,32 +511,35 @@ cards:
       - {category: travel_portal, multiplier: 5, notes: "flights and prepaid hotels booked on AmexTravel.com", evidence: "Earn 5X Membership Rewards points on flights and prepaid hotels booked on AmexTravel.com."}
       - {category: other, multiplier: 1, notes: "Other Eligible Purchases", evidence: "1X POINTS On Other Eligible Purchases"}
     benefits:
-      - {kind: hotel_credit, name: "Hotel Credit", amount: 600, cadence: semiannual, evidence: "Statement credits up to $300 semi-annually on prepaid bookings through Amex Travel with Fine Hotels + Resorts or The Hotel Collection"}
-      - {kind: hotel_credit, name: "Hilton Credit", amount: 200, cadence: quarterly, evidence: "statement credits of up to $50 quarterly on eligible purchases made directly with Hilton."}
+      - {kind: hotel_credit, name: "Amex Travel Fine Hotels + Resorts or The Hotel Collection credit", amount: 600, cadence: semiannual, evidence: "Statement credits up to $300 semi-annually on prepaid bookings through Amex Travel with Fine Hotels + Resorts or The Hotel Collection."}
+      - {kind: hotel_credit, name: "Hilton for Business credit", amount: 200, cadence: quarterly, evidence: "Hilton for Business members can get statement credits of up to $50 quarterly on eligible purchases made directly with Hilton."}
       - {kind: airline_fee, name: "Airline Fee Credit", amount: 200, cadence: annual, evidence: "Statement credits up to $200 per calendar year for incidental fees charged by your one selected qualifying airline."}
-      - {kind: global_entry, name: "CLEAR+ Credit", amount: 54.75, cadence: annual, evidence: "Statement credits up to $219 per calendar year for an auto-renewing CLEAR+ Membership, excluding taxes and fees."}
-      - {kind: lounge, name: "Global Lounge Collection", amount: null, cadence: annual, evidence: "Over $850 of annual value with access to Centurion Lounges, 10 complimentary Delta Sky Club visits"}
-      - {kind: hotel_credit, name: "The Hotel Collection credit", amount: null, cadence: one-time, evidence: "Receive a $100 credit towards eligible charges when you book two nights or more with The Hotel Collection with AmexTravel.com."}
-      - {kind: elite_status, name: "Leaders Club Sterling Status from The Leading Hotels of the World", amount: null, cadence: annual, evidence: "with complimentary Leaders Club Sterling Status from The Leading Hotels of the World"}
-      - {kind: elite_status, name: "Marriott Bonvoy Gold Elite Status", amount: null, cadence: annual, evidence: "you can receive Marriott Bonvoy Gold Elite Status without meeting any stay requirements."}
-      - {kind: elite_status, name: "Hilton Honors Gold Status", amount: null, cadence: annual, evidence: "Hilton Honors Gold Status"}
-      - {kind: other, name: "Dell Technologies Credit", amount: null, cadence: annual, evidence: "Statement credits up to $150 on U.S. purchases directly with Dell Technologies, and an additional $1,000 statement credit after you spend $5,000 or more on those purchases, per calendar year."}
+      - {kind: other, name: "CLEAR+ Credit", amount: 219, cadence: annual, evidence: "Statement credits up to $219 per calendar year for an auto-renewing CLEAR+ Membership, excluding taxes and fees."}
+      - {kind: hotel_credit, name: "The Hotel Collection credit", amount: null, cadence: one-time, evidence: "Receive a $100 credit towards eligible charges when you book two nights or more with The Hotel Collection."}
+      - {kind: lounge, name: "Global Lounge Collection access", amount: null, cadence: annual, evidence: "Business Platinum Card offers extensive airport lounge access through the Global Lounge Collection."}
+      - {kind: elite_status, name: "Leaders Club Sterling Status from The Leading Hotels of the World", amount: null, cadence: annual, evidence: "Enjoy bespoke benefits at over 400 independent luxury hotels across the globe with complimentary Leaders Club Sterling Status from The Leading Hotels of the World."}
+      - {kind: elite_status, name: "Marriott Bonvoy Gold Elite Status", amount: null, cadence: annual, evidence: "You can receive Marriott Bonvoy Gold Elite Status without meeting any stay requirements."}
+      - {kind: elite_status, name: "Hilton Honors Gold Status", amount: null, cadence: annual, evidence: "With Hilton Honors Gold status, you can enjoy benefits at hotels and resorts within the Hilton Portfolio."}
+      - {kind: other, name: "Avis, Hertz, and National rental privileges", amount: null, cadence: annual, evidence: "Business Platinum Card Members enjoy complimentary premium status for select car rental programs."}
+      - {kind: other, name: "Dell Technologies Credit", amount: 150, cadence: annual, evidence: "Statement credits up to $150 on U.S. purchases directly with Dell Technologies."}
+      - {kind: other, name: "Additional Dell Technologies statement credit", amount: null, cadence: annual, evidence: "An additional $1,000 statement credit after you spend $5,000 or more on those purchases, per calendar year."}
       - {kind: other, name: "ChatGPT Business Credit", amount: 300, cadence: annual, evidence: "Get up to $300 in statement credits per calendar year on U.S. purchases of ChatGPT Business on the Business Platinum Card."}
       - {kind: other, name: "Adobe Credit", amount: 250, cadence: annual, evidence: "A $250 statement credit per calendar year after you spend $600 or more on U.S. purchases directly with Adobe in a calendar year."}
       - {kind: other, name: "Indeed Credit", amount: 360, cadence: quarterly, evidence: "Get up to $90 in statement credits quarterly for purchases with Indeed on the Card."}
       - {kind: other, name: "Wireless Credit", amount: 120, cadence: monthly, evidence: "Statement credits up to $10 per month for wireless phone service purchases made directly with a U.S. wireless telephone service provider."}
-      - {kind: travel_credit, name: "Amex Travel flight credit (after $250,000 of spend)", amount: null, cadence: annual, evidence: "Unlock up to $1,200 in statement credits on flights booked on AmexTravel.com with the Business Platinum Card"}
-      - {kind: other, name: "35% Airline Bonus", amount: null, cadence: annual, evidence: "Get 35% points back after you use Pay with Points for flights booked through Amex Travel with your selected qualifying airline"}
-      - {kind: elite_status, name: "Premium status for select car rental programs", amount: null, cadence: annual, evidence: "Business Platinum Card Members enjoy complimentary premium status for select car rental programs."}
+      - {kind: other, name: "American Express One AP statement credit", amount: null, cadence: one-time, evidence: "Unlock up to $2,400 in statement credits for use in the next calendar year on American Express One AP monthly fees."}
+      - {kind: travel_credit, name: "Amex Travel Online Flight Statement Credit", amount: null, cadence: one-time, evidence: "Unlock up to $1,200 in statement credits on flights booked on AmexTravel.com with the Business Platinum Card."}
+      - {kind: other, name: "35% Points Back on Flights", amount: null, cadence: annual, evidence: "Get 35% points back after you use Pay with Points for flights booked through Amex Travel."}
+      - {kind: other, name: "Fine Hotels + Resorts suite of benefits", amount: null, cadence: one-time, evidence: "Unlock a complimentary suite of benefits worth an average total value of $550* per stay when you book Fine Hotels + Resorts through Amex Travel."}
       - {kind: dining_membership, name: "Global Dining Access by Resy", amount: null, cadence: annual, evidence: "Global Dining Access by Resy provides Business Platinum Card Members with access to exclusive reservations, Priority Notify"}
       - {kind: dining_membership, name: "Platinum Nights by Resy", amount: null, cadence: annual, evidence: "With Platinum Nights by Resy, you can get special access to reservations on select nights in select cities"}
     evidence:
       annual_fee: "Business Platinum Card Annual Fee: $895"
-      foreign_tx_fee: "there are no foreign transaction fees from American Express."
-      point_currency: "Earn 5X Membership Rewards points"
+      foreign_tx_fee: "The Business Platinum Card does not charge foreign transaction fees on purchases made outside of the United States."
+      point_currency: "Earn 5X Membership Rewards points on flights and prepaid hotels booked on AmexTravel.com."
     terms_source:
       url: "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/"
-      extracted: "2026-09-27"
+      extracted: "2026-09-28"
       method: "llm:gpt-6-luna"
 
   amex-hilton-honors:
@@ -597,6 +598,7 @@ cards:
     earn:
       - {category: flights, multiplier: 7, notes: "Flights booked directly with airlines", evidence: "7X Points on Select Travel Including flights booked directly with airlines or AmexTravel.com and car rentals booked directly with select car rental companies."}
       - {category: travel_portal, multiplier: 7, notes: "Flights booked through AmexTravel.com", evidence: "7X Points on Select Travel Including flights booked directly with airlines or AmexTravel.com and car rentals booked directly with select car rental companies."}
+      - {category: travel_general, multiplier: 7, notes: "Car rentals booked directly with select car rental companies", evidence: "7X Points on Select Travel Including flights booked directly with airlines or AmexTravel.com and car rentals booked directly with select car rental companies."}
       - {category: dining, multiplier: 7, notes: "Dining at U.S. restaurants", evidence: "7X Points on Dining At U.S. restaurants, including takeout and delivery."}
       - {category: other, multiplier: 3, notes: "Other eligible purchases", evidence: "3X Points on Other Eligible Purchases Spent on other eligible purchases."}
     benefits:
@@ -725,27 +727,31 @@ cards:
   amex-delta-skymiles-reserve:
     annual_fee: 650
     foreign_tx_fee: false
+    point_currency: delta
     earn:
       - {category: other, multiplier: 1, notes: "All Other Eligible Purchases", evidence: "Earn 1X Miles on All Other Eligible Purchases"}
     benefits:
-      - {kind: companion_cert, name: "Companion Certificate", amount: null, cadence: annual, evidence: "Enjoy a Companion Certificate on a Delta First, Delta Comfort, or Delta Main round-trip flight within the U.S. and to Mexico, the Caribbean, or Central America each year"}
-      - {kind: elite_status, name: "MQD Headstart", amount: null, cadence: annual, evidence: "With MQD Headstart, you can receive $2,500 Medallion Qualification Dollars each Medallion Qualification Year"}
-      - {kind: lounge, name: "Delta Sky Club Access", amount: null, cadence: annual, evidence: "Delta SkyMiles Reserve American Express Card Members enjoy 15 Visits each Medallion Year to the Delta Sky Club"}
+      - {kind: companion_cert, name: "Companion Certificate", amount: null, cadence: annual, evidence: "Enjoy a Companion Certificate on a Delta First, Delta Comfort, or Delta Main round-trip flight within the U.S. and to Mexico, the Caribbean, or Central America each year after renewal of your Card."}
+      - {kind: elite_status, name: "MQD Headstart", amount: null, cadence: annual, evidence: "With MQD Headstart, you can receive $2,500 Medallion Qualification Dollars each Medallion Qualification Year and you can get closer to elevated Status for next Medallion Year."}
+      - {kind: elite_status, name: "MQD Boost", amount: null, cadence: annual, evidence: "Get $1 Medallion Qualification Dollar for each $10 in purchases on your Delta SkyMiles Reserve American Express Card in a calendar year, getting you closer to Medallion Status for next Medallion Year quicker."}
+      - {kind: lounge, name: "Delta Sky Club Access", amount: null, cadence: annual, evidence: "Delta SkyMiles Reserve American Express Card Members enjoy 15 Visits each Medallion Year to the Delta Sky Club when flying Delta and can unlock Unlimited Delta Sky Club Access after spending $75,000 in purchases on your Card during a calendar year."}
       - {kind: lounge, name: "Complimentary Access to The Centurion Lounge", amount: null, cadence: annual, evidence: "Enjoy complimentary access to The Centurion Lounge when you book your Delta flight with your Reserve Card."}
-      - {kind: dining_credit, name: "Resy Credit", amount: 240, cadence: monthly, evidence: "you can earn up to $20 per month in statement credits on eligible purchases at over 10,000 qualifying U.S. Resy restaurants."}
+      - {kind: dining_credit, name: "Resy Credit", amount: 240, cadence: monthly, evidence: "With your enrolled Delta SkyMiles Reserve American Express Card, you can earn up to $20 per month in statement credits on eligible purchases at over 10,000 qualifying U.S. Resy restaurants."}
       - {kind: rideshare_credit, name: "Rideshare Credit", amount: 120, cadence: monthly, evidence: "Earn up to $10 in statement credits each month after using your Delta SkyMiles Reserve American Express Card on U.S. rideshare purchases with select providers."}
-      - {kind: hotel_credit, name: "Delta Stays Credit", amount: 200, cadence: annual, evidence: "Elevate your travel experience with an annual statement credit of up to $200 after using your Delta SkyMiles Reserve American Express Card"}
+      - {kind: other, name: "TakeOff 15", amount: null, cadence: annual, evidence: "Take 15% off anytime you book Award Travel with miles on Delta flights when using delta.com and the Fly Delta app."}
+      - {kind: global_entry, name: "Fee Credit for Global Entry or TSA PreCheck", amount: null, cadence: annual, evidence: "Receive either a statement credit every 4 years after you apply for Global Entry ($120) or a statement credit after you apply for a five-year membership for TSA PreCheck (up to $85 through a TSA PreCheck official enrollment provider) and pay the application fee with your Delta SkyMiles Reserve American Express Card."}
+      - {kind: travel_credit, name: "Delta Stays Credit", amount: 200, cadence: annual, evidence: "Elevate your travel experience with an annual statement credit of up to $200 after using your Delta SkyMiles Reserve American Express Card to book prepaid hotels or vacation rentals through Delta Stays on delta.com."}
       - {kind: elite_status, name: "Hertz President's Circle Status", amount: null, cadence: annual, evidence: "Transform your car rental experience with Hertz President’s Circle Status, compliments of your Delta SkyMiles® Reserve American Express Card."}
       - {kind: checked_bag, name: "First Bag Free and Second Bag Free", amount: null, cadence: annual, evidence: "Enjoy your first checked bag free on Delta flights worldwide – and on domestic Delta flights, your second bag flies free too."}
       - {kind: other, name: "Zone 5 Priority Boarding", amount: null, cadence: annual, evidence: "Receive Zone 5 Priority Boarding on Delta flights; board early, stow your carry-on bag and settle in sooner."}
-      - {kind: other, name: "American Express Venue Collection concessions credit", amount: null, cadence: annual, evidence: "Plus enroll your Card and get 10% back on qualifying concessions purchases up to $250 per calendar year."}
     downgrade_to: [amex-delta-skymiles-platinum, amex-delta-skymiles-gold, amex-delta-skymiles-blue]
     evidence:
       annual_fee: "The annual fee for the Delta SkyMiles Reserve American Express Card is $650."
       foreign_tx_fee: "Enjoy international travel without additional fees on purchases made abroad."
+      point_currency: "Earn miles for flights, seat upgrades, and more with the Delta SkyMiles Reserve American Express Card."
     terms_source:
       url: "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-reserve-american-express-card/"
-      extracted: "2026-09-27"
+      extracted: "2026-09-28"
       method: "llm:gpt-6-luna"
 
   capital-one-venture-x:
@@ -755,19 +761,20 @@ cards:
       - {category: travel_portal, multiplier: 5, notes: "flights and vacation rentals booked through Capital One Travel", evidence: "5X Miles on flights and vacation rentals booked through Capital One Travel"}
       - {category: other, multiplier: 2, notes: "all other purchases", evidence: "2X Miles on all other purchases, every day"}
     benefits:
-      - {kind: lounge, name: "Capital One Lounge and Priority Pass lounge access", amount: null, cadence: annual, evidence: "Venture X primary cardholders can enjoy access to Capital One Lounge and Landing locations."}
-      - {kind: other, name: "The Cultivist Enthusiast membership discount", amount: null, cadence: one-time, evidence: "Get access to over 80 of the world’s best museums with 50% off the Enthusiast membership to The Cultivist for up to 2 years."}
+      - {kind: lounge, name: "Capital One Lounges and Priority Pass lounges", amount: null, cadence: annual, evidence: "Venture X primary cardholders can enjoy access to Capital One Lounge and Landing locations."}
       - {kind: hotel_credit, name: "Premier Collection hotel experience credit", amount: null, cadence: one-time, evidence: "Premier Collection hotel experience credit will be applied at checkout by hotel to qualifying charges up to $100 USD"}
       - {kind: hotel_credit, name: "Lifestyle Collection hotel experience credit", amount: null, cadence: one-time, evidence: "Lifestyle Collection hotel experience credit will be applied at checkout by hotel to qualifying charges up to $50 USD"}
+      - {kind: other, name: "The Cultivist Enthusiast membership discount", amount: null, cadence: one-time, evidence: "Get access to over 80 of the world’s best museums with 50% off the Enthusiast membership to The Cultivist for up to 2 years."}
       - {kind: elite_status, name: "Hertz Gold+ Rewards status upgrade", amount: null, cadence: annual, evidence: "Eligible cardholders must enroll in the Hertz® Gold+™ Rewards status upgrade through the unique Benefits Tab link"}
+      - {kind: other, name: "Cell Phone Protection", amount: null, cadence: annual, evidence: "Protect your cell phone every time you pay your bill with your Venture X card."}
     protections: [primary_rental, trip_delay, trip_cancel, cell_phone, purchase, extended_warranty]
     downgrade_to: [capital-one-venture-rewards, capital-one-ventureone]
     evidence:
-      annual_fee: "Annual Fee $395 Purchase Rate 19.49% - 28.49% variable APR"
-      foreign_tx_fee: "No Foreign Transaction Fees You won’t pay a transaction fee when making purchases outside of the United States."
+      annual_fee: "Annual Fee $395"
+      foreign_tx_fee: "You won’t pay a transaction fee when making purchases outside of the United States."
     terms_source:
       url: "https://www.capitalone.com/credit-cards/venture-x/"
-      extracted: "2026-09-27"
+      extracted: "2026-09-28"
       method: "llm:gpt-6-luna"
 
   capital-one-venture-rewards:
@@ -777,10 +784,9 @@ cards:
       - {category: other, multiplier: 2, notes: "every purchase", evidence: "Get unlimited 2X miles per dollar on every purchase, every day."}
       - {category: travel_portal, multiplier: 5, notes: "hotels, vacation rentals, and rental cars booked through Capital One Travel", evidence: "Earn 5X miles on hotels, vacation rentals, and rental cars booked through Capital One Travel."}
     benefits:
-      - {kind: hotel_credit, name: "Capital One Travel Stays credit", amount: 300, cadence: one-time, evidence: "Eligible Venture primary account holders will receive a one-time $300 Capital One Travel Stays credit"}
-      - {kind: hotel_credit, name: "Lifestyle Collection experience credit", amount: null, cadence: one-time, evidence: "Receive a $50 experience credit on every Lifestyle Collection stay."}
-      - {kind: global_entry, name: "Global Entry or TSA PreCheck statement credit", amount: 30, cadence: annual, evidence: "Receive up to a $120 credit for Global Entry or TSA PreCheck®"}
-      - {kind: elite_status, name: "Hertz Five Star status", amount: null, cadence: annual, evidence: "Eligible Venture cardholders receive complimentary Hertz® Five Star status."}
+      - {kind: hotel_credit, name: "Capital One Travel Stays credit", amount: 300, cadence: one-time, evidence: "Eligible Venture primary account holders will receive a one-time $300 Capital One Travel Stays credit (“Credit”) to use toward hotel and vacation rental purchases made through Capital One Travel."}
+      - {kind: global_entry, name: "Global Entry or TSA PreCheck® statement credit", amount: 30, cadence: annual, evidence: "Receive up to a $120 credit for Global Entry or TSA PreCheck®"}
+      - {kind: elite_status, name: "Hertz® Five Star status", amount: null, cadence: annual, evidence: "Eligible Venture cardholders receive complimentary Hertz® Five Star status."}
     protections: [secondary_rental, extended_warranty]
     downgrade_to: [capital-one-ventureone]
     evidence:
@@ -788,7 +794,7 @@ cards:
       foreign_tx_fee: "No foreign transaction fees and no blackout dates"
     terms_source:
       url: "https://www.capitalone.com/credit-cards/venture/"
-      extracted: "2026-09-27"
+      extracted: "2026-09-28"
       method: "llm:gpt-6-luna"
 
   capital-one-ventureone:
@@ -797,12 +803,15 @@ cards:
     earn:
       - {category: other, multiplier: 1.25, notes: "every purchase", evidence: "Earn unlimited 1.25 miles per dollar on every purchase"}
       - {category: travel_portal, multiplier: 5, notes: "hotels, vacation rentals and rental cars booked through Capital One Travel", evidence: "Earn unlimited 5 miles per dollar on hotels, vacation rentals and rental cars booked through Capital One Travel"}
+    benefits:
+      - {kind: other, name: "No Foreign Transaction Fees", amount: null, cadence: annual, evidence: "You won't pay a transaction fee when making purchases outside of the United States."}
+      - {kind: other, name: "Rewards don't expire", amount: null, cadence: annual, evidence: "Rewards don't expire for the life of the account."}
     evidence:
-      annual_fee: "VentureOne Rewards from Capital One $0 Annual Fee"
+      annual_fee: "$0 Annual Fee"
       foreign_tx_fee: "You won't pay a transaction fee when making purchases outside of the United States."
     terms_source:
       url: "https://www.capitalone.com/credit-cards/ventureone/"
-      extracted: "2026-09-27"
+      extracted: "2026-09-28"
       method: "llm:gpt-6-luna"
 
   capital-one-venture-x-business:
@@ -900,7 +909,7 @@ cards:
       - {category: other, multiplier: 1.5, notes: "All Other Purchases", evidence: "1.5X points on All Other Purchases2"}
     benefits:
       - {kind: hotel_credit, name: "Annual Hotel Benefit", amount: 300, cadence: annual, evidence: "Once per calendar year, you can enjoy $300 off a single hotel stay of 2 nights or more (excluding taxes and fees) booked through cititravel.com."}
-      - {kind: airline_fee, name: "Splurge Credit", amount: 200, cadence: annual, evidence: "Every calendar year, earn up to $200 in statement credits on your choice of up to 2 of the following brands: 1stDibs, American Airlines (exclusions apply), Best Buy, Future Personal Training, and Live Nation (exclusions apply)."}
+      - {kind: other, name: "Splurge Credit", amount: 200, cadence: annual, evidence: "Every calendar year, earn up to $200 in statement credits on your choice of up to 2 of the following brands: 1stDibs, American Airlines (exclusions apply), Best Buy, Future Personal Training, and Live Nation (exclusions apply)."}
       - {kind: other, name: "Blacklane Credit", amount: 200, cadence: annual, evidence: "Every calendar year, earn up to $200 in statement credits when you book with Blacklane, a premium global chauffeur service."}
       - {kind: lounge, name: "Priority Pass Select membership", amount: null, cadence: annual, evidence: "Enjoy complimentary access to 1,500+ airport lounges worldwide."}
       - {kind: lounge, name: "Admirals Club Citi Strata Elite Passes", amount: null, cadence: annual, evidence: "Every calendar year, you will receive four Admirals Club® Citi Strata Elite® Passes for access to nearly 50 Admirals Club® lounges."}
@@ -920,7 +929,7 @@ cards:
     point_currency: citi_typ
     earn:
       - {category: other, multiplier: 2, notes: purchases, evidence: "Earn 2% cash back on purchases: 1% when you buy and 1% as you pay with no category enrollment, caps, or annual fee."}
-      - {category: travel_portal, multiplier: 5, notes: "5% total: the 2% on purchases plus 3% more on hotels, car rentals and attractions booked with Citi Travel", evidence: "In addition, earn 3% cash back on hotels, car rentals, and attractions booked with Citi Travel."}
+      - {category: travel_portal, multiplier: 3, notes: "hotels, car rentals, and attractions booked with Citi Travel", evidence: "In addition, earn 3% cash back on hotels, car rentals, and attractions booked with Citi Travel."}
     evidence:
       annual_fee: "The Citi Double Cash® Card does not charge an annual fee."
       foreign_tx_fee: "Fee for foreign purchases – % of the U.S. dollar amount of each purchase."
@@ -995,19 +1004,22 @@ cards:
     annual_fee: 0
     foreign_tx_fee: true
     earn:
-      - {category: other, multiplier: 2, notes: purchases, evidence: "Earn unlimited 2% cash rewards on purchases"}
+      - {category: other, multiplier: 2, notes: "Earn on purchases", evidence: "2% cash rewards are earned for every $1 spent in net purchases (purchases minus returns/credits) on the credit card account."}
     benefits:
-      - {kind: other, name: "Travel and Emergency Assistance Services", amount: null, cadence: annual, evidence: "Available for covered Wells Fargo cardholders. Count on emergency assistance while traveling anywhere in the world."}
-      - {kind: other, name: "Roadside Dispatch®", amount: null, cadence: annual, evidence: "Available whenever you're in need of a tow - for eligible Wells Fargo cardholders 24/7 with no membership required."}
-      - {kind: other, name: "Visa Signature Concierge Services", amount: null, cadence: annual, evidence: "Find tickets to top sports and entertainment events, book travel, make dinner reservations and more with your complimentary 24/7 Visa Signature® Concierge."}
-      - {kind: other, name: "Visa Signature Luxury Hotel Collection", amount: null, cadence: annual, evidence: "Enjoy a premium collection of benefits at a selection of the world’s most intriguing and prestigious properties."}
+      - {kind: other, name: "Cellular Telephone Protection", amount: null, cadence: one-time, evidence: "Up to $600 of cell phone protection against damage or theft."}
+      - {kind: other, name: "Auto Rental Collision Damage Waiver", amount: null, cadence: one-time, evidence: "Pay for rental cars using an eligible card and get reimbursed for covered damage or theft"}
+      - {kind: other, name: "Travel and Emergency Assistance Services", amount: null, cadence: one-time, evidence: "Available for covered Wells Fargo cardholders."}
+      - {kind: other, name: "Roadside Dispatch", amount: null, cadence: one-time, evidence: "Available whenever you’re in need of a tow – for eligible Wells Fargo cardholders 24/7"}
+      - {kind: other, name: "Zero Liability Protection", amount: null, cadence: one-time, evidence: "Built-in protection features ensure that you won’t be held responsible for unauthorized transactions"}
+      - {kind: other, name: "Visa Signature Concierge Services", amount: null, cadence: one-time, evidence: "Find tickets to top sports and entertainment events, book travel, make dinner reservations and more with your complimentary 24/7 Visa Signature Concierge."}
+      - {kind: other, name: "Visa Signature Luxury Hotel Collection", amount: null, cadence: one-time, evidence: "Enjoy a premium collection of benefits at a selection of the world’s most intriguing and prestigious properties."}
     protections: [cell_phone, secondary_rental]
     evidence:
-      annual_fee: "Plus, earn unlimited 2% cash rewards on purchases $0 Annual Fee"
+      annual_fee: "$0 annual fee"
       foreign_tx_fee: "There is a 3% fee for each foreign transaction amount converted to U.S. dollars."
     terms_source:
       url: "https://creditcards.wellsfargo.com/active-cash-credit-card/"
-      extracted: "2026-09-27"
+      extracted: "2026-10-01"
       method: "llm:gpt-6-luna"
 
   wells-fargo-autograph:
@@ -1020,18 +1032,13 @@ cards:
       - {category: gas, multiplier: 3, notes: "Gas Stations", evidence: "Earn Unlimited 3X points on : … Gas Stations"}
       - {category: transit_rideshare, multiplier: 3, notes: "Transit", evidence: "Earn Unlimited 3X points on : … Transit"}
       - {category: streaming, multiplier: 3, notes: "Popular Streaming Services", evidence: "Earn Unlimited 3X points on : … Popular Streaming Services"}
-      - {category: other, multiplier: 1, notes: "other purchases", evidence: "Plus, earn 1X rewards points on other purchases."}
+      - {category: other, multiplier: 1, notes: "other net purchases", evidence: "Other purchases : 1 rewards point will be earned per $1 spent on other net purchases."}
       - {category: ev_charging, multiplier: 3}
     benefits:
-      - {kind: other, name: "Cellular Telephone Protection", amount: null, cadence: annual, evidence: "Up to $600 of cell phone protection against damage or theft."}
-      - {kind: other, name: "Auto Rental Collision Damage Waiver", amount: null, cadence: annual, evidence: "Pay for rental cars using an eligible card and get reimbursed for covered damage or theft."}
-      - {kind: other, name: "Travel and Emergency Assistance Services", amount: null, cadence: annual, evidence: "Available for covered Wells Fargo cardholders. Count on emergency assistance while traveling anywhere in the world."}
-      - {kind: other, name: "Roadside Dispatch®", amount: null, cadence: annual, evidence: "Available whenever you're in need of a tow - for eligible Wells Fargo cardholders 24/7 with no membership required."}
-      - {kind: other, name: "Emergency Cash Disbursement and Card Replacement", amount: null, cadence: annual, evidence: "Visa credit cardholders can get an emergency cash advance disbursed or a card replaced within one to three business days."}
-      - {kind: other, name: "Visa Signature® Concierge Services", amount: null, cadence: annual, evidence: "Find tickets to top sports and entertainment events, book travel, make dinner reservations and more with your complimentary 24/7 Visa Signature Concierge."}
-      - {kind: other, name: "Visa Signature® Luxury Hotel Collection", amount: null, cadence: annual, evidence: "Enjoy a premium collection of benefits at a selection of the world’s most intriguing and prestigious properties."}
-      - {kind: other, name: "Autograph Card Exclusives", amount: null, cadence: annual, evidence: "Get access to tickets to live events featuring fan-favorite artists that put you closer to the artists than you’ve ever been"}
-      - {kind: other, name: "Zero Liability Protection", amount: null, cadence: annual, evidence: "Built-in protection features ensure that you won't be held responsible for unauthorized transactions, as long as they're reported promptly."}
+      - {kind: other, name: "Travel and Emergency Assistance Services", amount: null, cadence: one-time, evidence: "Travel and Emergency Assistance Services provide assistance and referral only."}
+      - {kind: other, name: "Roadside Dispatch", amount: null, cadence: one-time, evidence: "Roadside Dispatch® Available whenever you’re in need of a tow"}
+      - {kind: other, name: "Visa Signature Concierge Services", amount: null, cadence: one-time, evidence: "Find tickets to top sports and entertainment events, book travel, make dinner reservations and more with your complimentary 24/7 Visa Signature Concierge."}
+      - {kind: other, name: "Visa Signature Luxury Hotel Collection", amount: null, cadence: one-time, evidence: "Enjoy a premium collection of benefits at a selection of the world’s most intriguing and prestigious properties."}
     protections: [cell_phone, secondary_rental]
     evidence:
       annual_fee: "The Autograph Credit Card has no annual fee."
@@ -1039,7 +1046,7 @@ cards:
       point_currency: "redeem your Wells Fargo Rewards points to transfer as miles, points or credits"
     terms_source:
       url: "https://creditcards.wellsfargo.com/autograph-visa-credit-card"
-      extracted: "2026-09-27"
+      extracted: "2026-09-28"
       method: "llm:gpt-6-luna"
 
   wells-fargo-autograph-journey:
@@ -1047,24 +1054,31 @@ cards:
     foreign_tx_fee: false
     point_currency: wells_fargo_rewards
     earn:
-      - {category: flights, multiplier: 4, notes: "Airlines and air carriers", evidence: "Airlines: 4 points (1 base point plus 3 bonus points) for every $1 spent on net purchases made with retailers whose merchant category code is classified as airlines and air carriers."}
-      - {category: dining, multiplier: 3, notes: "Restaurants", evidence: "Restaurants: 3 points (1 base plus 2 bonus points) are earned per $1 spent on net purchases made at retailers whose merchant category code is classified as: eating places and restaurants, drinking places, fast food restaurants, and caterers."}
-      - {category: travel_general, multiplier: 3, notes: "Other Travel", evidence: "Other Travel: 3 points (1 base plus 2 bonus points) are earned per $1 spent on net purchases made at retailers whose merchant category code is classified as: timeshare, or vehicle/auto rental, cruise lines, travel agencies, discount travel sites, campgrounds."}
-      - {category: other, multiplier: 1, notes: "Other purchases", evidence: "Other purchases: 1 rewards point will be earned per $1 spent on other net purchases."}
-      - {category: hotels, multiplier: 5}
+      - {category: hotels, multiplier: 5, notes: "with hotels", evidence: "5X points with hotels"}
+      - {category: flights, multiplier: 4, notes: "with airlines", evidence: "4X points with airlines"}
+      - {category: dining, multiplier: 3, notes: "on restaurants", evidence: "3X points on restaurants and other travel"}
+      - {category: travel_general, multiplier: 3, notes: "other travel", evidence: "3X points on restaurants and other travel"}
+      - {category: other, multiplier: 1, notes: "other purchases", evidence: "Plus, earn 1X points on other purchases"}
     benefits:
-      - {kind: airline_fee, name: "Annual airline statement credit", amount: 50, cadence: annual, evidence: "Each year, you will receive a one-time $50 statement credit applied to your account when your card is used for your first airline purchase of at least $50."}
-      - {kind: other, name: "Visa Signature Concierge Services", amount: null, cadence: annual, evidence: "Find tickets to top sports and entertainment events, book travel, make dinner reservations and more with your complimentary 24/7 Visa Signature® Concierge."}
-      - {kind: other, name: "Visa Signature Luxury Hotel Collection", amount: null, cadence: annual, evidence: "Visa Signature® Luxury Hotel Collection Enjoy a premium collection of benefits at a selection of the world’s most intriguing and prestigious properties."}
+      - {kind: travel_credit, name: "Annual airline purchase statement credit", amount: 50, cadence: annual, evidence: "Each year, you will receive a one-time $50 statement credit applied to your account when your card is used for your first airline purchase of at least $50."}
+      - {kind: other, name: "Worldwide Automatic Common Carrier Travel Accident Insurance", amount: null, cadence: annual, evidence: "Get Travel Accident Insurance protection of up to $1,000,000 when you purchase your airline or other common carrier ticket with your eligible credit card."}
+      - {kind: other, name: "Lost Baggage Reimbursement", amount: null, cadence: annual, evidence: "Receive up to $3,000 in luggage reimbursement per trip if your bags are lost due to theft or misdirection by a common carrier while traveling."}
+      - {kind: other, name: "Trip Cancellation and Interruption Protection", amount: null, cadence: annual, evidence: "Use an eligible card to pay for your trip and get reimbursed up to $15,000 for lodging, flights, and activities if the trip is canceled for a covered reason."}
+      - {kind: other, name: "Auto Rental Collision Damage Waiver", amount: null, cadence: annual, evidence: "Pay for rental cars using an eligible card and get reimbursed for covered damage or theft."}
+      - {kind: other, name: "Travel and Emergency Assistance Services", amount: null, cadence: annual, evidence: "Available for covered Wells Fargo cardholders. Count on emergency assistance while traveling anywhere in the world."}
+      - {kind: other, name: "Cellular Telephone Protection", amount: null, cadence: annual, evidence: "Get up to $1,000 of cell phone protection against damage, theft, or unintended separation."}
       - {kind: other, name: "Roadside Dispatch", amount: null, cadence: annual, evidence: "Available whenever you're in need of a tow - for eligible Wells Fargo cardholders 24/7 with no membership required."}
+      - {kind: other, name: "Visa Signature Concierge Services", amount: null, cadence: annual, evidence: "Find tickets to top sports and entertainment events, book travel, make dinner reservations and more with your complimentary 24/7 Visa Signature® Concierge."}
+      - {kind: other, name: "Visa Signature Luxury Hotel Collection", amount: null, cadence: annual, evidence: "Enjoy a premium collection of benefits at a selection of the world’s most intriguing and prestigious properties."}
     protections: [cell_phone, trip_cancel, secondary_rental]
     downgrade_to: [wells-fargo-autograph, wells-fargo-active-cash]
     evidence:
       annual_fee: "The Wells Fargo Autograph Journey Card has an annual fee of $95 whereas the Wells Fargo Autograph Card does not have an annual fee."
+      foreign_tx_fee: "The Autograph Journey credit card has no foreign transaction fees."
       point_currency: "Rewards points transfer allows you to redeem your Wells Fargo Rewards points to transfer as miles, points or credits to participating partner loyalty transfer programs"
     terms_source:
       url: "https://creditcards.wellsfargo.com/autograph-journey-visa-credit-card"
-      extracted: "2026-09-27"
+      extracted: "2026-09-28"
       method: "llm:gpt-6-luna"
 
   wells-fargo-bilt:
@@ -1189,12 +1203,14 @@ cards:
       point_currency: usd
       apply_url: "https://robinhood.com/creditcard/"
       notes: "No card fee, but requires Robinhood Gold ($50/yr), counted here as the annual fee. Issued by Coastal Community Bank."
-    annual_fee: 50
+    annual_fee: 0
     foreign_tx_fee: false
     point_currency: usd
     earn:
       - {category: other, multiplier: 3, notes: "all categories", evidence: "3% cash back on all categories."}
       - {category: travel_portal, multiplier: 5, notes: "Robinhood travel portal"}
+    evidence:
+      annual_fee: "No annual fee"
     terms_source:
       url: "https://robinhood.com/creditcard/"
       extracted: "2026-09-27"
