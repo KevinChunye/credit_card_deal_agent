@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-10-01T20:22:38.216650Z",
+ "updated_at": "2026-10-08T20:42:48.984061Z",
  "cards": {
   "chase-sapphire-preferred": {
    "annual_fee": 95.0,
@@ -901,19 +901,19 @@
    }
   },
   "chase-ihg-premier": {
-   "annual_fee": 99.0,
+   "annual_fee": 150.0,
    "foreign_tx_fee": false,
    "point_currency": "ihg",
    "earn": [
     {
-     "category": "travel_general",
+     "category": "flights",
      "multiplier": 5.0,
      "cap": null,
      "cap_period": null,
      "choice_group": null,
      "choose": null,
-     "notes": "travel",
-     "evidence": "Earn 5X total points on travel, dining, and at gas stations."
+     "notes": "flights booked directly",
+     "evidence": "Earn 5X points on flights booked directly, car rental agencies, on dining, at grocery stores or gas stations."
     },
     {
      "category": "dining",
@@ -922,8 +922,18 @@
      "cap_period": null,
      "choice_group": null,
      "choose": null,
-     "notes": "dining",
-     "evidence": "Earn 5X total points on travel, dining, and at gas stations."
+     "notes": "dining at restaurants including takeout and eligible delivery services",
+     "evidence": "You’ll earn 5 points for each $1 spent on purchases made in the following rewards categories: grocery stores; gas stations; dining at restaurants including takeout and eligible delivery services."
+    },
+    {
+     "category": "groceries",
+     "multiplier": 5.0,
+     "cap": null,
+     "cap_period": null,
+     "choice_group": null,
+     "choose": null,
+     "notes": "grocery stores",
+     "evidence": "You’ll earn 5 points for each $1 spent on purchases made in the following rewards categories: grocery stores; gas stations; dining at restaurants including takeout and eligible delivery services."
     },
     {
      "category": "gas",
@@ -933,7 +943,7 @@
      "choice_group": null,
      "choose": null,
      "notes": "gas stations",
-     "evidence": "Earn 5X total points on travel, dining, and at gas stations."
+     "evidence": "You’ll earn 5 points for each $1 spent on purchases made in the following rewards categories: grocery stores; gas stations; dining at restaurants including takeout and eligible delivery services."
     },
     {
      "category": "other",
@@ -943,78 +953,57 @@
      "choice_group": null,
      "choose": null,
      "notes": "all other purchases",
-     "evidence": "Earn 3X points per $1 spent on all other purchases."
+     "evidence": "You'll earn 3 points for each $1 spent on all other purchases."
     }
    ],
    "benefits": [
     {
-     "kind": "elite_status",
-     "name": "Automatic Platinum Elite Status",
-     "amount": null,
+     "kind": "dining_credit",
+     "name": "IHG Food and Beverage Reward voucher",
+     "amount": 100.0,
+     "cadence": "quarterly",
+     "evidence": "Enjoy a $25 Food and Beverage Reward voucher quarterly to treat yourself to a drink or meal on your next trip at IHG Hotels."
+    },
+    {
+     "kind": "travel_credit",
+     "name": "Airline statement credit",
+     "amount": 100.0,
      "cadence": "annual",
-     "evidence": "Automatic Platinum Elite Status as long as you remain an IHG One Rewards Premier Cardmember."
+     "evidence": "A one-time statement credit of $100 per calendar year will automatically be applied to your account when you make a purchase of at least $250 with your IHG One Rewards Premier Credit Card on flight tickets booked directly with the airline through 12/31/27."
+    },
+    {
+     "kind": "lounge",
+     "name": "Complimentary DashPass by DoorDash",
+     "amount": null,
+     "cadence": "one-time",
+     "evidence": "When the membership is activated for the first time with your eligible Chase card between 02/01/2025 and 12/31/2027, you will receive 12 months of complimentary DashPass for use on both the DoorDash and Caviar applications during the same membership period based on the first activation date."
+    },
+    {
+     "kind": "other",
+     "name": "DoorDash non-restaurant order discount",
+     "amount": 120.0,
+     "cadence": "monthly",
+     "evidence": "Once you have activated your DashPass membership for the first time between 09/01/2026 and 12/31/2027, you will receive a $10 off discount each calendar month at checkout on one qualifying non-restaurant order on DoorDash as long as you remain enrolled in a DashPass membership."
     },
     {
      "kind": "free_night",
      "name": "Anniversary Free Night",
      "amount": null,
      "cadence": "annual",
-     "evidence": "Anniversary Free Night Earned each account anniversary year with a current point redemption cap of 40,000 points."
-    },
-    {
-     "kind": "other",
-     "name": "$100 statement credit",
-     "amount": null,
-     "cadence": "annual",
-     "evidence": "You'll receive a $100 statement credit and 10,000 bonus points each calendar year during which you spend at least $20,000 in purchases."
+     "evidence": "Anniversary Free Night will be available for redemption on your account anniversary date each year."
     },
     {
      "kind": "elite_status",
-     "name": "Diamond Elite Status",
+     "name": "Automatic IHG One Rewards Gold Elite status",
      "amount": null,
      "cadence": "annual",
-     "evidence": "Each Calendar Year you make purchases totaling $40,000 or more with an IHG One Rewards Premier Credit Card, you, as the primary cardmember, will qualify for Diamond Elite Status through December 31 of the following year."
-    },
-    {
-     "kind": "travel_credit",
-     "name": "United TravelBank Cash",
-     "amount": 50.0,
-     "cadence": "annual",
-     "evidence": "Up to $50 United Airlines TravelBank Cash each year"
-    },
-    {
-     "kind": "dining_membership",
-     "name": "complimentary DashPass",
-     "amount": null,
-     "cadence": "one-time",
-     "evidence": "you will receive 12 months of complimentary DashPass for use on both the DoorDash and Caviar applications during the same membership period"
-    },
-    {
-     "kind": "other",
-     "name": "DoorDash quarterly discount",
-     "amount": 40.0,
-     "cadence": "quarterly",
-     "evidence": "you will receive a $10 off discount each calendar quarter at checkout on one qualifying non-restaurant order on DoorDash"
-    },
-    {
-     "kind": "other",
-     "name": "Instacart credit",
-     "amount": 120.0,
-     "cadence": "monthly",
-     "evidence": "you can receive one $10 credit in your Instacart account each month you have an active Instacart+ membership"
-    },
-    {
-     "kind": "other",
-     "name": "complimentary Instacart+ membership",
-     "amount": null,
-     "cadence": "one-time",
-     "evidence": "You will receive one complimentary Instacart+ membership per eligible card account for three (3) months"
+     "evidence": "You qualify for automatic IHG One Rewards Gold Elite status for as long as you remain a Premier credit cardmember, and as long as your IHG One Rewards membership account remains in good standing."
     }
    ],
    "evidence": {
-    "annual_fee": "IHG One Rewards Premier Credit Card Earn 140,000 Bonus Points * Opens offer details overlay up to 26X at IHG * Opens offer details overlay 5X on gas and dining * Opens offer details overlay NEW CARDMEMBER OFFER Earn 140,000 Bonus Points after you spend $3,000 on purchases in the first 3 months from account opening. * Opens offer details overlay AT A GLANCE Earn IHG One Rewards points on every pur chase. Up to 26X total points per $1 spent when you stay at IHG Hotels and Resorts. * Opens offer details overlay APR 19.24 Min. of (6.75+12.49) and 29.99 %– 27.74 Min. of (6.75+20.99) and 29.99 % variable APR. ANNUAL FEE $99",
+    "annual_fee": "ANNUAL FEE $150 Sign in to apply faster",
     "foreign_tx_fee": "You will pay no foreign transaction fees when you use your card for purchases made outside the United States.",
-    "point_currency": "Earn IHG One Rewards points on every pur chase."
+    "point_currency": "Earn IHG One Rewards points on every purchase."
    }
   },
   "amex-platinum": {

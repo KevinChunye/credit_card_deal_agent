@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-10-01T20:22:38.216650Z",
+ "updated_at": "2026-10-08T20:42:48.984061Z",
  "cards": {
   "chase-sapphire-preferred": {
    "url": "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
@@ -193,14 +193,39 @@
   },
   "chase-ihg-premier": {
    "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
-   "sha256": "1b92370d92329911bfc7fbe2a10bc8ba1173c36e45b7f5ee78603d5c0363913e",
-   "last_fetched": "2026-09-28",
-   "last_verified": "2026-09-28",
+   "sha256": "ada7a320db0ea24e2a9c144a616ab6ea3bc068b20687058474bb5df1bd273b61",
+   "last_fetched": "2026-10-08",
+   "last_verified": "2026-10-08",
    "source_status": "ok",
    "extraction_status": "ok",
-   "last_extracted": "2026-09-27",
+   "last_extracted": "2026-10-08",
    "model": "gpt-6-luna",
-   "issues": []
+   "issues": [
+    {
+     "field": "earn.travel_general",
+     "reason": "evidence doesn't name travel_general",
+     "value": "5x",
+     "evidence": "Earn 5X points on flights booked directly, car rental agencies, on dining, at grocery stores or gas stations."
+    },
+    {
+     "field": "benefit.travel_credit",
+     "reason": "evidence doesn't state $50",
+     "value": "$50 annual",
+     "evidence": "Each calendar year, the primary cardmember will receive one $25 United TravelBank cash deposit in their United MileagePlus account on or about January 5, and another $25 United TravelBank cash deposit on or about July 5, subject to the requirements and restrictions below."
+    },
+    {
+     "field": "benefit.other",
+     "reason": "evidence not found on page",
+     "value": "$10 monthly",
+     "evidence": "As an IHG One Rewards Premier Credit Card Primary cardmember, you can receive one $10 credit in your Instacart account each month you have an active Instacart+ membership after you activate your complimentary Chase Instacart+ membership using your eligible Chase credit card on https://www.instacart.com/p/chase-cobrands from 5/1/2025 through 12/31/2027."
+    },
+    {
+     "field": "benefit.dining_membership",
+     "reason": "evidence not found on page",
+     "value": "",
+     "evidence": "You will receive one complimentary Instacart+ membership per eligible card account for three (3) months when the membership is activated on https://www.instacart.com/p/chase-cobrands for the first time with your IHG One Rewards Premier Credit Card between 5/1/2025 and 12/31/2027."
+    }
+   ]
   },
   "amex-platinum": {
    "url": "https://www.americanexpress.com/us/credit-cards/card/platinum/",
