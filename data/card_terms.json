@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-10-08T20:42:48.984061Z",
+ "updated_at": "2026-10-15T19:13:12.620262Z",
  "cards": {
   "chase-sapphire-preferred": {
    "annual_fee": 95.0,
@@ -283,10 +283,10 @@
    "benefits": [
     {
      "kind": "dining_membership",
-     "name": "Complimentary DashPass membership",
+     "name": "6 months of complimentary DashPass",
      "amount": null,
      "cadence": "one-time",
-     "evidence": "Get 6 months of complimentary access to DashPass– a membership for both DoorDash and Caviar"
+     "evidence": "Get 6 months of complimentary access to DashPass– a membership for both DoorDash and Caviar – which unlocks $0 delivery fees"
     },
     {
      "kind": "dining_credit",
@@ -297,7 +297,7 @@
     }
    ],
    "evidence": {
-    "annual_fee": "You won't have to pay an annual fee for all the great features that come with your Freedom Unlimited card."
+    "annual_fee": "No annual fee You won't have to pay an annual fee for all the great features"
    }
   },
   "chase-freedom-flex": {

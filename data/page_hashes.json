@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-10-08T20:42:48.984061Z",
+ "updated_at": "2026-10-15T19:13:12.620262Z",
  "cards": {
   "chase-sapphire-preferred": {
    "url": "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
@@ -56,12 +56,12 @@
   },
   "chase-freedom-unlimited": {
    "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited",
-   "sha256": "7e26e99dd7e246d70a38a1fd6658d2d93f678549a515d44ea3710837386bbc18",
-   "last_fetched": "2026-09-28",
-   "last_verified": "2026-09-28",
+   "sha256": "4a52e6c55b66a1ef2f27b25c8c546702ccee1a80c47027283ec198a1d0378128",
+   "last_fetched": "2026-10-15",
+   "last_verified": "2026-10-15",
    "source_status": "ok",
    "extraction_status": "ok",
-   "last_extracted": "2026-09-27",
+   "last_extracted": "2026-10-15",
    "model": "gpt-6-luna",
    "issues": []
   },
